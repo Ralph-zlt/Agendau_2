@@ -96,7 +96,7 @@
 
             <!-- Corpo de Formulários -->
             <div class="p-8 space-y-6">
-              
+               
 
                 <!-- Formulário de Login / Cadastro integrado -->
                 <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
@@ -122,60 +122,8 @@
                         <p class="text-[10px] text-slate-400 mt-2 leading-snug italic" id="login-hint">Caso seja seu primeiro acesso, digite o CPF e defina uma nova senha para se cadastrar e efetuar o primeiro login.</p>
                     </div>
 
-                    <!-- Campos Extras: Classificação do Profissional (Apenas para Administrador) -->
-                    <div id="admin-class-group" class="space-y-3 p-3.5 bg-slate-950 rounded-xl border border-slate-800">
-                        <span class="text-[10px] font-black uppercase text-brand-purple tracking-wider">Classificação do Profissional</span>
-                        <div class="grid grid-cols-2 gap-2 mt-1">
-                            <label class="flex items-center gap-2 bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs font-semibold cursor-pointer text-slate-300">
-                                <input type="radio" name="admin-job" value="groomer" checked onchange="toggleCrmRequirement()" class="text-brand-purple focus:ring-brand-purple">
-                                <span>Groomer (Pet)</span>
-                            </label>
-                            <label class="flex items-center gap-2 bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs font-semibold cursor-pointer text-slate-300">
-                                <input type="radio" name="admin-job" value="veterinario" onchange="toggleCrmRequirement()" class="text-brand-purple focus:ring-brand-purple">
-                                <span>Veterinário</span>
-                            </label>
-                        </div>
-                        
-                        <!-- CRM Obrigatório para Veterinário -->
-                        <div id="crm-fields" class="space-y-2 pt-2 border-t border-slate-800 hidden">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">CRM (Obrigatório)</label>
-                                <input type="text" id="admin-crm" placeholder="CRM-SP 123456" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:border-brand-blue outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Validade do CRM</label>
-                                <input type="date" id="admin-crm-validade" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:border-brand-blue outline-none">
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Campos Extras: Inclusão completa de dados do Tutor no Primeiro Acesso -->
-                    <div id="tutor-first-access-fields" class="space-y-3 p-3.5 bg-brand-purple/10 rounded-xl border border-brand-purple/30 hidden">
-                        <span class="text-[10px] font-black uppercase text-brand-lime tracking-wider flex items-center gap-1">
-                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Primeiro Acesso: Preencha seus dados
-                        </span>
-                        <div class="space-y-2 mt-1">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Nome Completo</label>
-                                <input type="text" id="new-tutor-nome" placeholder="Digite seu nome completo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:border-brand-blue outline-none">
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Celular / Telefone</label>
-                                    <input type="text" id="new-tutor-tel" placeholder="(11) 99999-9999" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:border-brand-blue outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">E-mail</label>
-                                    <input type="email" id="new-tutor-email" placeholder="nome@email.com" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:border-brand-blue outline-none">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1">Endereço Residencial Completo</label>
-                                <input type="text" id="new-tutor-endereco" placeholder="Ex: Rua do Bosque, 45 - Pilar do Sul" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:border-brand-blue outline-none">
-                            </div>
-                        </div>
-                    </div>
-
+                   
                     <!-- Botão de Login / Cadastro -->
                     <button type="submit" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-brand-blue/30 flex items-center justify-center gap-2">
                         <span>Acessar o Painel</span> <i data-lucide="arrow-right" class="w-4 h-4 text-brand-lime"></i>
@@ -242,11 +190,7 @@
                     <span>Módulo Clínico</span>
                 </button>
 
-                <!-- Visível apenas para Administradores -->
-                <button onclick="switchTab('banho-tosa')" id="nav-banho-tosa" class="nav-btn admin-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
-                    <i data-lucide="scissors" class="w-4 h-4 text-brand-lime"></i>
-                    <span>Banho & Tosa</span>
-                </button>
+               
 
                 <!-- Visível apenas para Administradores -->
                 <button onclick="switchTab('produtos')" id="nav-produtos" class="nav-btn admin-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
@@ -658,92 +602,7 @@
                     </div>
                 </section>
 
-                <!-- 5. ABA BANHO E TOSA (Apenas Admin) -->
-                <section id="tab-banho-tosa" class="tab-content hidden space-y-6">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-100">Painel de Banho & Tosa</h3>
-                            <p class="text-xs text-slate-400">Acompanhamento operacional dos pets em procedimentos de embelezamento estético e histórico.</p>
-                        </div>
-                    </div>
-
-                    <!-- Kanban de Procedimentos Estéticos -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <!-- Coluna 1: Aguardando -->
-                        <div class="bg-slate-900 rounded-xl p-3 flex flex-col min-h-[400px] border border-slate-800">
-                            <div class="flex items-center justify-between mb-3 px-2">
-                                <span class="text-xs font-bold text-slate-400 uppercase">Aguardando</span>
-                                <span id="badge-aguardando" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs font-bold px-2 py-0.5 rounded-full">0</span>
-                            </div>
-                            <div id="kanban-aguardando" class="flex-1 space-y-3 custom-scrollbar overflow-y-auto"></div>
-                        </div>
-
-                        <!-- Coluna 2: Em Banho -->
-                        <div class="bg-slate-900/60 border border-brand-blue/30 rounded-xl p-3 flex flex-col min-h-[400px]">
-                            <div class="flex items-center justify-between mb-3 px-2">
-                                <span class="text-xs font-bold text-brand-blue uppercase">Em Banho</span>
-                                <span id="badge-banho" class="bg-brand-blue text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
-                            </div>
-                            <div id="kanban-banho" class="flex-1 space-y-3 custom-scrollbar overflow-y-auto"></div>
-                        </div>
-
-                        <!-- Coluna 3: Secando / Tosa -->
-                        <div class="bg-slate-900/60 border border-brand-purple/30 rounded-xl p-3 flex flex-col min-h-[400px]">
-                            <div class="flex items-center justify-between mb-3 px-2">
-                                <span class="text-xs font-bold text-brand-purple uppercase">Secando / Tosa</span>
-                                <span id="badge-tosa" class="bg-brand-purple text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
-                            </div>
-                            <div id="kanban-tosa" class="flex-1 space-y-3 custom-scrollbar overflow-y-auto"></div>
-                        </div>
-
-                        <!-- Coluna 4: Pronto (Aguardando Retirada) -->
-                        <div class="bg-slate-900/60 border border-brand-lime/30 rounded-xl p-3 flex flex-col min-h-[400px]">
-                            <div class="flex items-center justify-between mb-3 px-2">
-                                <span class="text-xs font-bold text-brand-lime uppercase tracking-wider">Pronto</span>
-                                <span id="badge-pronto" class="bg-brand-lime text-slate-950 text-xs font-bold px-2 py-0.5 rounded-full shadow-md shadow-brand-lime/10">0</span>
-                            </div>
-                            <div id="kanban-pronto" class="flex-1 space-y-3 custom-scrollbar overflow-y-auto"></div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 6. ABA PRODUTOS & MEDICAMENTOS (Apenas Admin) -->
-                <section id="tab-produtos" class="tab-content hidden space-y-6">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-100">Controle de Produtos & Medicamentos</h3>
-                            <p class="text-xs text-slate-400">Mapeamento e controle de insumos e produtos mais utilizados clinicamente e no pet shop.</p>
-                        </div>
-                        <button onclick="abrirModalProduto()" class="bg-brand-blue hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
-                            <i data-lucide="plus" class="w-4 h-4 text-brand-lime"></i> Novo Insumo/Produto
-                        </button>
-                    </div>
-
-                    <!-- Tabela de Produtos -->
-                    <div class="bg-slate-900 rounded-xl border border-slate-800 shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-950 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                        <th class="py-3.5 px-6">Identificação</th>
-                                        <th class="py-3.5 px-6">Categoria</th>
-                                        <th class="py-3.5 px-6">Status do Estoque</th>
-                                        <th class="py-3.5 px-6">Quantidade</th>
-                                        <th class="py-3.5 px-6">Preço Unitário</th>
-                                        <th class="py-3.5 px-6 text-right">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="produtos-table-body" class="divide-y divide-slate-800 text-sm text-slate-300">
-                                    <!-- Conteúdo dinâmico -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-
-            </div>
-        </main>
-    </div>
+              
 
     <!-- ===================== MODAIS DO SISTEMA ===================== -->
 
@@ -1153,165 +1012,74 @@
             }
         }
 
-        // --- SUBMIT DA TELA DE LOGIN & CADASTRO ---
+        
+        // --- SUBMIT DA TELA DE LOGIN (MODO PROTÓTIPO) ---
         function handleAuthSubmit(e) {
             e.preventDefault();
             const cpf = document.getElementById('login-cpf').value.trim();
-            const passwordInput = document.getElementById('login-password').value;
 
-            if (currentRole === 'admin') {
-                // Procurar Administrador existente
-                let adminObj = administradores.find(a => a.cpf === cpf);
-                
-                if (adminObj) {
-                    // Já cadastrado, verificar senha
-                    if (adminObj.senha === passwordInput) {
-                        realizarLogin(adminObj, 'admin');
-                    } else {
-                        showToast("Senha do Administrador incorreta!", "error");
-                    }
-                } else {
-                    // Primeiro acesso: registrar nova senha e classificação profissional
-                    if (!passwordInput) {
-                        showToast("Primeiro acesso detectado! Defina sua senha no campo correspondente.", "error");
-                        return;
-                    }
-                    const selectedJob = document.querySelector('input[name="admin-job"]:checked').value;
-                    let crmValue = "";
-                    let valCrm = "";
-                    
-                    if (selectedJob === 'veterinario') {
-                        crmValue = document.getElementById('admin-crm').value;
-                        valCrm = document.getElementById('admin-crm-validade').value;
-                        if (!crmValue) {
-                            showToast("Veterinários necessitam registrar o CRM!", "error");
-                            return;
-                        }
-                    }
+            // Mapeamento de perfis de teste (Qualquer senha será aceita)
+            const perfisTestes = {
+                "1": { id: "1", nome: "Admin Geral", role: "admin", profissao: "admin" },
+                "111": { id: "1", nome: "Admin Geral", role: "admin", profissao: "admin" },
+        
+             "2": { id: "2", nome: "Dr. Carlos (Veterinário)", role: "veterinario", profissao: "veterinario", crm: "CRM-SP 12345" },
+                "222": { id: "2", nome: "Dr. Carlos (Veterinário)", role: "veterinario", profissao: "veterinario", crm: "CRM-SP 12345" },
+        
+                "3": { id: "3", nome: "Mariana (Gestora)", role: "gestor", profissao: "gestor" },
+                "333": { id: "3", nome: "Mariana (Gestora)", role: "gestor", profissao: "gestor" },
+        
+             "4": { id: "4", nome: "Lucas (Funcionário)", role: "funcionario", profissao: "groomer" },
+                "444": { id: "4", nome: "Lucas (Funcionário)", role: "funcionario", profissao: "groomer" }
+            };
 
-                    const novoAdmin = {
-                        id: 'admin_' + (administradores.length + 1),
-                        nome: "Administrador Novo",
-                        cpf: cpf,
-                        profissao: selectedJob,
-                        crm: crmValue,
-                        crmValidade: valCrm,
-                        senha: passwordInput
-                    };
-                    administradores.push(novoAdmin);
-                    realizarLogin(novoAdmin, 'admin');
-                    showToast("Primeiro acesso registrado! Sua conta administrativa foi configurada.");
-                }
+            let userObj = perfisTestes[cpf];
+
+            if (userObj) {
+                realizarLogin(userObj, userObj.role);
             } else {
-                // LOGIN DO TUTOR (CLIENTE)
-                let tutorObj = tutores.find(t => t.cpf === cpf);
-                const tutorFirstAccessGroup = document.getElementById('tutor-first-access-fields');
-
-                if (tutorObj) {
-                    // Tutor já cadastrado, checa senha comum
-                    if (tutorObj.senha === passwordInput) {
-                        realizarLogin(tutorObj, 'tutor');
-                    } else {
-                        showToast("Senha do Tutor incorreta!", "error");
-                    }
-                } else {
-                    // Primeiro acesso: CPF não cadastrado em memória
-                    if (tutorFirstAccessGroup.classList.contains('hidden')) {
-                        // Exibe os campos extras de Nome, Telefone, Email e Endereço para inclusão completa
-                        tutorFirstAccessGroup.classList.remove('hidden');
-                        showToast("Primeiro acesso detectado! Por favor, insira seus dados pessoais para habilitar o seu primeiro login.", "warning");
-                    } else {
-                        // Processa o preenchimento dos dados do primeiro acesso do Tutor
-                        const nome = document.getElementById('new-tutor-nome').value.trim();
-                        const tel = document.getElementById('new-tutor-tel').value.trim();
-                        const email = document.getElementById('new-tutor-email').value.trim();
-                        const endereco = document.getElementById('new-tutor-endereco').value.trim();
-
-                        if (!nome || !tel || !email || !endereco || !passwordInput) {
-                            showToast("Todos os campos do primeiro acesso (Nome, CPF, Senha, Endereço e Telefone) são obrigatórios!", "error");
-                            return;
-                        }
-
-                        // Registra o Tutor
-                        const novoTutor = {
-                            id: (tutores.length + 1).toString(),
-                            nome: nome,
-                            tel: tel,
-                            cpf: cpf,
-                            email: email,
-                            endereco: endereco,
-                            senha: passwordInput
-                        };
-                        tutores.push(novoTutor);
-                        
-                        // Reseta campos extras de cadastro
-                        document.getElementById('new-tutor-nome').value = '';
-                        document.getElementById('new-tutor-tel').value = '';
-                        document.getElementById('new-tutor-email').value = '';
-                        document.getElementById('new-tutor-endereco').value = '';
-                        tutorFirstAccessGroup.classList.add('hidden');
-
-                        // Permite e efetua o primeiro login de forma imediata
-                        realizarLogin(novoTutor, 'tutor');
-                        showToast("Cadastro concluído com sucesso! Bem-vindo ao primeiro acesso do Agend-Au.");
-                    }
-                }
+                showToast("Use os CPFs de teste: 1 (Admin), 2 (Vet), 3 (Gestor) ou 4 (Funcionário)", "info");
             }
         }
-
         function realizarLogin(userObj, role) {
             currentUser = userObj;
             currentRole = role;
 
-            // Fechar modal de login
+            // Esconde a tela de login
             document.getElementById('login-screen').classList.add('hidden');
             
-            // Atualizar cabeçalho e perfil
+            // Atualiza nome no cabeçalho
             document.getElementById('current-user-name').innerText = userObj.nome;
             document.getElementById('header-user-name').innerText = userObj.nome;
 
+            // Oculta todos os blocos de permissão para resetar a tela
+            document.querySelectorAll('.admin-only, .vet-only, .gestor-only, .func-only').forEach(el => el.classList.add('hidden'));
+
+            // Configuração de regras por perfil
             if (role === 'admin') {
                 document.getElementById('current-user-role-label').innerText = "Administrador";
-                document.getElementById('header-user-role').innerText = "Profissão: " + userObj.profissao.toUpperCase() + " " + (userObj.crm ? "(" + userObj.crm + ")" : "");
-                document.getElementById('header-avatar').innerText = "AD";
-                
-                // Mostrar controles exclusivos para Admin
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-                document.querySelectorAll('.tutor-only').forEach(el => el.classList.add('hidden'));
-
-                // Ajustar visual clínico dependendo da profissão
-                ajustarModuloClinicoProfissao();
-
-                // Ir para a aba do Dashboard
                 switchTab('dashboard');
-            } else {
-                document.getElementById('current-user-role-label').innerText = "Tutor Logado";
-                document.getElementById('header-user-role').innerText = "Tutor do Pet";
-                document.getElementById('header-avatar').innerText = "TT";
-
-                // Esconder controles exclusivos de Admin, mostrar de Tutor
-                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.tutor-only').forEach(el => el.classList.remove('hidden'));
-
-                // Ir para Meus Pets
-                switchTab('meus-pets');
+            } 
+            else if (role === 'veterinario') {
+                document.getElementById('current-user-role-label').innerText = "Veterinário";
+                document.querySelectorAll('.vet-only').forEach(el => el.classList.remove('hidden'));
+                switchTab('dashboard'); // Ou aba de prontuários
+            } 
+            else if (role === 'gestor') {
+                document.getElementById('current-user-role-label').innerText = "Gestor";
+                document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('hidden'));
+                switchTab('dashboard');
+            } 
+            else if (role === 'funcionario') {
+                document.getElementById('current-user-role-label').innerText = "Funcionário";
+                document.querySelectorAll('.func-only').forEach(el => el.classList.remove('hidden'));
+                switchTab('meus-pets'); // Ou agenda do dia
             }
 
-            // Recarregar os drops, listas e tabelas considerando as permissões
-            popularTutorDropdowns();
-            renderizarTutores();
-            renderizarMeusPetsTutor();
-            renderizarAgendamentos();
-            renderizarKanbanBanhoTosa();
-            renderizarHistoricoClinico();
-            renderizarHistoricoExclusivoTutor();
-            renderizarEstoque();
-            atualizarKPIs();
-            inicializarGraficos();
-            
-            showToast("Acesso autorizado! Bem-vindo de volta, " + userObj.nome + ".");
+            showToast("Acesso autorizado como " + userObj.nome);
         }
-
+        
         function handleLogout() {
             currentUser = null;
             document.getElementById('login-cpf').value = '';
@@ -2077,68 +1845,7 @@
             showToast("Registro excluído.");
         }
 
-        // --- PAINEL OPERACIONAL DE BANHO E TOSA (KANBAN) ---
-        function renderizarKanbanBanhoTosa() {
-            const cols = {
-                'Aguardando': document.getElementById('kanban-aguardando'),
-                'Em Banho': document.getElementById('kanban-banho'),
-                'Secando/Tosa': document.getElementById('kanban-tosa'),
-                'Pronto': document.getElementById('kanban-pronto')
-            };
-
-            if (!cols['Aguardando']) return;
-
-            // Limpa as colunas
-            Object.values(cols).forEach(col => col.innerHTML = '');
-
-            // Contadores
-            const counters = { 'Aguardando': 0, 'Em Banho': 0, 'Secando/Tosa': 0, 'Pronto': 0 };
-
-            // Apenas agendamentos confirmados de "Banho e Tosa"
-            const esteticos = agendamentos.filter(a => a.status === 'confirmado' && a.servico === 'Banho e Tosa');
-
-            esteticos.forEach(a => {
-                const pet = pets.find(p => p.id === a.petId);
-                const tutor = tutores.find(t => t.id === a.tutorId);
-                const statusAtual = a.statusEstetico || 'Aguardando';
-
-                counters[statusAtual]++;
-
-                let acoesEsteticas = '';
-                if (statusAtual === 'Aguardando') {
-                    acoesEsteticas = "<button onclick=\"moverFluxoEstetico('" + a.id + "', 'Em Banho')\" class='w-full mt-2.5 bg-brand-blue hover:opacity-90 text-white font-semibold text-xs py-1.5 rounded-lg transition-all flex items-center justify-center gap-1'>Iniciar Banho <i data-lucide='arrow-right' class='w-3 h-3 text-brand-lime'></i></button>";
-                } else if (statusAtual === 'Em Banho') {
-                    acoesEsteticas = "<button onclick=\"moverFluxoEstetico('" + a.id + "', 'Secando/Tosa')\" class='w-full mt-2.5 bg-brand-purple hover:opacity-90 text-white font-semibold text-xs py-1.5 rounded-lg transition-all flex items-center justify-center gap-1'>Iniciar Tosa <i data-lucide='arrow-right' class='w-3 h-3 text-brand-lime'></i></button>";
-                } else if (statusAtual === 'Secando/Tosa') {
-                    acoesEsteticas = "<button onclick=\"moverFluxoEstetico('" + a.id + "', 'Pronto')\" class='w-full mt-2.5 bg-brand-lime hover:opacity-90 text-slate-950 font-black text-xs py-1.5 rounded-lg transition-all flex items-center justify-center gap-1'>Finalizar <i data-lucide='check' class='w-3 h-3'></i></button>";
-                }
-
-                const cardHTML = "<div class='bg-slate-950 p-3.5 rounded-xl border border-slate-800 shadow-sm space-y-1.5 hover:shadow-md transition-all'>" +
-                        "<div class='flex items-center justify-between'>" +
-                            "<span class='text-[10px] font-black uppercase text-brand-pink tracking-wider'>" + a.hora + "</span>" +
-                            "<span class='text-xs font-bold text-brand-lime'>" + (pet ? pet.nome : 'Pet') + "</span>" +
-                        "</div>" +
-                        "<p class='text-xs text-slate-400'>Tutor: " + (tutor ? tutor.nome : 'Tutor') + "</p>" +
-                        "<div class='text-[11px] text-slate-300 bg-slate-900 p-2 rounded border border-slate-800 italic'>" +
-                            "<strong>Obs:</strong> " + (pet ? pet.comportamento : 'Sem observações') + "" +
-                        "</div>" +
-                        acoesEsteticas +
-                    "</div>";
-
-                if (cols[statusAtual]) {
-                    cols[statusAtual].innerHTML += cardHTML;
-                }
-            });
-
-            // text de badges de contagem
-            document.getElementById('badge-aguardando').innerText = counters['Aguardando'];
-            document.getElementById('badge-banho').innerText = counters['Em Banho'];
-            document.getElementById('badge-tosa').innerText = counters['Secando/Tosa'];
-            document.getElementById('badge-pronto').innerText = counters['Pronto'];
-
-            lucide.createIcons();
-        }
-
+     
         function moverFluxoEstetico(id, proximoStatus) {
             const agend = agendamentos.find(a => a.id === id);
             if (agend) {
