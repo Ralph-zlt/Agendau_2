@@ -96,18 +96,7 @@
 
             <!-- Corpo de Formulários -->
             <div class="p-8 space-y-6">
-                <!-- Seletor de Perfil -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">Como deseja acessar?</label>
-                    <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                        <button type="button" onclick="selectLoginProfile('admin')" id="btn-login-admin" class="py-2.5 rounded-lg text-xs font-bold transition-all bg-brand-blue text-white shadow-lg">
-                            <i data-lucide="shield-check" class="w-4 h-4 inline mr-1 text-brand-lime"></i> Administrador
-                        </button>
-                        <button type="button" onclick="selectLoginProfile('tutor')" id="btn-login-tutor" class="py-2.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
-                            <i data-lucide="users" class="w-4 h-4 inline mr-1 text-brand-pink"></i> Tutor (Cliente)
-                        </button>
-                    </div>
-                </div>
+              
 
                 <!-- Formulário de Login / Cadastro integrado -->
                 <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
