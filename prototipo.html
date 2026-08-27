@@ -880,72 +880,73 @@
                     </div>
                 </div>
 
-                    <!-- Modal Adicionar Usuário (Mock UI para demonstração) -->
-                    <div id="modal-usuario" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-                        <div class="bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-800 flex flex-col">
-                            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
-                                <h4 class="font-bold text-slate-100 flex items-center gap-2">
-                                    <i data-lucide="user-plus" class="text-brand-blue"></i> Adicionar Usuário
-                                </h4>
-                                <button onclick="fecharModalUsuario()" class="text-slate-400 hover:text-white transition-colors">
-                                    <i data-lucide="x" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-                            <form id="usuario-form" onsubmit="handleUsuarioFormSubmit(event)" class="p-6 space-y-4">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div class="md:col-span-2">
-                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
-                                        <input type="text" id="usuario-nome" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">CPF</label>
-                                        <input type="text" id="usuario-cpf" placeholder="123.456.789-00" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Senha temporária</label>
-                                        <input type="password" id="usuario-senha" placeholder="Senha temporária" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Cargo</label>
-                                        <select id="usuario-role" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
-                                            <option value="admin">Administrador</option>
-                                            <option value="gestor">Gestor</option>
-                                            <option value="veterinario">Veterinário</option>
-                                            <option value="funcionario">Funcionário</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-4">
-                                    <button type="button" onclick="fecharModalUsuario()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
-                                    <button type="submit" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Adicionar</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Modal Confirmar Exclusão de Usuário (Mock) -->
-                    <div id="modal-confirm-delete-usuario" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-                        <div class="bg-slate-900 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border border-slate-800 flex flex-col">
-                            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
-                                <h4 class="font-bold text-slate-100">Confirmar Remoção</h4>
-                                <button onclick="fecharModalConfirmDeleteUsuario()" class="text-slate-400 hover:text-white transition-colors">
-                                    <i data-lucide="x" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-                            <div class="p-6 space-y-4">
-                                <p class="text-sm text-slate-300">Deseja remover o usuário <strong id="confirm-delete-username">NOME</strong>?</p>
-                                <div class="flex justify-end gap-2 pt-2">
-                                    <button type="button" onclick="fecharModalConfirmDeleteUsuario()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
-                                    <button id="confirm-delete-usuario-btn" type="button" onclick="confirmarRemoverUsuario()" class="px-4 py-2 bg-brand-pink text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Remover</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-4">
                     <button type="button" onclick="fecharModalProduto()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
                     <button type="submit" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Salvar Insumo</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar Usuário -->
+    <div id="modal-usuario" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-800 flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="user-plus" class="text-brand-blue"></i> Adicionar Usuário
+                </h4>
+                <button onclick="fecharModalUsuario()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="usuario-form" onsubmit="handleUsuarioFormSubmit(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
+                        <input type="text" id="usuario-nome" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">CPF</label>
+                        <input type="text" id="usuario-cpf" placeholder="123.456.789-00" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Senha temporária</label>
+                        <input type="password" id="usuario-senha" placeholder="Senha temporária" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Cargo</label>
+                        <select id="usuario-role" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                            <option value="admin">Administrador</option>
+                            <option value="gestor">Gestor</option>
+                            <option value="veterinario">Veterinário</option>
+                            <option value="funcionario">Funcionário</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-4">
+                    <button type="button" onclick="fecharModalUsuario()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Exclusão de Usuário -->
+    <div id="modal-confirm-delete-usuario" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden border border-slate-800 flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <h4 class="font-bold text-slate-100">Confirmar Remoção</h4>
+                <button onclick="fecharModalConfirmDeleteUsuario()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-slate-300">Deseja remover o usuário <strong id="confirm-delete-username">NOME</strong>?</p>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="fecharModalConfirmDeleteUsuario()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
+                    <button id="confirm-delete-usuario-btn" type="button" onclick="confirmarRemoverUsuario()" class="px-4 py-2 bg-brand-pink text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Remover</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1051,11 +1052,11 @@
     </div>
 
     <!--  (Placeholder) ABA GESTÃO DE USUÁRIOS - Integração com DB esperada -->
-    <section id="tab-usuarios" class="tab-content hidden space-y-6">
+    <section id="tab-usuarios" class="tab-content hidden space-y-6 admin-gestor-only hidden">
         <div class="flex items-center justify-between">
             <div>
                 <h3 class="text-lg font-bold text-slate-100">Gerenciamento de Contas</h3>
-                <p class="text-xs text-slate-400">Gerencie Usuários do sistema: criar, editar, excluir e atribuir papéis.</p>
+                <p class="text-xs text-slate-400">Gerencie usuários do sistema: criar, editar e excluir contas com acesso restrito a administradores e gestores.</p>
             </div>
             <div>
                 <button onclick="abrirModalUsuario()" class="bg-brand-blue hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
@@ -1069,9 +1070,9 @@
                 <thead>
                     <tr class="text-xs text-slate-400 uppercase">
                         <th class="py-3 px-4">Nome</th>
-                        <th class="py-3 px-4">Papel</th>
+                        <th class="py-3 px-4">Cargo</th>
                         <th class="py-3 px-4">CPF</th>
-                        <th class="py-3 px-4">Ações</th>
+                        <th class="py-3 px-4"></th>
                     </tr>
                 </thead>
                 <tbody id="usuarios-table-body" class="divide-y divide-slate-800 text-sm text-slate-300">
@@ -1128,6 +1129,17 @@
             { id: 'u2', nome: 'Laís Oliveira', role: 'gestor', cpf: '222.222.222-22' },
             { id: 'u3', nome: 'Marcos Silva', role: 'veterinario', cpf: '222.333.444-55' }
         ];
+
+        function formatarCargo(role) {
+            const labels = {
+                admin: 'Administrador',
+                gestor: 'Gestor',
+                veterinario: 'Veterinário',
+                funcionario: 'Funcionário',
+                tutor: 'Tutor'
+            };
+            return labels[role] || (role || 'Usuário');
+        }
 
         // --- CONTROLE DE SESSÃO DO USUÁRIO ---
         let currentUser = null; // Guardará o objeto do usuário ativo
@@ -1277,7 +1289,7 @@
             } catch (e) { /* ignore */ }
 
             // Oculta todos os blocos de permissão para resetar a tela
-            document.querySelectorAll('.admin-only, .vet-only, .gestor-only, .func-only').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.admin-only, .admin-gestor-only, .vet-only, .gestor-only, .func-only').forEach(el => el.classList.add('hidden'));
 
             // Definir quais abas / navegações ficam visíveis por papel
             const roleTabs = {
@@ -1298,6 +1310,10 @@
             });
 
             // Configuração de regras por perfil - visuais e permissões locais (protótipo)
+            if (role === 'admin' || role === 'gestor') {
+                document.querySelectorAll('.admin-gestor-only').forEach(el => el.classList.remove('hidden'));
+            }
+
             if (role === 'admin') {
                 document.getElementById('current-user-role-label').innerText = "Administrador";
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
@@ -1421,6 +1437,29 @@
          * TODO [Integração DB]: substituir chamadas mock por fetch/axios para
          * endpoints autenticados (POST /api/login, GET /api/me, GET /api/usuarios ...)
          */
+        function renderUsuarios() {
+            const tbody = document.getElementById('usuarios-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            usuariosMock.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/50 transition-colors';
+                tr.dataset.userid = u.id;
+                tr.innerHTML = `
+                    <td class="py-3 px-6">${escapeHtml(u.nome)}</td>
+                    <td class="py-3 px-6">${escapeHtml(formatarCargo(u.role))}</td>
+                    <td class="py-3 px-6">${escapeHtml(u.cpf)}</td>
+                    <td class="py-3 px-6">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="abrirModalEditarUsuario('${u.id}')" class="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-850 text-slate-300 rounded-md">Editar</button>
+                            <button onclick="abrirModalConfirmDeleteUsuario('${u.id}','${escapeJsString(u.nome)}')" class="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-850 text-slate-300 rounded-md">Excluir</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         function aplicarPermissoesInterface(role) {
             // 1. Reset: Oculta tudo por padrão para segurança visual
             document.querySelectorAll('.admin-only, .tutor-only, .admin-gestor-only, .gestor-only, .vet-only, .func-only').forEach(el => {
@@ -1434,32 +1473,8 @@
                     el.classList.remove('hidden');
                     el.style.display = '';
                 });
+                renderUsuarios();
             }
-
-                // Renderiza usuários na tabela de Gerenciamento de Contas (mock)
-                // TODO [Integração DB]: substituir por chamada assíncrona a GET /api/usuarios
-                function renderUsuarios() {
-                    const tbody = document.getElementById('usuarios-table-body');
-                    if (!tbody) return;
-                    tbody.innerHTML = '';
-                    usuariosMock.forEach(u => {
-                        const tr = document.createElement('tr');
-                        tr.className = 'hover:bg-slate-800/50 transition-colors';
-                        tr.dataset.userid = u.id;
-                        tr.innerHTML = `
-                            <td class="py-3 px-6">${escapeHtml(u.nome)}</td>
-                            <td class="py-3 px-6">${escapeHtml(u.role)}</td>
-                            <td class="py-3 px-6">${escapeHtml(u.cpf)}</td>
-                            <td class="py-3 px-6">
-                                <div class="flex items-center gap-2">
-                                    <button onclick="abrirModalEditarUsuario('${u.id}')" class="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-850 text-slate-300 rounded-md">Editar</button>
-                                    <button onclick="abrirModalConfirmDeleteUsuario('${u.id}','${escapeJsString(u.nome)}')" class="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-850 text-slate-300 rounded-md">Remover</button>
-                                </div>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
         
             if (role === 'admin') {
                 document.querySelectorAll('.admin-only').forEach(el => {
@@ -2334,8 +2349,11 @@
             if (!tr) return;
             const cols = tr.querySelectorAll('td');
             const nome = cols[0] ? cols[0].innerText.trim() : '';
-            const role = cols[1] ? cols[1].innerText.trim() : '';
+            const cargoLabel = cols[1] ? cols[1].innerText.trim() : '';
             const cpf = cols[2] ? cols[2].innerText.trim() : '';
+            const role = Object.keys({ admin: 'Administrador', gestor: 'Gestor', veterinario: 'Veterinário', funcionario: 'Funcionário' }).find(key => {
+                return formatarCargo(key) === cargoLabel;
+            }) || 'admin';
 
             document.getElementById('usuario-nome').value = nome;
             document.getElementById('usuario-cpf').value = cpf;
@@ -2371,25 +2389,8 @@
             }
 
             const id = 'u' + Date.now();
-            const tbody = document.getElementById('usuarios-table-body');
-            if (!tbody) return;
-
-            const tr = document.createElement('tr');
-            tr.className = 'hover:bg-slate-800/50 transition-colors';
-            tr.dataset.userid = id;
-            tr.innerHTML = `
-                <td class="py-3 px-6">${escapeHtml(nome)}</td>
-                <td class="py-3 px-6">${escapeHtml(role)}</td>
-                <td class="py-3 px-6">${escapeHtml(cpf)}</td>
-                <td class="py-3 px-6">
-                    <div class="flex items-center gap-2">
-                        <button onclick="abrirModalEditarUsuario('${id}')" class="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-850 text-slate-300 rounded-md">Editar</button>
-                        <button onclick="abrirModalConfirmDeleteUsuario('${id}','${escapeJsString(nome)}')" class="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-850 text-slate-300 rounded-md">Remover</button>
-                    </div>
-                </td>
-            `;
-
-            tbody.prepend(tr);
+            usuariosMock.unshift({ id, nome, role, cpf, senha: senha || '123456' });
+            renderUsuarios();
             fecharModalUsuario();
             showToast('Usuário "' + nome + '" adicionado (simulação).');
         }
@@ -2405,15 +2406,12 @@
             const nome = document.getElementById('usuario-nome').value.trim();
             const cpf = document.getElementById('usuario-cpf').value.trim();
             const role = document.getElementById('usuario-role').value;
-            const tbody = document.getElementById('usuarios-table-body');
-            if (!tbody) return;
-            const tr = tbody.querySelector('tr[data-userid="' + editId + '"]');
-            if (!tr) return;
+            const userIndex = usuariosMock.findIndex(user => user.id === editId);
+            if (userIndex !== -1) {
+                usuariosMock[userIndex] = { ...usuariosMock[userIndex], nome, cpf, role };
+            }
 
-            tr.cells[0].innerText = nome;
-            tr.cells[1].innerText = role;
-            tr.cells[2].innerText = cpf;
-
+            renderUsuarios();
             fecharModalUsuario();
             showToast('Usuário "' + nome + '" atualizado (simulação).');
         }
@@ -2424,10 +2422,11 @@
             const id = btn.dataset.userid;
             if (!id) return fecharModalConfirmDeleteUsuario();
 
-            const tbody = document.getElementById('usuarios-table-body');
-            if (!tbody) return;
-            const tr = tbody.querySelector('tr[data-userid="' + id + '"]');
-            if (tr) tr.remove();
+            const index = usuariosMock.findIndex(user => user.id === id);
+            if (index !== -1) {
+                usuariosMock.splice(index, 1);
+            }
+            renderUsuarios();
             fecharModalConfirmDeleteUsuario();
             showToast('Usuário removido (simulação).');
         }
