@@ -519,7 +519,7 @@
                         </div>
                     </div>
 
-                    <div id="clinica-allowed-content" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div id="clinica-allowed-content" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Painel Esquerdo: Registro Clínico Rápido -->
                         <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm space-y-4">
                             <h4 class="font-bold text-slate-100 flex items-center gap-2">
@@ -584,6 +584,94 @@
                                 <button type="submit" class="w-full bg-brand-pink hover:opacity-90 text-white font-bold py-2 rounded-lg transition-all shadow-md">
                                     Registrar na Ficha do Pet
                                 </button>
+                            </form>
+                        </div>
+
+                        <!-- Emissão de Laudo (visível para Veterinário e Administrador) -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm space-y-4 vet-only admin-only">
+                            <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                                <i data-lucide="file-text" class="text-brand-lime w-5 h-5"></i> Emitir Laudo / Relatório Clínico
+                            </h4>
+
+                            <form id="clinico-laudo-form" onsubmit="salvarLaudo(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Selecionar o Pet</label>
+                                    <select id="laudo-pet-select" onchange="popularLaudoFromPet()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none" required>
+                                        <!-- Mesmo conteúdo de clinico-pet-select, mas usado para laudo -->
+                                    </select>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Paciente (nome)</label>
+                                        <input type="text" id="laudo-paciente-nome" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Espécie</label>
+                                        <input type="text" id="laudo-especie" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Raça</label>
+                                        <input type="text" id="laudo-raca" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Idade</label>
+                                        <input type="text" id="laudo-idade" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Sexo</label>
+                                        <input type="text" id="laudo-sexo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Peso (kg)</label>
+                                        <input type="text" id="laudo-peso" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Tutor / Responsável</label>
+                                    <input type="text" id="laudo-tutor" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Atendimento (data e hora)</label>
+                                        <input type="datetime-local" id="laudo-datahora" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Profissional / CRM</label>
+                                        <input type="text" id="laudo-profissional" value="" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Histórico e Justificativa</label>
+                                    <textarea id="laudo-historico" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Metodologia</label>
+                                    <input type="text" id="laudo-metodologia" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Descrição dos Achados</label>
+                                    <textarea id="laudo-achados" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Conclusão / Diagnóstico</label>
+                                    <textarea id="laudo-conclusao" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Orientações</label>
+                                    <textarea id="laudo-orientacoes" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+                                </div>
+
+                                <div class="flex justify-end gap-2 pt-2">
+                                    <button type="submit" class="px-4 py-2 bg-brand-lime text-slate-900 font-bold rounded-lg">Emitir Laudo</button>
+                                </div>
                             </form>
                         </div>
 
@@ -729,10 +817,10 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Módulo do Serviço</label>
-                        <select id="agend-tipo" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
-                            <option value="Consulta Veterinária">Consulta Veterinária</option>
-                            <option value="Banho e Tosa">Banho e Tosa</option>
-                        </select>
+                                <select id="agend-tipo" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                                    <option value="Consulta Veterinária">Consulta Veterinária</option>
+                                    <option value="Atendimento">Atendimento</option>
+                                </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Valor Estimado do Serviço (R$)</label>
@@ -919,10 +1007,10 @@
         ];
 
         let agendamentos = [
-            { id: "201", petId: "101", tutorId: "1", servico: "Consulta Veterinária", data: "2026-05-18", hora: "09:30", valor: 150.00, status: "confirmado", statusEstetico: "Aguardando" },
-            { id: "202", petId: "102", tutorId: "2", servico: "Banho e Tosa", data: "2026-05-18", hora: "14:00", valor: 90.00, status: "confirmado", statusEstetico: "Em Banho" },
-            { id: "203", petId: "101", tutorId: "1", servico: "Banho e Tosa", data: "2026-05-17", hora: "10:00", valor: 110.00, status: "confirmado", statusEstetico: "Pronto" },
-            { id: "204", petId: "102", tutorId: "2", servico: "Consulta Veterinária", data: "2026-05-19", hora: "11:00", valor: 150.00, status: "pendente", statusEstetico: "Aguardando" }
+            { id: "201", petId: "101", tutorId: "1", servico: "Consulta Veterinária", data: "2026-05-18", hora: "09:30", valor: 150.00, status: "confirmado" },
+            { id: "202", petId: "102", tutorId: "2", servico: "Atendimento", data: "2026-05-18", hora: "14:00", valor: 90.00, status: "confirmado" },
+            { id: "203", petId: "101", tutorId: "1", servico: "Atendimento", data: "2026-05-17", hora: "10:00", valor: 110.00, status: "confirmado" },
+            { id: "204", petId: "102", tutorId: "2", servico: "Consulta Veterinária", data: "2026-05-19", hora: "11:00", valor: 150.00, status: "pendente" }
         ];
 
         let produtos = [
@@ -939,7 +1027,28 @@
 
         // --- CONTROLE DE SESSÃO DO USUÁRIO ---
         let currentUser = null; // Guardará o objeto do usuário ativo
-        let currentRole = 'admin'; // 'admin' ou 'tutor'
+        // Perfis de usuário (protótipo de mapeamento numérico):
+        // 1 = Administrador (admin) - acesso total
+        // 2 = Veterinário (veterinario) - acesso clínico reduzido
+        // 3 = Gestor (gestor) - acesso a relatórios e financeiro
+        // 4 = Funcionário (funcionario) - acesso operacional (banho & tosa)
+        // Observação: para este protótipo os CPFs de teste (1,2,3,4) já aparecem
+        // no bloco `perfisTestes` utilizado na tela de login.
+        // Guia de integração com banco de dados (resumo técnico):
+        // - Backend: criar tabela `users` com campos: id, nome, cpf, email,
+        //   senhaHash, role, profissao, crm, crmValidade, etc.
+        // - Autenticação: endpoint `POST /api/login` (body { cpf, senha })
+        //   que valida credenciais, retorna token JWT e objeto do usuário.
+        // - Sessão no frontend: armazenar token e buscar `GET /api/me` para
+        //   popular `currentUser` e `currentRole` (server-side authoritative).
+        // - Autorização: definir permissões no backend por `role` e sempre
+        //   validar no servidor; frontend aplica apenas restrições visuais.
+        // - Para relacionamentos (pets, agendamentos, produtos) usar APIs
+        //   REST/GraphQL: e.g. `GET /api/pets?tutorId=...`, `GET /api/agendamentos`.
+        // - Migração do protótipo: substituir os arrays em memória por chamadas
+        //   às APIs e remover dados mock quando backend estiver disponível.
+        // Valor inicial para prototipação (mudar para recuperar do servidor):
+        let currentRole = 'admin'; // valores: 'admin','veterinario','gestor','funcionario'
 
         let configRestricao = "comercial"; // comercial ou livre
         let filtroAgendamentosStatus = "todos";
@@ -1051,33 +1160,153 @@
             // Atualiza nome no cabeçalho
             document.getElementById('current-user-name').innerText = userObj.nome;
             document.getElementById('header-user-name').innerText = userObj.nome;
+            // Atualiza profissão no cabeçalho (ex.: Profissão: Veterinário)
+            try {
+                const headerProf = document.getElementById('header-user-role');
+                if (headerProf) {
+                    let prof = userObj.profissao || userObj.role || '';
+                    // Normalizar termo (ex.: 'veterinario' -> 'Veterinário')
+                    prof = prof.toString();
+                    prof = prof.charAt(0).toUpperCase() + prof.slice(1);
+                    headerProf.innerText = 'Profissão: ' + prof;
+                }
+            } catch (e) { /* ignore */ }
 
             // Oculta todos os blocos de permissão para resetar a tela
             document.querySelectorAll('.admin-only, .vet-only, .gestor-only, .func-only').forEach(el => el.classList.add('hidden'));
 
-            // Configuração de regras por perfil
+            // Definir quais abas / navegações ficam visíveis por papel
+            const roleTabs = {
+                admin: ['dashboard','agendamentos','clientes','produtos','banho-tosa','clinica','historico-tutor','meus-pets'],
+                // Veterinário agora tem acesso a Dashboard, Agendamentos e Módulo Clínico
+                veterinario: ['dashboard','agendamentos','clinica'],
+                gestor: ['dashboard','agendamentos','produtos','clientes'],
+                funcionario: ['dashboard','banho-tosa','agendamentos']
+            };
+
+            // Oculta todos os botões de navegação e mostra apenas os permitidos
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.add('hidden'));
+            const allowed = roleTabs[role] || ['dashboard'];
+            allowed.forEach(tab => {
+                const btn = document.getElementById('nav-' + tab);
+                if (btn) btn.classList.remove('hidden');
+            });
+
+            // Configuração de regras por perfil - visuais e permissões locais (protótipo)
             if (role === 'admin') {
                 document.getElementById('current-user-role-label').innerText = "Administrador";
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
-                switchTab('dashboard');
+                switchTab(allowed[0] || 'dashboard');
             } 
             else if (role === 'veterinario') {
                 document.getElementById('current-user-role-label').innerText = "Veterinário";
+                // Mostrar somente blocos específicos para veterinário
                 document.querySelectorAll('.vet-only').forEach(el => el.classList.remove('hidden'));
-                switchTab('dashboard'); // Ou aba de prontuários
+                switchTab(allowed[0] || 'clinica'); // abrir a aba principal do veterinário
             } 
             else if (role === 'gestor') {
                 document.getElementById('current-user-role-label').innerText = "Gestor";
                 document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('hidden'));
-                switchTab('dashboard');
+                switchTab(allowed[0] || 'dashboard');
             } 
             else if (role === 'funcionario') {
                 document.getElementById('current-user-role-label').innerText = "Funcionário";
                 document.querySelectorAll('.func-only').forEach(el => el.classList.remove('hidden'));
-                switchTab('meus-pets'); // Ou agenda do dia
+                switchTab(allowed[0] || 'meus-pets');
             }
 
             showToast("Acesso autorizado como " + userObj.nome);
+            // Aplicar ajustes de visibilidade específicos por papel (protótipo)
+            aplicarVisibilidadePorRole();
+            // Ajustar visibilidade de campos clínicos conforme profissão (CRM)
+            ajustarModuloClinicoProfissao();
+        }
+
+        // Ajustes finos de visibilidade por perfil para remover elementos não pertinentes
+        // Veterinário deve ver apenas o módulo clínico e informações clínicas, sem KPIs comerciais
+        function aplicarVisibilidadePorRole() {
+            try {
+                if (currentRole === 'veterinario') {
+                    // Esconder itens de navegação administrativos
+                    const hideNav = ['nav-clientes', 'nav-produtos'];
+                    hideNav.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.add('hidden');
+                    });
+
+                    // Esconder KPIs comerciais (Volume de Vendas, Produtos Cadastrados)
+
+                    // Esconder somente os cards específicos (mais seguros que subir muitos níveis)
+                    const vendaEl = document.getElementById('kpi-vendas');
+                    if (vendaEl) {
+                        const card = vendaEl.closest('.rounded-xl') || vendaEl.parentElement.parentElement;
+                        if (card) card.classList.add('hidden');
+                    }
+
+                    const prodEl = document.getElementById('kpi-produtos-count');
+                    if (prodEl) {
+                        const card = prodEl.closest('.rounded-xl') || prodEl.parentElement.parentElement;
+                        if (card) card.classList.add('hidden');
+                    }
+
+                    // Esconder painel de produtos mais utilizados (gráfico)
+                    const topProductsCard = document.getElementById('topProductsChart');
+                    if (topProductsCard) {
+                        const card = topProductsCard.closest('.rounded-xl') || topProductsCard.closest('div');
+                        if (card) card.classList.add('hidden');
+                    }
+
+                    // Esconder o banner de relatório de vendas (opcional para veterinário)
+                    const h3s = Array.from(document.getElementsByTagName('h3'));
+                    const relBanner = h3s.find(h => h.innerText && h.innerText.includes('Relatório de Desempenho Operacional'));
+                    if (relBanner && relBanner.closest('div')) {
+                        relBanner.closest('div').classList.add('hidden');
+                    }
+                    // Ajustar título/subtítulo do módulo clínico para veterinário
+                    const clinicaHeader = document.querySelector('#tab-clinica h3');
+                    if (clinicaHeader) clinicaHeader.innerText = 'Atendimento Clínico Veterinário';
+                    const clinicaP = document.querySelector('#tab-clinica p');
+                    if (clinicaP) clinicaP.innerText = 'Registro de imunização, emissão de receitas e registro de exames para pacientes.';
+                } else {
+                    // Restaurar visibilidade para outros perfis (simplesmente remove a classe 'hidden')
+                    const showNav = ['nav-clientes', 'nav-produtos'];
+                    showNav.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.remove('hidden');
+                    });
+
+                    const vendaEl = document.getElementById('kpi-vendas');
+                    if (vendaEl) {
+                        const card = vendaEl.closest('.rounded-xl') || vendaEl.parentElement.parentElement;
+                        if (card) card.classList.remove('hidden');
+                    }
+
+                    const prodEl = document.getElementById('kpi-produtos-count');
+                    if (prodEl) {
+                        const card = prodEl.closest('.rounded-xl') || prodEl.parentElement.parentElement;
+                        if (card) card.classList.remove('hidden');
+                    }
+
+                    const topProductsCard = document.getElementById('topProductsChart');
+                    if (topProductsCard) {
+                        const card = topProductsCard.closest('.rounded-xl') || topProductsCard.closest('div');
+                        if (card) card.classList.remove('hidden');
+                    }
+
+                    const h3s = Array.from(document.getElementsByTagName('h3'));
+                    const relBanner = h3s.find(h => h.innerText && h.innerText.includes('Relatório de Desempenho Operacional'));
+                    if (relBanner && relBanner.closest('div')) {
+                        relBanner.closest('div').classList.remove('hidden');
+                    }
+                    // Restaurar título padrão do módulo clínico
+                    const clinicaHeader = document.querySelector('#tab-clinica h3');
+                    if (clinicaHeader) clinicaHeader.innerText = 'Módulo Clínico (Acesso Restrito)';
+                    const clinicaP = document.querySelector('#tab-clinica p');
+                    if (clinicaP) clinicaP.innerText = 'Registro de imunização por vacina, emissão eletrônica de receitas e registro de exames / laudos de animais cadastrados.';
+                }
+            } catch (err) {
+                console.warn('Erro aplicando visibilidade por role:', err);
+            }
         }
         
         function handleLogout() {
@@ -1086,6 +1315,10 @@
             document.getElementById('login-password').value = '';
             document.getElementById('tutor-first-access-fields').classList.add('hidden');
             document.getElementById('login-screen').classList.remove('hidden');
+            // Reset cabeçalho
+            const headerProf = document.getElementById('header-user-role');
+            if (headerProf) headerProf.innerText = 'Profissão: -';
+            document.getElementById('header-user-name').innerText = 'Carregando...';
             showToast("Você saiu do sistema de agendamento.");
         }
 
@@ -1111,8 +1344,9 @@
             renderizarEstoque();
             renderizarAgendamentos();
             renderizarTutores();
-            renderizarKanbanBanhoTosa();
             renderizarHistoricoClinico();
+            aplicarVisibilidadePorRole();
+            ajustarModuloClinicoProfissao();
         };
 
         function switchTab(tabId) {
@@ -1469,14 +1703,12 @@
             const novo = {
                 id: (agendamentos.length + 201).toString(),
                 tutorId: tutorId, petId: petId, servico: servico, data: data, hora: hora, valor: valor,
-                status: statusInicial,
-                statusEstetico: "Aguardando"
+                status: statusInicial
             };
 
             agendamentos.push(novo);
             fecharModalAgendamento();
             renderizarAgendamentos();
-            renderizarKanbanBanhoTosa();
             atualizarKPIs();
             
             if (currentRole === 'tutor') {
@@ -1571,7 +1803,7 @@
                         "</td>" +
                         "<td class='py-4 px-6'>" +
                             "<div class='font-semibold text-slate-300 flex items-center gap-1.5'>" +
-                                "<i data-lucide='" + (a.servico === 'Consulta Veterinária' ? 'stethoscope' : 'scissors') + "' class='w-4 h-4 text-brand-lime'></i> " + a.servico + "" +
+                                                "<i data-lucide='" + (a.servico === 'Consulta Veterinária' ? 'stethoscope' : 'calendar') + "' class='w-4 h-4 text-brand-lime'></i> " + a.servico + "" +
                             "</div>" +
                         "</td>" +
                         "<td class='py-4 px-6 text-slate-300'>" +
@@ -1599,7 +1831,6 @@
             if (agend) {
                 agend.status = novoStatus;
                 renderizarAgendamentos();
-                renderizarKanbanBanhoTosa();
                 atualizarKPIs();
                 showToast("Agendamento atualizado para: " + novoStatus.toUpperCase());
             }
@@ -1734,6 +1965,10 @@
             });
             petSelect.innerHTML = options;
 
+            // Também popular select de laudo (mesmos pets)
+            const laudoSelect = document.getElementById('laudo-pet-select');
+            if (laudoSelect) laudoSelect.innerHTML = options;
+
             const timeline = document.getElementById('clinico-timeline');
             if (!timeline) return;
             timeline.innerHTML = '';
@@ -1765,6 +2000,10 @@
                     icone = "<div class='p-2.5 bg-slate-950 text-brand-pink rounded-xl border border-slate-800'><i data-lucide='clipboard' class='w-5 h-5'></i></div>";
                     corBorda = 'border-l-4 border-l-brand-pink';
                     tituloRegistro = 'Exame Complementar Cadastrado';
+                } else if (h.tipo === 'laudo') {
+                    icone = "<div class='p-2.5 bg-slate-950 text-brand-lime rounded-xl border border-slate-800'><i data-lucide='file-text' class='w-5 h-5'></i></div>";
+                    corBorda = 'border-l-4 border-l-brand-lime';
+                    tituloRegistro = 'Laudo Médico Veterinário';
                 }
 
                 timeline.innerHTML += "<div class='bg-slate-950 p-4 rounded-xl flex gap-4 items-start " + corBorda + " border border-slate-850 hover:shadow-sm transition-all'>" +
@@ -1838,6 +2077,57 @@
             showToast("Registro clínico inserido com sucesso!");
         }
 
+        // Popular os campos do formulário de laudo a partir do pet selecionado
+        function popularLaudoFromPet() {
+            const petId = document.getElementById('laudo-pet-select').value;
+            const pet = pets.find(p => p.id === petId);
+            if (!pet) return;
+            document.getElementById('laudo-paciente-nome').value = pet.nome || '';
+            document.getElementById('laudo-especie').value = pet.especie || '';
+            document.getElementById('laudo-raca').value = pet.raca || '';
+            // idade/sexo/peso podem não existir no mock; manter campos livres
+        }
+
+        function salvarLaudo(e) {
+            e.preventDefault();
+            const petSelect = document.getElementById('laudo-pet-select');
+            const petId = petSelect ? petSelect.value : '';
+            const paciente = document.getElementById('laudo-paciente-nome').value.trim();
+            const especie = document.getElementById('laudo-especie').value.trim();
+            const raca = document.getElementById('laudo-raca').value.trim();
+            const idade = document.getElementById('laudo-idade').value.trim();
+            const sexo = document.getElementById('laudo-sexo').value.trim();
+            const peso = document.getElementById('laudo-peso').value.trim();
+            const tutor = document.getElementById('laudo-tutor').value.trim();
+            const datahora = document.getElementById('laudo-datahora').value;
+            const profissional = document.getElementById('laudo-profissional').value.trim() || (currentUser ? currentUser.nome + ' ' + (currentUser.crm || '') : '');
+            const historico = document.getElementById('laudo-historico').value.trim();
+            const metodo = document.getElementById('laudo-metodologia').value.trim();
+            const achados = document.getElementById('laudo-achados').value.trim();
+            const conclusao = document.getElementById('laudo-conclusao').value.trim();
+            const orientacoes = document.getElementById('laudo-orientacoes').value.trim();
+
+            if (!paciente || !profissional) {
+                showToast('Preencha pelo menos o paciente e o profissional responsável.', 'error');
+                return;
+            }
+
+            const detalhe = `Paciente: ${paciente}\nEspécie: ${especie}\nRaça: ${raca}\nIdade: ${idade}\nSexo: ${sexo}\nPeso: ${peso}\nTutor: ${tutor}\nAtendimento: ${datahora}\nProfissional: ${profissional}\n\nHistórico/Justificativa:\n${historico}\n\nMetodologia:\n${metodo}\n\nAchados:\n${achados}\n\nConclusão/Diagnóstico:\n${conclusao}\n\nOrientações:\n${orientacoes}`;
+
+            const novo = {
+                id: (historicoClinico.length + 401).toString(),
+                petId: petId || null,
+                tipo: 'laudo',
+                data: datahora ? datahora.split('T')[0] : new Date().toISOString().split('T')[0],
+                detalhe: detalhe
+            };
+
+            historicoClinico.push(novo);
+            renderizarHistoricoClinico();
+            showToast('Laudo emitido e salvo no prontuário do pet.');
+            document.getElementById('clinico-laudo-form').reset();
+        }
+
         function removerRegistroClinico(id) {
             historicoClinico = historicoClinico.filter(h => h.id !== id);
             renderizarHistoricoClinico();
@@ -1846,14 +2136,7 @@
         }
 
      
-        function moverFluxoEstetico(id, proximoStatus) {
-            const agend = agendamentos.find(a => a.id === id);
-            if (agend) {
-                agend.statusEstetico = proximoStatus;
-                renderizarKanbanBanhoTosa();
-                showToast("Procedimento atualizado no fluxo de embelezamento: " + proximoStatus);
-            }
-        }
+        // Fluxo de estética removido: Banho & Tosa não é mais tratado aqui.
 
         // --- PRODUTOS & MEDICAMENTOS ---
         function abrirModalProduto() { document.getElementById('modal-produto').classList.remove('hidden'); }
