@@ -1177,7 +1177,8 @@
 
             // Definir quais abas / navegações ficam visíveis por papel
             const roleTabs = {
-                admin: ['dashboard','agendamentos','clientes','produtos','banho-tosa','clinica','historico-tutor','meus-pets'],
+                // Admin reduzido: não mostrar abas de produtos e abas de tutor/tutor-only
+                admin: ['dashboard','agendamentos','clientes','clinica'],
                 // Veterinário agora tem acesso a Dashboard, Agendamentos e Módulo Clínico
                 veterinario: ['dashboard','agendamentos','clinica'],
                 gestor: ['dashboard','agendamentos','produtos','clientes'],
