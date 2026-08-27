@@ -891,7 +891,7 @@
                                     <i data-lucide="x" class="w-5 h-5"></i>
                                 </button>
                             </div>
-                            <form id="usuario-form" onsubmit="simularCadastroUsuario(event)" class="p-6 space-y-4">
+                            <form id="usuario-form" onsubmit="handleUsuarioFormSubmit(event)" class="p-6 space-y-4">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div class="md:col-span-2">
                                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
@@ -1278,10 +1278,10 @@
             // Definir quais abas / navegações ficam visíveis por papel
             const roleTabs = {
                 // Admin reduzido: não mostrar abas de produtos e abas de tutor/tutor-only
-                admin: ['dashboard','agendamentos','clientes','clinica'],
+                admin: ['dashboard','agendamentos','clientes','clinica','usuarios'],
                 // Veterinário agora tem acesso a Dashboard, Agendamentos e Módulo Clínico
                 veterinario: ['dashboard','agendamentos','clinica'],
-                gestor: ['dashboard','agendamentos','produtos','clientes'],
+                gestor: ['dashboard','agendamentos','produtos','clientes','usuarios'],
                 funcionario: ['dashboard','banho-tosa','agendamentos']
             };
 
@@ -2289,8 +2289,35 @@
         function fecharModalProduto() { document.getElementById('modal-produto').classList.add('hidden'); }
 
         // --- MODAIS DE USUÁRIOS (Simulação / Frontend-only) ---
-        function abrirModalUsuario() { document.getElementById('modal-usuario').classList.remove('hidden'); }
-        function fecharModalUsuario() { document.getElementById('modal-usuario').classList.add('hidden'); document.getElementById('usuario-form').reset(); }
+        function abrirModalUsuario() { 
+            const form = document.getElementById('usuario-form');
+            if (form) { form.removeAttribute('data-edit-id'); }
+            const submitBtn = document.querySelector('#usuario-form button[type="submit"]');
+            if (submitBtn) submitBtn.innerText = 'Adicionar';
+            document.getElementById('modal-usuario').classList.remove('hidden'); 
+        }
+        function fecharModalUsuario() { document.getElementById('modal-usuario').classList.add('hidden'); const f = document.getElementById('usuario-form'); if (f) { f.reset(); f.removeAttribute('data-edit-id'); } }
+
+        function abrirModalEditarUsuario(id) {
+            const tbody = document.getElementById('usuarios-table-body');
+            if (!tbody) return;
+            const tr = tbody.querySelector('tr[data-userid="' + id + '"]');
+            if (!tr) return;
+            const cols = tr.querySelectorAll('td');
+            const nome = cols[0] ? cols[0].innerText.trim() : '';
+            const role = cols[1] ? cols[1].innerText.trim() : '';
+            const cpf = cols[2] ? cols[2].innerText.trim() : '';
+
+            document.getElementById('usuario-nome').value = nome;
+            document.getElementById('usuario-cpf').value = cpf;
+            document.getElementById('usuario-role').value = role;
+
+            const form = document.getElementById('usuario-form');
+            if (form) form.dataset.editId = id;
+            const submitBtn = document.querySelector('#usuario-form button[type="submit"]');
+            if (submitBtn) submitBtn.innerText = 'Salvar alterações';
+            document.getElementById('modal-usuario').classList.remove('hidden');
+        }
 
         function abrirModalConfirmDeleteUsuario(id, nome) {
             const btn = document.getElementById('confirm-delete-usuario-btn');
@@ -2327,6 +2354,7 @@
                 <td class="py-3 px-6">${escapeHtml(cpf)}</td>
                 <td class="py-3 px-6">
                     <div class="flex items-center gap-2">
+                        <button onclick="abrirModalEditarUsuario('${id}')" class="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-850 text-slate-300 rounded-md">Editar</button>
                         <button onclick="abrirModalConfirmDeleteUsuario('${id}','${escapeJsString(nome)}')" class="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-850 text-slate-300 rounded-md">Remover</button>
                     </div>
                 </td>
@@ -2335,6 +2363,30 @@
             tbody.prepend(tr);
             fecharModalUsuario();
             showToast('Usuário "' + nome + '" adicionado (simulação).');
+        }
+        
+        // If form has data-edit-id, update existing row instead of creating
+        function simularEditarUsuario(e) {
+            e.preventDefault();
+            const form = document.getElementById('usuario-form');
+            if (!form) return simularCadastroUsuario(e);
+            const editId = form.dataset.editId;
+            if (!editId) return simularCadastroUsuario(e);
+
+            const nome = document.getElementById('usuario-nome').value.trim();
+            const cpf = document.getElementById('usuario-cpf').value.trim();
+            const role = document.getElementById('usuario-role').value;
+            const tbody = document.getElementById('usuarios-table-body');
+            if (!tbody) return;
+            const tr = tbody.querySelector('tr[data-userid="' + editId + '"]');
+            if (!tr) return;
+
+            tr.cells[0].innerText = nome;
+            tr.cells[1].innerText = role;
+            tr.cells[2].innerText = cpf;
+
+            fecharModalUsuario();
+            showToast('Usuário "' + nome + '" atualizado (simulação).');
         }
 
         function confirmarRemoverUsuario() {
@@ -2349,6 +2401,12 @@
             if (tr) tr.remove();
             fecharModalConfirmDeleteUsuario();
             showToast('Usuário removido (simulação).');
+        }
+
+        function handleUsuarioFormSubmit(e) {
+            const form = document.getElementById('usuario-form');
+            if (form && form.dataset.editId) return simularEditarUsuario(e);
+            return simularCadastroUsuario(e);
         }
 
         // Pequenas funções utilitárias para evitar injeção visual na simulação
