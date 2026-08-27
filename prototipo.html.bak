@@ -1,0 +1,2391 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full bg-slate-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agend-Au - Sistema de Gestão Veterinária e Pet Shop</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para Dashboards -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Configuração personalizada do Tailwind para integrar a paleta futurista solicitada
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            lime: '#CCFF00',      // Verde-limão
+                            pink: '#FF007F',      // Rosa-choque
+                            blue: '#0033FF',      // Azul Elétrico
+                            yellow: '#FFFF00',    // Amarelo Neon
+                            purple: '#8B00FF',    // Roxo Vibrante
+                            dark: '#03001e',
+                            darker: '#0a0029'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #03001e;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0a0029;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #8B00FF;
+            border-radius: 4px;
+        }
+        /* Neon Glow Effects */
+        .neon-border-blue {
+            box-shadow: 0 0 10px rgba(0, 51, 255, 0.4);
+        }
+        .neon-border-pink {
+            box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+        }
+        .neon-border-lime {
+            box-shadow: 0 0 10px rgba(204, 255, 0, 0.4);
+        }
+        .neon-text-lime {
+            text-shadow: 0 0 5px rgba(204, 255, 0, 0.8);
+        }
+        .neon-text-pink {
+            text-shadow: 0 0 5px rgba(255, 0, 127, 0.8);
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-full {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                background: white !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col overflow-hidden text-slate-100">
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ===================== TELA DE LOGIN (SISTEMA DE ACESSO FUTURISTA) ===================== -->
+    <div id="login-screen" class="fixed inset-0 bg-brand-darker/90 backdrop-blur-xl z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-brand-blue/30 flex flex-col neon-border-blue">
+            <!-- Header do Login -->
+            <div class="p-8 bg-gradient-to-br from-brand-darker via-slate-900 to-brand-purple text-white text-center relative border-b border-brand-purple/20">
+                <div class="mx-auto bg-brand-lime text-slate-950 p-3.5 rounded-2xl font-black text-2xl flex items-center justify-center shadow-lg shadow-brand-lime/20 w-14 h-14 mb-3">
+                    <i data-lucide="paw-print" class="w-8 h-8"></i>
+                </div>
+                <h1 class="font-extrabold text-3xl tracking-tight text-white">Agend-<span class="text-brand-lime neon-text-lime">Au</span></h1>
+                <p class="text-[10px] text-brand-pink mt-1 font-bold uppercase tracking-widest neon-text-pink">Veterinária & Pet Shop do Futuro</p>
+            </div>
+
+            <!-- Corpo de Formulários -->
+            <div class="p-8 space-y-6">
+               
+
+                <!-- Formulário de Login / Cadastro integrado -->
+                <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                                <i data-lucide="user" class="w-4 h-4"></i>
+                            </span>
+                            <input type="text" id="login-cpf" placeholder="Ex: 111.222.333-44" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Bloco de senha comum -->
+                    <div id="password-group">
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Senha</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                                <i data-lucide="lock" class="w-4 h-4"></i>
+                            </span>
+                            <input type="password" id="login-password" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 leading-snug italic" id="login-hint">Caso seja seu primeiro acesso, digite o CPF e defina uma nova senha para se cadastrar e efetuar o primeiro login.</p>
+                    </div>
+
+
+                   
+                    <!-- Botão de Login / Cadastro -->
+                    <button type="submit" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-brand-blue/30 flex items-center justify-center gap-2">
+                        <span>Acessar o Painel</span> <i data-lucide="arrow-right" class="w-4 h-4 text-brand-lime"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===================== INTERFACE DO SITE DO SISTEMA ===================== -->
+    <div class="flex h-full w-full">
+        <!-- Sidebar de Navegação -->
+        <aside class="w-64 bg-slate-950 text-slate-300 flex flex-col flex-shrink-0 transition-all duration-300 no-print z-40 border-r border-slate-900">
+            <!-- Logo / Identidade -->
+            <div class="p-6 border-b border-slate-900 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-brand-lime text-slate-950 p-2 rounded-xl font-black text-xl flex items-center justify-center shadow-lg shadow-brand-lime/20">
+                        <i data-lucide="paw-print" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-extrabold text-white text-lg tracking-tight">Agend-Au</h1>
+                        <span class="text-xs text-brand-pink font-semibold">Clínica & Pet Shop</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu Principal com Visibilidade Controlada -->
+            <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+                <div class="text-xs font-bold text-slate-500 uppercase px-3 mb-2 tracking-wider">Módulos</div>
+                
+                <!-- Visível apenas para Administradores -->
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn admin-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white bg-slate-900 text-white">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-brand-lime"></i>
+                    <span>Dashboards & Finanças</span>
+                </button>
+
+                <button onclick="switchTab('agendamentos')" id="nav-agendamentos" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="calendar" class="w-4 h-4 text-brand-purple"></i>
+                    <span>Agendamentos</span>
+                </button>
+
+                <!-- Visível apenas para Administradores -->
+                <button onclick="switchTab('clientes')" id="nav-clientes" class="nav-btn admin-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="users" class="w-4 h-4 text-brand-blue"></i>
+                    <span>Tutores & Pets</span>
+                </button>
+
+                <!-- Área de Meus Pets para Tutores -->
+                <button onclick="switchTab('meus-pets')" id="nav-meus-pets" class="nav-btn tutor-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="dog" class="w-4 h-4 text-brand-lime"></i>
+                    <span>Meus Pets</span>
+                </button>
+
+                <!-- Histórico Médico do Tutor -->
+                <button onclick="switchTab('historico-tutor')" id="nav-historico-tutor" class="nav-btn tutor-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="history" class="w-4 h-4 text-brand-pink"></i>
+                    <span>Histórico dos Pets</span>
+                </button>
+
+                <!-- Módulo Clínico (Restrições de CRM aplicáveis) -->
+                <button onclick="switchTab('clinica')" id="nav-clinica" class="nav-btn admin-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="stethoscope" class="w-4 h-4 text-brand-pink"></i>
+                    <span>Módulo Clínico</span>
+                </button>
+
+               
+
+                <!-- Visível apenas para Administradores -->
+                <button onclick="switchTab('produtos')" id="nav-produtos" class="nav-btn admin-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="package" class="w-4 h-4 text-brand-yellow"></i>
+                    <span>Produtos & Insumos</span>
+                </button>
+            </nav>
+
+            <!-- Rodapé com Usuário Logado e Logout -->
+            <div class="p-4 border-t border-slate-900 bg-slate-950/40 text-xs">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-bold text-brand-lime" id="current-user-role-label">Administrador</p>
+                        <p class="text-slate-400 font-medium truncate w-36" id="current-user-name">Carregando...</p>
+                    </div>
+                    <button onclick="handleLogout()" class="text-brand-pink hover:text-white p-1 rounded-lg hover:bg-slate-900 transition-colors" title="Sair da Conta">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Área Principal de Conteúdo -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-900">
+            <!-- Header -->
+            <header class="h-16 bg-slate-950 border-b border-slate-900 flex items-center justify-between px-6 flex-shrink-0 no-print">
+                <div class="flex items-center gap-4">
+                    <h2 id="page-title" class="text-xl font-bold text-slate-100">Painel do Agend-Au</h2>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Configuração de Horário Comercial -->
+                    <div class="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-semibold text-slate-300">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-brand-lime" id="status-ping"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-lime" id="status-dot"></span>
+                        </span>
+                        <span>Restrição Horário:</span>
+                        <select id="config-horario" onchange="alterarRestricaoHoraria()" class="bg-transparent border-none p-0 focus:ring-0 text-xs font-bold text-brand-lime cursor-pointer outline-none">
+                            <option value="comercial" class="bg-slate-900 text-slate-300">Apenas Comercial (08h - 18h)</option>
+                            <option value="livre" class="bg-slate-900 text-slate-300">Livre (24 horas)</option>
+                        </select>
+                    </div>
+
+                    <div class="h-8 w-px bg-slate-800"></div>
+
+                    <!-- Perfil Visualizado -->
+                    <div class="flex items-center gap-2">
+                        <div class="w-9 h-9 bg-brand-purple/20 text-brand-lime border border-brand-purple/50 font-bold rounded-full flex items-center justify-center text-sm shadow-inner" id="header-avatar">
+                            AD
+                        </div>
+                        <div class="hidden md:block text-left">
+                            <p class="text-sm font-semibold text-slate-100 leading-tight" id="header-user-name">Administrador</p>
+                            <p class="text-xs text-slate-400" id="header-user-role">Profissão: Groomer</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Conteúdo das Páginas/Abas -->
+            <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-brand-darker relative">
+
+                <!-- 1. ABA DASHBOARDS (Apenas Admin) -->
+                <section id="tab-dashboard" class="tab-content space-y-6">
+                    <!-- Seletor de Período Financeiro -->
+                    <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                        <div>
+                            <h3 class="text-md font-bold text-slate-100">Painel Financeiro e Operacional</h3>
+                            <p class="text-xs text-slate-400">Monitore as receitas e métricas com filtros rápidos por períodos.</p>
+                        </div>
+                        <div class="flex gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                            <button onclick="filtrarPeriodo('diario')" id="periodo-diario" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all hover:bg-slate-900 text-slate-400">Diário</button>
+                            <button onclick="filtrarPeriodo('semanal')" id="periodo-semanal" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all hover:bg-slate-900 text-slate-400">Semanal</button>
+                            <button onclick="filtrarPeriodo('mensal')" id="periodo-mensal" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all hover:bg-slate-900 bg-slate-900 text-white shadow-sm">Mensal</button>
+                            <button onclick="filtrarPeriodo('anual')" id="periodo-anual" class="px-4 py-1.5 rounded-md text-xs font-semibold transition-all hover:bg-slate-900 text-slate-400">Anual</button>
+                        </div>
+                    </div>
+
+                    <!-- KPIs Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Faturamento Período</span>
+                                <h4 id="kpi-faturamento" class="text-2xl font-black text-brand-lime mt-1">R$ 12.850,00</h4>
+                                <span class="text-xs text-emerald-400 font-semibold flex items-center gap-0.5 mt-2">
+                                    <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +14.2% vs. anterior
+                                </span>
+                            </div>
+                            <div class="p-3 bg-slate-950 text-brand-lime rounded-xl border border-slate-800">
+                                <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Volume de Vendas</span>
+                                <h4 id="kpi-vendas" class="text-2xl font-black text-brand-blue mt-1">142</h4>
+                                <span class="text-xs text-emerald-400 font-semibold flex items-center gap-0.5 mt-2">
+                                    <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +8.5% vendas
+                                </span>
+                            </div>
+                            <div class="p-3 bg-slate-950 text-brand-blue rounded-xl border border-slate-800">
+                                <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Consultas Realizadas</span>
+                                <h4 id="kpi-consultas" class="text-2xl font-black text-brand-purple mt-1">68</h4>
+                                <span class="text-xs text-brand-yellow font-semibold flex items-center gap-0.5 mt-2">
+                                    <i data-lucide="activity" class="w-3.5 h-3.5"></i> Estável na média
+                                </span>
+                            </div>
+                            <div class="p-3 bg-slate-950 text-brand-purple rounded-xl border border-slate-800">
+                                <i data-lucide="activity" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Produtos Cadastrados</span>
+                                <h4 id="kpi-produtos-count" class="text-2xl font-black text-brand-pink mt-1">4</h4>
+                                <span class="text-xs text-brand-lime font-semibold flex items-center gap-0.5 mt-2">
+                                    <i data-lucide="check" class="w-3.5 h-3.5"></i> Itens sob controle
+                                </span>
+                            </div>
+                            <div class="p-3 bg-slate-950 text-brand-pink rounded-xl border border-slate-800">
+                                <i data-lucide="package" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficos -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm lg:col-span-2">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-bold text-slate-100">Desempenho Financeiro Comparativo</h4>
+                                <i data-lucide="info" class="w-4 h-4 text-slate-400 hover:text-slate-200 cursor-help" title="Fluxo de Caixa comparativo do pet shop e clínica."></i>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="financeChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="font-bold text-slate-100">Mais Utilizados</h4>
+                                <span class="text-xs text-slate-400 font-bold">Produtos & Medicamentos</span>
+                            </div>
+                            <div class="h-64">
+                                <canvas id="topProductsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Geração de Relatórios Exportáveis -->
+                    <div class="bg-gradient-to-r from-brand-purple via-slate-900 to-brand-blue p-6 rounded-2xl text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-brand-purple/20">
+                        <div>
+                            <h3 class="text-lg font-extrabold flex items-center gap-2">
+                                <i data-lucide="file-text" class="text-brand-lime"></i> Relatório de Desempenho Operacional & Vendas
+                            </h3>
+                            <p class="text-sm text-slate-300 mt-1 max-w-xl">
+                                Gere um relatório abrangente contendo o consolidado de agendamentos, clientes, status financeiros e métricas de desempenho para exportação (PDF).
+                            </p>
+                        </div>
+                        <button onclick="gerarRelatorio()" class="bg-brand-lime text-slate-950 font-bold px-5 py-3 rounded-xl shadow-lg hover:opacity-90 transition-all flex items-center gap-2 shrink-0">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Exportar Relatório (PDF)
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 2. ABA AGENDAMENTOS -->
+                <section id="tab-agendamentos" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-100">Controle de Agendamentos</h3>
+                            <p class="text-xs text-slate-400" id="agenda-subtitle">Faça a solicitação, aprovação, reagendamento ou cancelamento de horários clínicos e pet shop.</p>
+                        </div>
+                        <button onclick="abrirModalAgendamento()" class="bg-brand-blue hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4 text-brand-lime"></i> Solicitar Novo Horário
+                        </button>
+                    </div>
+
+                    <!-- Filtros & Listagem -->
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-800 bg-slate-950/50 flex flex-wrap gap-3 items-center justify-between">
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="filtrarAgendamentos('todos')" id="filter-all" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-white">Todos</button>
+                                <button onclick="filtrarAgendamentos('pendente')" id="filter-pendente" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 bg-slate-950 hover:bg-slate-800 border border-slate-800">Pendentes</button>
+                                <button onclick="filtrarAgendamentos('confirmado')" id="filter-confirmado" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 bg-slate-950 hover:bg-slate-800 border border-slate-800">Confirmados</button>
+                                <button onclick="filtrarAgendamentos('cancelado')" id="filter-cancelado" class="filter-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-400 bg-slate-950 hover:bg-slate-800 border border-slate-800">Cancelados</button>
+                            </div>
+                            <span class="text-xs text-slate-400 font-medium" id="agendamento-counter">Exibindo 4 compromissos</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-950 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        <th class="py-3.5 px-6">Tutor / Pet</th>
+                                        <th class="py-3.5 px-6">Serviço / Especialidade</th>
+                                        <th class="py-3.5 px-6">Data & Hora</th>
+                                        <th class="py-3.5 px-6">Valor</th>
+                                        <th class="py-3.5 px-6">Status</th>
+                                        <th class="py-3.5 px-6 text-right">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="agendamentos-table-body" class="divide-y divide-slate-800 text-sm text-slate-300">
+                                    <!-- Conteúdo inserido dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. ABA CLIENTES E PETS (Apenas Admin) -->
+                <section id="tab-clientes" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-100">Gestão de Tutores e Pets</h3>
+                            <p class="text-xs text-slate-400">Gestão de dados dos clientes, seus respectivos animais de estimação, fichas comportamentais e alergias.</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="abrirModalTutor()" class="bg-brand-blue hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
+                                <i data-lucide="plus-circle" class="w-4 h-4 text-brand-lime"></i> Cadastrar Tutor
+                            </button>
+                            <button onclick="abrirModalPet()" class="bg-slate-950 hover:bg-slate-800 text-white border border-slate-800 font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
+                                <i data-lucide="dog" class="w-4 h-4 text-brand-pink"></i> Cadastrar Pet
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Grid de Tutores e Pets -->
+                    <div id="tutores-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <!-- Cards inseridos dinamicamente por JS -->
+                    </div>
+                </section>
+
+                <!-- 3.1 ABA MEUS PETS (Apenas Tutor) -->
+                <section id="tab-meus-pets" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-100">Meus Animais de Estimação</h3>
+                            <p class="text-xs text-slate-400">Cadastre e gerencie as informações de seus pets domésticos.</p>
+                        </div>
+                        <button onclick="abrirModalPet()" class="bg-brand-blue hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
+                            <i data-lucide="dog" class="w-4 h-4 text-brand-lime"></i> Cadastrar Meu Pet
+                        </button>
+                    </div>
+
+                    <div id="meus-pets-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Inserido dinamicamente para o Tutor Logado -->
+                    </div>
+                </section>
+
+                <!-- 3.2 ABA HISTÓRICO DOS PETS (Apenas Tutor) -->
+                <section id="tab-historico-tutor" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-100">Linha de Tempo & Histórico de Vacinas</h3>
+                            <p class="text-xs text-slate-400">Veja o histórico de consultas aplicadas, vacinas recebidas e envie novos exames médicos de seus pets.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Envio Rápido de Exame por parte do Tutor -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm space-y-4">
+                            <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                                <i data-lucide="upload-cloud" class="text-brand-lime w-5 h-5"></i> Registrar Exame Manual
+                            </h4>
+                            <p class="text-xs text-slate-400">Anexe ou digite o resultado de exames para que os veterinários possam acompanhar o prontuário.</p>
+                            
+                            <form id="tutor-exame-form" onsubmit="salvarExameTutor(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Selecione seu Pet</label>
+                                    <select id="tutor-exame-pet-select" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none" required>
+                                        <!-- Carregado dinamicamente -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Título do Exame / Procedimento</label>
+                                    <input type="text" id="tutor-exame-nome" placeholder="Ex: Hemograma, Raio-X Pata Traseira" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Detalhes do Resultado / Laudo</label>
+                                    <textarea id="tutor-exame-resultado" rows="4" placeholder="Digite os valores do exame ou observações enviadas pela clínica parceira..." required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none"></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition-all shadow-md">
+                                    Enviar Resultados
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Histórico Clínico Exclusivo -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm lg:col-span-2 space-y-4 flex flex-col h-[520px]">
+                            <div class="flex items-center justify-between flex-shrink-0">
+                                <h4 class="font-bold text-slate-100">Consultas, Laudos e Vacinas Realizadas</h4>
+                                <span class="text-xs bg-brand-purple/20 text-brand-lime border border-brand-purple/30 px-2.5 py-1 rounded-full font-bold" id="tutor-prontuario-count">0 registros</span>
+                            </div>
+
+                            <div id="tutor-historico-timeline" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+                                <!-- Prontuários exclusivos do Tutor logado -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. ABA CLÍNICA (ACESSO VETERINÁRIO/ADMIN) -->
+                <section id="tab-clinica" class="tab-content hidden space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-100">Módulo Clínico (Acesso Restrito)</h3>
+                            <p class="text-xs text-slate-400">Registro de imunização por vacina, emissão eletrônica de receitas e registro de exames / laudos de animais cadastrados.</p>
+                        </div>
+                    </div>
+
+                    <!-- Mensagem de bloqueio caso o profissional não seja Veterinário e sim Groomer -->
+                    <div id="crm-blocking-message" class="bg-slate-950 border border-brand-pink/30 p-5 rounded-xl text-slate-300 hidden neon-border-pink">
+                        <div class="flex gap-3">
+                            <i data-lucide="lock" class="w-5 h-5 text-brand-pink shrink-0"></i>
+                            <div>
+                                <h4 class="font-bold text-brand-pink text-sm">Acesso Clínico Restrito</h4>
+                                <p class="text-xs text-slate-400 mt-1">Este módulo é de acesso exclusivo a veterinários portadores de CRM ativo. O seu cadastro atual está configurado como Groomer.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="clinica-allowed-content" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Painel Esquerdo: Registro Clínico Rápido -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm space-y-4">
+                            <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                                <i data-lucide="edit-3" class="text-brand-pink w-5 h-5"></i> Registrar Evolução / Vacina / Receita
+                            </h4>
+                            
+                            <form id="clinico-form" onsubmit="salvarHistoricoClinico(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Selecionar o Pet</label>
+                                    <select id="clinico-pet-select" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none" required>
+                                        <!-- Carregado Dinamicamente -->
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Tipo de Registro</label>
+                                    <select id="clinico-tipo" onchange="alternarCamposClinicos()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none" required>
+                                        <option value="vacina">Aplicação de Vacina</option>
+                                        <option value="receita">Emissão de Receituário</option>
+                                        <option value="exame">Registro de Exame / Laudo</option>
+                                    </select>
+                                </div>
+
+                                <!-- Campos Dinâmicos: Vacinação -->
+                                <div id="campos-vacina" class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome da Vacina</label>
+                                        <input type="text" id="vacina-nome" placeholder="Ex: V10, Antirrábica" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Lote</label>
+                                            <input type="text" id="vacina-lote" placeholder="Ex: AB203" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Vencimento Lote</label>
+                                            <input type="date" id="vacina-venc" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Campos Dinâmicos: Receituário -->
+                                <div id="campos-receita" class="space-y-3 hidden">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Prescrição</label>
+                                        <textarea id="receita-texto" rows="4" placeholder="Ex: Dipirona Gotas (1 gota por kg a cada 8 horas por 5 dias)." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none"></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Campos Dinâmicos: Exame -->
+                                <div id="campos-exame" class="space-y-3 hidden">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Tipo de Exame</label>
+                                        <input type="text" id="exame-nome" placeholder="Ex: Hemograma, Ultrassonografia Abdominal" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Resultado / Laudo</label>
+                                        <textarea id="exame-laudo" rows="3" placeholder="Insira o resumo do laudo médico veterinário..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none"></textarea>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="w-full bg-brand-pink hover:opacity-90 text-white font-bold py-2 rounded-lg transition-all shadow-md">
+                                    Registrar na Ficha do Pet
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Emissão de Laudo (visível para Veterinário e Administrador) -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm space-y-4 vet-only admin-only">
+                            <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                                <i data-lucide="file-text" class="text-brand-lime w-5 h-5"></i> Emitir Laudo / Relatório Clínico
+                            </h4>
+
+                            <form id="clinico-laudo-form" onsubmit="salvarLaudo(event)" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Selecionar o Pet</label>
+                                    <select id="laudo-pet-select" onchange="popularLaudoFromPet()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none" required>
+                                        <!-- Mesmo conteúdo de clinico-pet-select, mas usado para laudo -->
+                                    </select>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Paciente (nome)</label>
+                                        <input type="text" id="laudo-paciente-nome" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Espécie</label>
+                                        <input type="text" id="laudo-especie" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Raça</label>
+                                        <input type="text" id="laudo-raca" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Idade</label>
+                                        <input type="text" id="laudo-idade" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Sexo</label>
+                                        <input type="text" id="laudo-sexo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Peso (kg)</label>
+                                        <input type="text" id="laudo-peso" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Tutor / Responsável</label>
+                                    <input type="text" id="laudo-tutor" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Atendimento (data e hora)</label>
+                                        <input type="datetime-local" id="laudo-datahora" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Profissional / CRM</label>
+                                        <input type="text" id="laudo-profissional" value="" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Histórico e Justificativa</label>
+                                    <textarea id="laudo-historico" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Metodologia</label>
+                                    <input type="text" id="laudo-metodologia" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Descrição dos Achados</label>
+                                    <textarea id="laudo-achados" rows="4" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Conclusão / Diagnóstico</label>
+                                    <textarea id="laudo-conclusao" rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Orientações</label>
+                                    <textarea id="laudo-orientacoes" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100"></textarea>
+                                </div>
+
+                                <div class="flex justify-end gap-2 pt-2">
+                                    <button type="submit" class="px-4 py-2 bg-brand-lime text-slate-900 font-bold rounded-lg">Emitir Laudo</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Painel Direito: Linha do Tempo / Prontuário Rápido -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm lg:col-span-2 space-y-4 flex flex-col h-[520px]">
+                            <div class="flex items-center justify-between flex-shrink-0">
+                                <h4 class="font-bold text-slate-100">Prontuário e Histórico Médico Geral</h4>
+                                <span class="text-xs bg-brand-purple/20 text-brand-lime border border-brand-purple/30 px-2.5 py-1 rounded-full font-bold" id="prontuario-count">0 registros</span>
+                            </div>
+
+                            <!-- Prontuário Histórico Timeline -->
+                            <div id="clinico-timeline" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+                                <!-- Inserido dinamicamente via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+              
+
+    <!-- ===================== MODAIS DO SISTEMA ===================== -->
+
+    <!-- Modal Novo Tutor -->
+    <div id="modal-tutor" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-800 flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="user-plus" class="text-brand-blue"></i> Cadastrar Novo Tutor
+                </h4>
+                <button onclick="fecharModalTutor()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="salvarTutor(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome Completo</label>
+                        <input type="text" id="tutor-nome" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Celular / Telefone</label>
+                        <input type="text" id="tutor-tel" placeholder="(11) 99999-9999" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">CPF</label>
+                        <input type="text" id="tutor-cpf" placeholder="123.456.789-00" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">E-mail</label>
+                        <input type="email" id="tutor-email" placeholder="tutor@exemplo.com" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Endereço Residencial</label>
+                        <input type="text" id="tutor-endereco" placeholder="Ex: Av. Paulista, 1000 - Bela Vista" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-4">
+                    <button type="button" onclick="fecharModalTutor()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Salvar Tutor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Novo Pet -->
+    <div id="modal-pet" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-800 flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="dog" class="text-brand-pink"></i> Cadastrar Novo Pet
+                </h4>
+                <button onclick="fecharModalPet()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="salvarPet(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Escondido/Vira automático caso o perfil logado seja tutor -->
+                    <div id="pet-tutor-selection-wrapper">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Vincular Tutor Responsável</label>
+                        <select id="pet-tutor-select" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                            <!-- Carregado Dinamicamente -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome do Pet</label>
+                        <input type="text" id="pet-nome" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Espécie / Tipo</label>
+                        <select id="pet-especie" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                            <option value="Cachorro">Cachorro</option>
+                            <option value="Gato">Gato</option>
+                            <option value="Outro">Outro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Raça / Porte</label>
+                        <input type="text" id="pet-raca" placeholder="Ex: Golden Retriever / G" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Histórico Comportamental / Observações</label>
+                        <textarea id="pet-comportamento" placeholder="Ex: Ansioso com barulho de secador, dócil com outros animais..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Registro de Possíveis Alergias</label>
+                        <input type="text" id="pet-alergias" placeholder="Ex: Alergia a picada de pulga, dipirona..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-4">
+                    <button type="button" onclick="fecharModalPet()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-pink text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Salvar Pet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Novo Agendamento -->
+    <div id="modal-agendamento" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-800 flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="calendar" class="text-brand-blue"></i> Agendar Novo Compromisso
+                </h4>
+                <button onclick="fecharModalAgendamento()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="salvarAgendamento(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Seletor de Tutor: escondido se for o próprio tutor agendando -->
+                    <div id="agend-tutor-wrapper">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tutor</label>
+                        <select id="agend-tutor-select" onchange="popularPetsDoTutor()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                            <!-- Carregado Dinamicamente -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Pet do Tutor</label>
+                        <select id="agend-pet-select" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                            <!-- Carregado Dinamicamente -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Módulo do Serviço</label>
+                                <select id="agend-tipo" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                                    <option value="Consulta Veterinária">Consulta Veterinária</option>
+                                    <option value="Atendimento">Atendimento</option>
+                                </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Valor Estimado do Serviço (R$)</label>
+                        <input type="number" step="0.01" id="agend-valor" placeholder="120.00" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Data</label>
+                        <input type="date" id="agend-data" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Horário</label>
+                        <input type="time" id="agend-hora" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-4">
+                    <button type="button" onclick="fecharModalAgendamento()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Reservar Horário</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Novo Produto -->
+    <div id="modal-produto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-800 flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="package" class="text-brand-yellow"></i> Cadastrar Produto / Medicamento
+                </h4>
+                <button onclick="fecharModalProduto()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="salvarProduto(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome do Insumo ou Produto</label>
+                        <input type="text" id="prod-nome" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Categoria</label>
+                        <select id="prod-categoria" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                            <option value="Medicamento">Medicamento</option>
+                            <option value="Shampoo/Estética">Shampoo & Estética</option>
+                            <option value="Acessório">Acessório / Pet Shop</option>
+                            <option value="Vacina">Insumo Vacina</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Preço Unitário (R$)</label>
+                        <input type="number" step="0.01" id="prod-preco" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Quantidade Inicial</label>
+                        <input type="number" id="prod-qtd" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-800 mt-4">
+                    <button type="button" onclick="fecharModalProduto()" class="px-4 py-2 border border-slate-800 rounded-lg text-sm text-slate-400 font-semibold hover:bg-slate-850">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-semibold hover:opacity-90 shadow-md">Salvar Insumo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Relatório Imprimível / Visualização PDF -->
+    <div id="modal-relatorio" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 rounded-2xl max-w-4xl w-full h-[90vh] shadow-2xl overflow-hidden border border-slate-800 flex flex-col print-full">
+            <div class="p-6 border-b border-slate-800 flex items-center justify-between no-print bg-slate-950">
+                <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                    <i data-lucide="file-text" class="text-brand-lime"></i> Visualização de Relatório
+                </h4>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="px-4 py-2 bg-brand-blue hover:opacity-90 text-white rounded-lg text-sm font-semibold shadow flex items-center gap-2">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Imprimir / PDF
+                    </button>
+                    <button onclick="fecharModalRelatorio()" class="text-slate-400 hover:text-white transition-colors p-2">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Conteúdo do Relatório Clínico/Petshop -->
+            <div id="relatorio-printable" class="flex-1 overflow-y-auto p-12 custom-scrollbar bg-slate-950 text-slate-100 space-y-8">
+                <div class="flex justify-between items-start border-b border-slate-800 pb-6">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-brand-lime">Agend-Au</h1>
+                        <p class="text-sm text-slate-400 mt-1">Clínica Veterinária e Soluções de Pet Shop Integradas</p>
+                        <p class="text-xs text-slate-500">Pilar do Sul, SP, Brasil</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-bold text-brand-pink uppercase tracking-widest">Relatório Analítico</span>
+                        <p id="relatorio-data-geracao" class="text-sm font-semibold text-slate-300 mt-1">Gerado em: 17/05/2026</p>
+                        <p class="text-xs text-slate-400">Responsável: Administrador Geral</p>
+                    </div>
+                </div>
+
+                <!-- Estatísticas Consolidadas -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="p-4 border border-slate-800 rounded-xl bg-slate-900">
+                        <span class="text-xs text-slate-400 font-bold uppercase block">Faturamento Consolidado</span>
+                        <h3 id="relatorio-faturamento" class="text-xl font-extrabold text-brand-lime mt-1">R$ 12.850,00</h3>
+                    </div>
+                    <div class="p-4 border border-slate-800 rounded-xl bg-slate-900">
+                        <span class="text-xs text-slate-400 font-bold uppercase block">Clientes/Tutores Cadastrados</span>
+                        <h3 id="relatorio-tutores" class="text-xl font-extrabold text-slate-100 mt-1">2</h3>
+                    </div>
+                    <div class="p-4 border border-slate-800 rounded-xl bg-slate-900">
+                        <span class="text-xs text-slate-400 font-bold uppercase block">Pets Assistidos</span>
+                        <h3 id="relatorio-pets" class="text-xl font-extrabold text-slate-100 mt-1">2</h3>
+                    </div>
+                </div>
+
+                <!-- Detalhes de Agendamentos -->
+                <div>
+                    <h3 class="text-md font-bold text-slate-100 border-b border-slate-800 pb-2 mb-4">Agendamentos Realizados e Pendentes</h3>
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead>
+                            <tr class="border-b border-slate-800 font-bold text-slate-400">
+                                <th class="py-2">Pet</th>
+                                <th class="py-2">Tutor</th>
+                                <th class="py-2">Serviço</th>
+                                <th class="py-2">Data / Hora</th>
+                                <th class="py-2 text-right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relatorio-agendamentos-body" class="divide-y divide-slate-900">
+                            <!-- Inserido dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Detalhes de Estoque e Medicamentos -->
+                <div>
+                    <h3 class="text-md font-bold text-slate-100 border-b border-slate-800 pb-2 mb-4">Uso de Produtos e Medicamentos</h3>
+                    <table class="w-full text-left text-sm text-slate-300">
+                        <thead>
+                            <tr class="border-b border-slate-800 font-bold text-slate-400">
+                                <th class="py-2">Insumo</th>
+                                <th class="py-2">Categoria</th>
+                                <th class="py-2">Status</th>
+                                <th class="py-2">Estoque</th>
+                                <th class="py-2 text-right">Preço</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relatorio-produtos-body" class="divide-y divide-slate-900">
+                            <!-- Inserido dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Assinaturas de Desenvolvimento (Rodapé do PDF) -->
+                <div class="pt-12 border-t border-slate-800 flex justify-between text-xs text-slate-500">
+                    <div>
+                        <p class="font-bold text-slate-400">Agend-Au Vet & Pet Shop</p>
+                        <p>Douglas Silva Ferreira & Laís Vieira de Oliveira</p>
+                    </div>
+                    <div class="text-right">
+                        <p>Ficha de Acompanhamento Operacional</p>
+                        <p>Páginas: 1 / 1</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== JAVASCRIPT GERAL ===================== -->
+    <script>
+        // --- BANCO DE DADOS EM MEMÓRIA (MOCKUPS INICIAIS COM CONTAS E SENHAS) ---
+        // Administradores e Tutores possuem senhas para simular primeiro acesso
+        let administradores = [
+            { id: "admin1", nome: "Dr. Douglas Ferreira", cpf: "111.111.111-11", profissao: "veterinario", crm: "CRM-SP 45678", crmValidade: "2029-10-12", senha: "admin" },
+            { id: "admin2", nome: "Laís Oliveira", cpf: "222.222.222-22", profissao: "groomer", crm: "", crmValidade: "", senha: "admin" }
+        ];
+
+        let tutores = [
+            { id: "1", nome: "Douglas Silva Ferreira", tel: "(11) 98765-4321", cpf: "111.222.333-44", email: "douglas.ferreira@agendau.com", endereco: "Rua do Pet, 120 - Pilar do Sul", senha: "123" },
+            { id: "2", nome: "Laís Vieira de Oliveira", tel: "(11) 97777-8888", cpf: "222.333.444-55", email: "lais.oliveira@agendau.com", endereco: "Av. Veterinária, 350 - Pilar do Sul", senha: "123" }
+        ];
+
+        let pets = [
+            { id: "101", tutorId: "1", nome: "Rex", especie: "Cachorro", raca: "Golden Retriever", comportamento: "Muito dócil, mas ansioso com barulho intenso de secador.", alergias: "Nenhuma registrada." },
+            { id: "102", tutorId: "2", nome: "Mingau", especie: "Gato", raca: "Persa", comportamento: "Muito dócil, preguiçoso e amigável.", alergias: "Sensibilidade a xampus perfumados." }
+        ];
+
+        let agendamentos = [
+            { id: "201", petId: "101", tutorId: "1", servico: "Consulta Veterinária", data: "2026-05-18", hora: "09:30", valor: 150.00, status: "confirmado" },
+            { id: "202", petId: "102", tutorId: "2", servico: "Atendimento", data: "2026-05-18", hora: "14:00", valor: 90.00, status: "confirmado" },
+            { id: "203", petId: "101", tutorId: "1", servico: "Atendimento", data: "2026-05-17", hora: "10:00", valor: 110.00, status: "confirmado" },
+            { id: "204", petId: "102", tutorId: "2", servico: "Consulta Veterinária", data: "2026-05-19", hora: "11:00", valor: 150.00, status: "pendente" }
+        ];
+
+        let produtos = [
+            { id: "301", nome: "Dipirona Veterinária Gotas", categoria: "Medicamento", estoque: 15, preco: 35.00 },
+            { id: "302", nome: "Shampoo Hipoalergênico Pet 1L", categoria: "Shampoo/Estética", estoque: 8, preco: 65.00 },
+            { id: "303", nome: "Coleira Antipulgas Frontline", categoria: "Acessório", estoque: 22, preco: 89.90 },
+            { id: "304", nome: "Vacina V10 Imunizante", categoria: "Vacina", estoque: 30, preco: 120.00 }
+        ];
+
+        let historicoClinico = [
+            { id: "401", petId: "101", tipo: "vacina", data: "2026-05-10", detalhe: "Vacina V10 aplicada com sucesso. Lote: AB203. Vencimento: 2027-12-10." },
+            { id: "402", petId: "102", tipo: "receita", data: "2026-05-12", detalhe: "Prescrição: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." }
+        ];
+
+        // --- CONTROLE DE SESSÃO DO USUÁRIO ---
+        let currentUser = null; // Guardará o objeto do usuário ativo
+        // Perfis de usuário (protótipo de mapeamento numérico):
+        // 1 = Administrador (admin) - acesso total
+        // 2 = Veterinário (veterinario) - acesso clínico reduzido
+        // 3 = Gestor (gestor) - acesso a relatórios e financeiro
+        // 4 = Funcionário (funcionario) - acesso operacional (banho & tosa)
+        // Observação: para este protótipo os CPFs de teste (1,2,3,4) já aparecem
+        // no bloco `perfisTestes` utilizado na tela de login.
+        // Guia de integração com banco de dados (resumo técnico):
+        // - Backend: criar tabela `users` com campos: id, nome, cpf, email,
+        //   senhaHash, role, profissao, crm, crmValidade, etc.
+        // - Autenticação: endpoint `POST /api/login` (body { cpf, senha })
+        //   que valida credenciais, retorna token JWT e objeto do usuário.
+        // - Sessão no frontend: armazenar token e buscar `GET /api/me` para
+        //   popular `currentUser` e `currentRole` (server-side authoritative).
+        // - Autorização: definir permissões no backend por `role` e sempre
+        //   validar no servidor; frontend aplica apenas restrições visuais.
+        // - Para relacionamentos (pets, agendamentos, produtos) usar APIs
+        //   REST/GraphQL: e.g. `GET /api/pets?tutorId=...`, `GET /api/agendamentos`.
+        // - Migração do protótipo: substituir os arrays em memória por chamadas
+        //   às APIs e remover dados mock quando backend estiver disponível.
+        // Valor inicial para prototipação (mudar para recuperar do servidor):
+        let currentRole = 'admin'; // valores: 'admin','veterinario','gestor','funcionario'
+
+        let configRestricao = "comercial"; // comercial ou livre
+        let filtroAgendamentosStatus = "todos";
+        let periodoFaturamento = "mensal";
+
+        // Referências Globais de Charts
+        let financeChartRef = null;
+        let topProductsChartRef = null;
+
+        // --- SISTEMA DE TOASTS ---
+        function showToast(mensagem, tipo = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = "bg-slate-900 border-slate-800 text-slate-100";
+            let icon = '<i data-lucide="check-circle-2" class="w-5 h-5 text-brand-lime"></i>';
+            if (tipo === 'error') {
+                bgClass = "bg-red-950 border-red-800 text-red-100";
+                icon = '<i data-lucide="alert-triangle" class="w-5 h-5 text-brand-pink"></i>';
+            }
+
+            toast.className = "flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl pointer-events-auto transition-all duration-300 transform translate-y-5 opacity-0 " + bgClass;
+            toast.innerHTML = icon + " <span class='text-sm font-semibold'>" + mensagem + "</span>";
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-5', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-5', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // --- FLUXO DE SELEÇÃO DE PERFIL DE LOGIN ---
+        function selectLoginProfile(profile) {
+            currentRole = profile;
+            const btnAdmin = document.getElementById('btn-login-admin');
+            const btnTutor = document.getElementById('btn-login-tutor');
+            const adminGroup = document.getElementById('admin-class-group');
+            const tutorFirstAccess = document.getElementById('tutor-first-access-fields');
+
+            // Resetar formulários de primeiro acesso na troca
+            tutorFirstAccess.classList.add('hidden');
+
+            if (profile === 'admin') {
+                btnAdmin.className = "py-2.5 rounded-lg text-xs font-bold transition-all bg-brand-blue text-white shadow-lg";
+                btnTutor.className = "py-2.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+                adminGroup.classList.remove('hidden');
+            } else {
+                btnTutor.className = "py-2.5 rounded-lg text-xs font-bold transition-all bg-brand-blue text-white shadow-lg";
+                btnAdmin.className = "py-2.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+                adminGroup.classList.add('hidden');
+            }
+        }
+
+        function toggleCrmRequirement() {
+            const crmFields = document.getElementById('crm-fields');
+            const selectedJob = document.querySelector('input[name="admin-job"]:checked').value;
+            
+            if (selectedJob === 'veterinario') {
+                crmFields.classList.remove('hidden');
+                document.getElementById('admin-crm').setAttribute('required', 'true');
+            } else {
+                crmFields.classList.add('hidden');
+                document.getElementById('admin-crm').removeAttribute('required');
+            }
+        }
+
+        
+        // --- SUBMIT DA TELA DE LOGIN (MODO PROTÓTIPO) ---
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const cpf = document.getElementById('login-cpf').value.trim();
+
+            // Mapeamento de perfis de teste (Qualquer senha será aceita)
+            const perfisTestes = {
+                "1": { id: "1", nome: "Admin Geral", role: "admin", profissao: "admin" },
+                "111": { id: "1", nome: "Admin Geral", role: "admin", profissao: "admin" },
+        
+             "2": { id: "2", nome: "Dr. Carlos (Veterinário)", role: "veterinario", profissao: "veterinario", crm: "CRM-SP 12345" },
+                "222": { id: "2", nome: "Dr. Carlos (Veterinário)", role: "veterinario", profissao: "veterinario", crm: "CRM-SP 12345" },
+        
+                "3": { id: "3", nome: "Mariana (Gestora)", role: "gestor", profissao: "gestor" },
+                "333": { id: "3", nome: "Mariana (Gestora)", role: "gestor", profissao: "gestor" },
+        
+             "4": { id: "4", nome: "Lucas (Funcionário)", role: "funcionario", profissao: "groomer" },
+                "444": { id: "4", nome: "Lucas (Funcionário)", role: "funcionario", profissao: "groomer" }
+            };
+
+            let userObj = perfisTestes[cpf];
+
+            if (userObj) {
+                realizarLogin(userObj, userObj.role);
+            } else {
+                showToast("Use os CPFs de teste: 1 (Admin), 2 (Vet), 3 (Gestor) ou 4 (Funcionário)", "info");
+            }
+        }
+        function realizarLogin(userObj, role) {
+            currentUser = userObj;
+            currentRole = role;
+
+            // Esconde a tela de login
+            document.getElementById('login-screen').classList.add('hidden');
+            
+            // Atualiza nome no cabeçalho
+            document.getElementById('current-user-name').innerText = userObj.nome;
+            document.getElementById('header-user-name').innerText = userObj.nome;
+            // Atualiza profissão no cabeçalho (ex.: Profissão: Veterinário)
+            try {
+                const headerProf = document.getElementById('header-user-role');
+                if (headerProf) {
+                    let prof = userObj.profissao || userObj.role || '';
+                    // Normalizar termo (ex.: 'veterinario' -> 'Veterinário')
+                    prof = prof.toString();
+                    prof = prof.charAt(0).toUpperCase() + prof.slice(1);
+                    headerProf.innerText = 'Profissão: ' + prof;
+                }
+            } catch (e) { /* ignore */ }
+
+            // Oculta todos os blocos de permissão para resetar a tela
+            document.querySelectorAll('.admin-only, .vet-only, .gestor-only, .func-only').forEach(el => el.classList.add('hidden'));
+
+            // Definir quais abas / navegações ficam visíveis por papel
+            const roleTabs = {
+                admin: ['dashboard','agendamentos','clientes','produtos','banho-tosa','clinica','historico-tutor','meus-pets'],
+                // Veterinário agora tem acesso a Dashboard, Agendamentos e Módulo Clínico
+                veterinario: ['dashboard','agendamentos','clinica'],
+                gestor: ['dashboard','agendamentos','produtos','clientes'],
+                funcionario: ['dashboard','banho-tosa','agendamentos']
+            };
+
+            // Oculta todos os botões de navegação e mostra apenas os permitidos
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.add('hidden'));
+            const allowed = roleTabs[role] || ['dashboard'];
+            allowed.forEach(tab => {
+                const btn = document.getElementById('nav-' + tab);
+                if (btn) btn.classList.remove('hidden');
+            });
+
+            // Configuração de regras por perfil - visuais e permissões locais (protótipo)
+            if (role === 'admin') {
+                document.getElementById('current-user-role-label').innerText = "Administrador";
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+                switchTab(allowed[0] || 'dashboard');
+            } 
+            else if (role === 'veterinario') {
+                document.getElementById('current-user-role-label').innerText = "Veterinário";
+                // Mostrar somente blocos específicos para veterinário
+                document.querySelectorAll('.vet-only').forEach(el => el.classList.remove('hidden'));
+                switchTab(allowed[0] || 'clinica'); // abrir a aba principal do veterinário
+            } 
+            else if (role === 'gestor') {
+                document.getElementById('current-user-role-label').innerText = "Gestor";
+                document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('hidden'));
+                switchTab(allowed[0] || 'dashboard');
+            } 
+            else if (role === 'funcionario') {
+                document.getElementById('current-user-role-label').innerText = "Funcionário";
+                document.querySelectorAll('.func-only').forEach(el => el.classList.remove('hidden'));
+                switchTab(allowed[0] || 'meus-pets');
+            }
+
+            showToast("Acesso autorizado como " + userObj.nome);
+            // Aplicar ajustes de visibilidade específicos por papel (protótipo)
+            aplicarVisibilidadePorRole();
+            // Ajustar visibilidade de campos clínicos conforme profissão (CRM)
+            ajustarModuloClinicoProfissao();
+        }
+
+        // Ajustes finos de visibilidade por perfil para remover elementos não pertinentes
+        // Veterinário deve ver apenas o módulo clínico e informações clínicas, sem KPIs comerciais
+        function aplicarVisibilidadePorRole() {
+            try {
+                if (currentRole === 'veterinario') {
+                    // Esconder itens de navegação administrativos
+                    const hideNav = ['nav-clientes', 'nav-produtos'];
+                    hideNav.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.add('hidden');
+                    });
+
+                    // Esconder KPIs comerciais (Volume de Vendas, Produtos Cadastrados)
+
+                    // Esconder somente os cards específicos (mais seguros que subir muitos níveis)
+                    const vendaEl = document.getElementById('kpi-vendas');
+                    if (vendaEl) {
+                        const card = vendaEl.closest('.rounded-xl') || vendaEl.parentElement.parentElement;
+                        if (card) card.classList.add('hidden');
+                    }
+
+                    const prodEl = document.getElementById('kpi-produtos-count');
+                    if (prodEl) {
+                        const card = prodEl.closest('.rounded-xl') || prodEl.parentElement.parentElement;
+                        if (card) card.classList.add('hidden');
+                    }
+
+                    // Esconder painel de produtos mais utilizados (gráfico)
+                    const topProductsCard = document.getElementById('topProductsChart');
+                    if (topProductsCard) {
+                        const card = topProductsCard.closest('.rounded-xl') || topProductsCard.closest('div');
+                        if (card) card.classList.add('hidden');
+                    }
+
+                    // Esconder o banner de relatório de vendas (opcional para veterinário)
+                    const h3s = Array.from(document.getElementsByTagName('h3'));
+                    const relBanner = h3s.find(h => h.innerText && h.innerText.includes('Relatório de Desempenho Operacional'));
+                    if (relBanner && relBanner.closest('div')) {
+                        relBanner.closest('div').classList.add('hidden');
+                    }
+                    // Ajustar título/subtítulo do módulo clínico para veterinário
+                    const clinicaHeader = document.querySelector('#tab-clinica h3');
+                    if (clinicaHeader) clinicaHeader.innerText = 'Atendimento Clínico Veterinário';
+                    const clinicaP = document.querySelector('#tab-clinica p');
+                    if (clinicaP) clinicaP.innerText = 'Registro de imunização, emissão de receitas e registro de exames para pacientes.';
+                } else {
+                    // Restaurar visibilidade para outros perfis (simplesmente remove a classe 'hidden')
+                    const showNav = ['nav-clientes', 'nav-produtos'];
+                    showNav.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.remove('hidden');
+                    });
+
+                    const vendaEl = document.getElementById('kpi-vendas');
+                    if (vendaEl) {
+                        const card = vendaEl.closest('.rounded-xl') || vendaEl.parentElement.parentElement;
+                        if (card) card.classList.remove('hidden');
+                    }
+
+                    const prodEl = document.getElementById('kpi-produtos-count');
+                    if (prodEl) {
+                        const card = prodEl.closest('.rounded-xl') || prodEl.parentElement.parentElement;
+                        if (card) card.classList.remove('hidden');
+                    }
+
+                    const topProductsCard = document.getElementById('topProductsChart');
+                    if (topProductsCard) {
+                        const card = topProductsCard.closest('.rounded-xl') || topProductsCard.closest('div');
+                        if (card) card.classList.remove('hidden');
+                    }
+
+                    const h3s = Array.from(document.getElementsByTagName('h3'));
+                    const relBanner = h3s.find(h => h.innerText && h.innerText.includes('Relatório de Desempenho Operacional'));
+                    if (relBanner && relBanner.closest('div')) {
+                        relBanner.closest('div').classList.remove('hidden');
+                    }
+                    // Restaurar título padrão do módulo clínico
+                    const clinicaHeader = document.querySelector('#tab-clinica h3');
+                    if (clinicaHeader) clinicaHeader.innerText = 'Módulo Clínico (Acesso Restrito)';
+                    const clinicaP = document.querySelector('#tab-clinica p');
+                    if (clinicaP) clinicaP.innerText = 'Registro de imunização por vacina, emissão eletrônica de receitas e registro de exames / laudos de animais cadastrados.';
+                }
+            } catch (err) {
+                console.warn('Erro aplicando visibilidade por role:', err);
+            }
+        }
+        
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('login-cpf').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('tutor-first-access-fields').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            // Reset cabeçalho
+            const headerProf = document.getElementById('header-user-role');
+            if (headerProf) headerProf.innerText = 'Profissão: -';
+            document.getElementById('header-user-name').innerText = 'Carregando...';
+            showToast("Você saiu do sistema de agendamento.");
+        }
+
+        // Bloquear/liberar ações conforme as regras de profissional
+        function ajustarModuloClinicoProfissao() {
+            const blockingMsg = document.getElementById('crm-blocking-message');
+            const clinicalForm = document.getElementById('clinica-allowed-content');
+
+            if (currentUser && currentUser.profissao === 'groomer') {
+                blockingMsg.classList.remove('hidden');
+                clinicalForm.classList.add('hidden');
+            } else {
+                blockingMsg.classList.add('hidden');
+                clinicalForm.classList.remove('hidden');
+            }
+        }
+
+        // --- SISTEMA DE INICIALIZAÇÃO E ABAS ---
+        window.onload = function() {
+            lucide.createIcons();
+            atualizarRestricaoHorariaVisual();
+            popularTutorDropdowns();
+            renderizarEstoque();
+            renderizarAgendamentos();
+            renderizarTutores();
+            renderizarHistoricoClinico();
+            aplicarVisibilidadePorRole();
+            ajustarModuloClinicoProfissao();
+        };
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-900', 'text-white');
+                btn.classList.add('text-slate-400');
+            });
+
+            document.getElementById("tab-" + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById("nav-" + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-slate-900', 'text-white');
+                activeBtn.classList.remove('text-slate-400');
+            }
+
+            // Ajuste do título da página
+            const titulos = {
+                'dashboard': 'Dashboards & Finanças',
+                'agendamentos': 'Controle de Agendamentos',
+                'clientes': 'Tutores & Pets Cadastrados',
+                'meus-pets': 'Meus Animais de Estimação',
+                'historico-tutor': 'Histórico Médico e de Vacinas',
+                'clinica': 'Atendimento Clínico Veterinário',
+                'banho-tosa': 'Painel de Banho & Tosa',
+                'produtos': 'Controle de Estoque & Insumos'
+            };
+            document.getElementById('page-title').innerText = titulos[tabId] || 'Agend-Au';
+
+            // Comportamentos e atualizações de dados sob demanda
+            if (tabId === 'dashboard') {
+                atualizarKPIs();
+                inicializarGraficos();
+            } else if (tabId === 'meus-pets') {
+                renderizarMeusPetsTutor();
+            } else if (tabId === 'historico-tutor') {
+                renderizarHistoricoExclusivoTutor();
+            } else if (tabId === 'agendamentos') {
+                renderizarAgendamentos();
+            }
+        }
+
+        // --- MÓDULO CONFIGURAÇÕES (RESTRIÇÃO DE HORÁRIOS) ---
+        function alterarRestricaoHoraria() {
+            configRestricao = document.getElementById('config-horario').value;
+            atualizarRestricaoHorariaVisual();
+            showToast("Configuração atualizada: Restrição em horário " + (configRestricao === 'comercial' ? 'Comercial (08h às 18h)' : 'Livre (24h)') + ".");
+        }
+
+        function atualizarRestricaoHorariaVisual() {
+            const ping = document.getElementById('status-ping');
+            const dot = document.getElementById('status-dot');
+            if (configRestricao === 'comercial') {
+                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-brand-lime";
+                dot.className = "relative inline-flex rounded-full h-2 w-2 bg-brand-lime";
+            } else {
+                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-brand-pink";
+                dot.className = "relative inline-flex rounded-full h-2 w-2 bg-brand-pink";
+            }
+        }
+
+        // --- DROPDOWNS E CADASTROS ---
+        function abrirModalTutor() { document.getElementById('modal-tutor').classList.remove('hidden'); }
+        function fecharModalTutor() { document.getElementById('modal-tutor').classList.add('hidden'); }
+        
+        function abrirModalPet() { 
+            document.getElementById('modal-pet').classList.remove('hidden'); 
+            
+            // Caso seja tutor logado, já amarra no próprio ID
+            const selectionWrapper = document.getElementById('pet-tutor-selection-wrapper');
+            if (currentRole === 'tutor') {
+                selectionWrapper.classList.add('hidden');
+            } else {
+                selectionWrapper.classList.remove('hidden');
+                popularTutorDropdowns();
+            }
+        }
+        function fecharModalPet() { document.getElementById('modal-pet').classList.add('hidden'); }
+
+        function popularTutorDropdowns() {
+            const selectPetTutor = document.getElementById('pet-tutor-select');
+            const selectAgendTutor = document.getElementById('agend-tutor-select');
+            
+            let options = '<option value="">Selecione um Tutor...</option>';
+            tutores.forEach(t => {
+                options += "<option value='" + t.id + "'>" + t.nome + "</option>";
+            });
+
+            if (selectPetTutor) selectPetTutor.innerHTML = options;
+            if (selectAgendTutor) selectAgendTutor.innerHTML = options;
+        }
+
+        function salvarTutor(e) {
+            e.preventDefault();
+            const nome = document.getElementById('tutor-nome').value;
+            const tel = document.getElementById('tutor-tel').value;
+            const cpf = document.getElementById('tutor-cpf').value;
+            const email = document.getElementById('tutor-email').value;
+            const endereco = document.getElementById('tutor-endereco').value;
+
+            const novo = {
+                id: (tutores.length + 1).toString(),
+                nome: nome, tel: tel, cpf: cpf, email: email, endereco: endereco, senha: "123"
+            };
+
+            tutores.push(novo);
+            fecharModalTutor();
+            document.getElementById('tutor-nome').value = '';
+            document.getElementById('tutor-tel').value = '';
+            document.getElementById('tutor-cpf').value = '';
+            document.getElementById('tutor-email').value = '';
+            document.getElementById('tutor-endereco').value = '';
+
+            renderizarTutores();
+            popularTutorDropdowns();
+            showToast("Tutor " + nome + " cadastrado com sucesso!");
+        }
+
+        function salvarPet(e) {
+            e.preventDefault();
+            let tutorId = "";
+            
+            if (currentRole === 'tutor') {
+                tutorId = currentUser.id;
+            } else {
+                tutorId = document.getElementById('pet-tutor-select').value;
+            }
+
+            const nome = document.getElementById('pet-nome').value;
+            const especie = document.getElementById('pet-especie').value;
+            const raca = document.getElementById('pet-raca').value;
+            const comportamento = document.getElementById('pet-comportamento').value;
+            const alergias = document.getElementById('pet-alergias').value;
+
+            if (!tutorId) {
+                showToast("Selecione um tutor válido!", "error");
+                return;
+            }
+
+            // Cada pet terá um ID exclusivo incremental
+            const novo = {
+                id: (pets.length + 101).toString(),
+                tutorId: tutorId, nome: nome, especie: especie, raca: raca, comportamento: comportamento, alergias: alergias
+            };
+
+            pets.push(novo);
+            fecharModalPet();
+            document.getElementById('pet-nome').value = '';
+            document.getElementById('pet-comportamento').value = '';
+            document.getElementById('pet-alergias').value = '';
+
+            renderizarTutores();
+            renderizarMeusPetsTutor();
+            renderizarHistoricoClinico();
+            renderizarHistoricoExclusivoTutor();
+            
+            showToast("Pet " + nome + " (ID: " + novo.id + ") cadastrado com sucesso!");
+        }
+
+        function renderizarTutores() {
+            const grid = document.getElementById('tutores-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            tutores.forEach(t => {
+                const petsDoTutor = pets.filter(p => p.tutorId === t.id);
+                let petsHTML = '';
+
+                if (petsDoTutor.length === 0) {
+                    petsHTML = "<div class='text-xs text-slate-400 italic'>Nenhum pet de estimação vinculado.</div>";
+                } else {
+                    petsDoTutor.forEach(p => {
+                        petsHTML += "<div class='bg-slate-950 border border-slate-800 p-3.5 rounded-xl hover:shadow-sm transition-all space-y-1.5'>" +
+                                "<div class='flex items-center justify-between'>" +
+                                    "<span class='text-xs font-black uppercase text-brand-lime tracking-wide'>" + p.especie + "</span>" +
+                                    "<span class='text-[10px] bg-slate-800 text-brand-lime px-1.5 py-0.5 rounded font-mono font-bold'>ID: " + p.id + "</span>" +
+                                "</div>" +
+                                "<h5 class='font-bold text-slate-100 text-sm flex items-center gap-1.5'>" +
+                                    "<i data-lucide='paw-print' class='w-4 h-4 text-brand-lime'></i> " + p.nome + "" +
+                                "</h5>" +
+                                "<p class='text-[11px] text-slate-400 font-semibold'>" + p.raca + "</p>" +
+                                "<div class='text-xs text-slate-300 bg-slate-900 p-2 rounded-lg border border-slate-800'>" +
+                                    "<strong>Comportamento:</strong> " + (p.comportamento || 'Sem registros') + "" +
+                                "</div>" +
+                                "<div class='text-xs text-slate-300 bg-slate-900 p-2 rounded-lg border border-slate-800'>" +
+                                    "<strong>Alergias:</strong> " + (p.alergias || 'Nenhuma alergia relatada') + "" +
+                                "</div>" +
+                            "</div>";
+                    });
+                }
+
+                grid.innerHTML += "<div class='bg-slate-900 rounded-2xl border border-slate-800 shadow-sm overflow-hidden flex flex-col md:flex-row'>" +
+                        "<div class='p-5 md:w-2/5 border-b md:border-b-0 md:border-r border-slate-800 bg-slate-950/40 flex flex-col justify-between'>" +
+                            "<div class='space-y-3'>" +
+                                "<div class='flex items-center gap-2'>" +
+                                    "<div class='w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold'>" +
+                                        t.nome.substring(0, 2).toUpperCase() +
+                                    "</div>" +
+                                    "<div>" +
+                                        "<h4 class='font-bold text-slate-100 text-sm leading-tight'>" + t.nome + "</h4>" +
+                                        "<span class='text-xs text-slate-400'>CPF: " + t.cpf + "</span>" +
+                                    "</div>" +
+                                "</div>" +
+                                "<div class='space-y-1 text-xs text-slate-400'>" +
+                                    "<p class='flex items-center gap-1.5'><i data-lucide='phone' class='w-3.5 h-3.5 text-brand-blue'></i> " + t.tel + "</p>" +
+                                    "<p class='flex items-center gap-1.5'><i data-lucide='mail' class='w-3.5 h-3.5 text-brand-pink'></i> " + t.email + "</p>" +
+                                    "<p class='flex items-center gap-1.5'><i data-lucide='map-pin' class='w-3.5 h-3.5 text-brand-purple'></i> " + t.endereco + "</p>" +
+                                "</div>" +
+                            "</div>" +
+                            "<button onclick=\"removerTutor('" + t.id + "')\" class='text-brand-pink hover:opacity-80 text-xs font-bold mt-4 flex items-center gap-1'>" +
+                                "<i data-lucide='trash' class='w-3.5 h-3.5'></i> Excluir Tutor" +
+                            "</button>Grid" +
+                        "</div>" +
+                        "<div class='p-5 md:w-3/5 flex-1 space-y-4'>" +
+                            "<div class='flex items-center justify-between'>" +
+                                "<h4 class='text-xs font-black uppercase text-slate-400 tracking-wider'>Pets Vinculados</h4>" +
+                                "<span class='bg-brand-purple/10 text-brand-lime border border-brand-purple/20 text-xs font-bold px-2 py-0.5 rounded-full'>" + petsDoTutor.length + " pets</span>" +
+                            "</div>" +
+                            "<div class='space-y-3 overflow-y-auto max-h-[190px] pr-1 custom-scrollbar'>" +
+                                petsHTML +
+                            "</div>" +
+                        "</div>" +
+                    "</div>";
+            });
+            lucide.createIcons();
+        }
+
+        // Renderiza apenas os pets de quem está logado como tutor
+        function renderizarMeusPetsTutor() {
+            const grid = document.getElementById('meus-pets-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            if (currentRole !== 'tutor' || !currentUser) return;
+
+            const meusPets = pets.filter(p => p.tutorId === currentUser.id);
+
+            if (meusPets.length === 0) {
+                grid.innerHTML = "<div class='col-span-full bg-slate-900 border border-slate-800 p-8 text-center rounded-2xl space-y-3'>" +
+                        "<i data-lucide='smile' class='w-12 h-12 text-brand-lime mx-auto'></i>" +
+                        "<h4 class='font-bold text-slate-100'>Você ainda não cadastrou pets!</h4>" +
+                        "<p class='text-xs text-slate-400'>Cadastre seus companheiros clicando no botão de cadastro de pets acima.</p>" +
+                    "</div>";
+                return;
+            }
+
+            meusPets.forEach(p => {
+                grid.innerHTML += "<div class='bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4 shadow-sm hover:shadow-md transition-all relative'>" +
+                        "<div class='flex items-center justify-between'>" +
+                            "<span class='text-xs font-black uppercase text-brand-lime tracking-wide'>" + p.especie + "</span>" +
+                            "<span class='text-xs font-mono font-bold bg-slate-950 px-2 py-0.5 rounded text-brand-lime border border-slate-800'>ID: " + p.id + "</span>" +
+                        "</div>" +
+                        "<div>" +
+                            "<h4 class='font-black text-slate-100 text-lg flex items-center gap-1.5'>" +
+                                "<i data-lucide='paw-print' class='w-5 h-5 text-brand-pink'></i> " + p.nome + "" +
+                            "</h4>" +
+                            "<p class='text-xs text-slate-400 mt-1 font-semibold'>" + p.raca + "</p>" +
+                        "</div>" +
+                        "<div class='space-y-2'>" +
+                            "<div class='text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800'>" +
+                                "<strong class='text-brand-lime'>Comportamento do Pet:</strong>" +
+                                "<p class='mt-0.5'>" + (p.comportamento || 'Sem observações cadastradas.') + "</p>" +
+                            "</div>" +
+                            "<div class='text-xs text-slate-300 bg-slate-950 p-2.5 rounded-lg border border-slate-800'>" +
+                                "<strong class='text-brand-pink'>Possíveis Alergias:</strong>" +
+                                "<p class='mt-0.5'>" + (p.alergias || 'Nenhuma alergia ou contraindicação.') + "</p>" +
+                            "</div>" +
+                        "</div>" +
+                    "</div>";
+            });
+            lucide.createIcons();
+        }
+
+        function removerTutor(id) {
+            tutores = tutores.filter(t => t.id !== id);
+            pets = pets.filter(p => p.tutorId !== id); // Remove em cascata
+            renderizarTutores();
+            popularTutorDropdowns();
+            renderizarHistoricoClinico();
+            atualizarKPIs();
+            showToast("Tutor e seus animais de estimação foram removidos!");
+        }
+
+        // --- SOLICITAÇÃO E CONFIRMAÇÃO DE AGENDAMENTOS ---
+        function abrirModalAgendamento() {
+            document.getElementById('modal-agendamento').classList.remove('hidden');
+            
+            const tutorWrapper = document.getElementById('agend-tutor-wrapper');
+            const selectPet = document.getElementById('agend-pet-select');
+            
+            if (currentRole === 'tutor') {
+                // Tutor logado não precisa selecionar outro tutor
+                tutorWrapper.classList.add('hidden');
+                
+                // Popula os pets direto do tutor logado
+                let options = '<option value="">Selecione o Pet...</option>';
+                const meusPets = pets.filter(p => p.tutorId === currentUser.id);
+                meusPets.forEach(p => {
+                    options += "<option value='" + p.id + "'>" + p.nome + "</option>";
+                });
+                selectPet.innerHTML = options;
+            } else {
+                tutorWrapper.classList.remove('hidden');
+                popularTutorDropdowns();
+            }
+        }
+        
+        function fecharModalAgendamento() {
+            document.getElementById('modal-agendamento').classList.add('hidden');
+        }
+
+        function popularPetsDoTutor() {
+            const tutorId = document.getElementById('agend-tutor-select').value;
+            const selectPet = document.getElementById('agend-pet-select');
+            
+            let options = '<option value="">Selecione o Pet...</option>';
+            if (tutorId) {
+                const petsDoTutor = pets.filter(p => p.tutorId === tutorId);
+                petsDoTutor.forEach(p => {
+                    options += "<option value='" + p.id + "'>" + p.nome + "</option>";
+                });
+            }
+            selectPet.innerHTML = options;
+        }
+
+        function salvarAgendamento(e) {
+            e.preventDefault();
+            
+            let tutorId = "";
+            if (currentRole === 'tutor') {
+                tutorId = currentUser.id;
+            } else {
+                tutorId = document.getElementById('agend-tutor-select').value;
+            }
+
+            const petId = document.getElementById('agend-pet-select').value;
+            const servico = document.getElementById('agend-tipo').value;
+            const valor = parseFloat(document.getElementById('agend-valor').value);
+            const data = document.getElementById('agend-data').value;
+            const hora = document.getElementById('agend-hora').value;
+
+            // Validação de Restrição Horária (Comercial 08:00 às 18:00)
+            if (configRestricao === "comercial") {
+                const h = parseInt(hora.split(':')[0]);
+                if (h < 8 || h >= 18) {
+                    showToast("Agendamento fora do Horário Comercial (08h às 18h)! Modifique o horário ou altere as regras de restrição.", "error");
+                    return;
+                }
+            }
+
+            // Agendamento cadastrado por Tutor entra como "pendente". Cadastrado por Admin já entra como "confirmado".
+            const statusInicial = (currentRole === 'admin') ? 'confirmado' : 'pendente';
+
+            const novo = {
+                id: (agendamentos.length + 201).toString(),
+                tutorId: tutorId, petId: petId, servico: servico, data: data, hora: hora, valor: valor,
+                status: statusInicial
+            };
+
+            agendamentos.push(novo);
+            fecharModalAgendamento();
+            renderizarAgendamentos();
+            atualizarKPIs();
+            
+            if (currentRole === 'tutor') {
+                showToast("Sua solicitação foi enviada! Aguardando confirmação do administrador.");
+            } else {
+                showToast("Novo agendamento confirmado e inserido no sistema.");
+            }
+        }
+
+        function filtrarAgendamentos(status) {
+            filtroAgendamentosStatus = status;
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('bg-slate-800', 'text-white');
+                b.classList.add('text-slate-400', 'bg-slate-950', 'border-slate-800');
+            });
+
+            const mapper = {
+                'todos': 'all',
+                'pendente': 'pendente',
+                'confirmado': 'confirmado',
+                'cancelado': 'cancelado'
+            };
+            const targetBtn = document.getElementById("filter-" + mapper[status]);
+            if (targetBtn) {
+                targetBtn.classList.add('bg-slate-800', 'text-white');
+                targetBtn.classList.remove('text-slate-400', 'bg-slate-950', 'border-slate-800');
+            }
+
+            renderizarAgendamentos();
+        }
+
+        function renderizarAgendamentos() {
+            const body = document.getElementById('agendamentos-table-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            // Se for tutor logado, ele só enxerga os agendamentos dele próprio
+            let filtrados = agendamentos;
+            if (currentRole === 'tutor') {
+                filtrados = agendamentos.filter(a => a.tutorId === currentUser.id);
+                document.getElementById('agenda-subtitle').innerText = "Acompanhe e faça a solicitação de novos horários para os seus pets cadastrados.";
+            } else {
+                document.getElementById('agenda-subtitle').innerText = "Faça a solicitação, aprovação, reagendamento ou cancelamento de horários clínicos e pet shop.";
+            }
+
+            if (filtroAgendamentosStatus !== 'todos') {
+                filtrados = filtrados.filter(a => a.status === filtroAgendamentosStatus);
+            }
+
+            document.getElementById('agendamento-counter').innerText = "Exibindo " + filtrados.length + " compromissos";
+
+            if (filtrados.length === 0) {
+                body.innerHTML = "<tr><td colspan='6' class='text-center py-8 text-slate-500'>Nenhum compromisso encontrado para este filtro.</td></tr>";
+                return;
+            }
+
+            filtrados.forEach(a => {
+                const pet = pets.find(p => p.id === a.petId);
+                const tutor = tutores.find(t => t.id === a.tutorId);
+
+                let badge = '';
+                if (a.status === 'pendente') {
+                    badge = "<span class='bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20 text-xs font-bold px-2.5 py-1 rounded-full'>Pendente</span>";
+                } else if (a.status === 'confirmado') {
+                    badge = "<span class='bg-brand-lime/10 text-brand-lime border border-brand-lime/20 text-xs font-bold px-2.5 py-1 rounded-full'>Confirmado</span>";
+                } else {
+                    badge = "<span class='bg-brand-pink/10 text-brand-pink border border-brand-pink/20 text-xs font-bold px-2.5 py-1 rounded-full'>Cancelado</span>";
+                }
+
+                let actions = '';
+                
+                // Confirmar agendamento (Apenas administradores podem confirmar agendamentos pendentes)
+                if (a.status === 'pendente' && currentRole === 'admin') {
+                    actions = "<button onclick=\"alterarStatusAgendamento('" + a.id + "', 'confirmado')\" class='text-brand-lime hover:opacity-85 font-bold text-xs bg-brand-lime/10 border border-brand-lime/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1'>" +
+                            "<i data-lucide='check' class='w-3.5 h-3.5'></i> Confirmar" +
+                        "</button>";
+                }
+
+                // Opção de cancelamento (Livre para Admin e Tutor cancelar seu próprio compromisso)
+                if (a.status !== 'cancelado') {
+                    actions += "<button onclick=\"alterarStatusAgendamento('" + a.id + "', 'cancelado')\" class='text-brand-pink hover:opacity-85 font-bold text-xs bg-brand-pink/10 border border-brand-pink/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1'>" +
+                            "<i data-lucide='trash-2' class='w-3.5 h-3.5'></i> Cancelar" +
+                        "</button>";
+                } else {
+                    actions = "<span class='text-slate-500 text-xs italic'>Sem ações disponíveis</span>";
+                }
+
+                body.innerHTML += "<tr class='hover:bg-slate-900/60 transition-all border-b border-slate-800/50'>" +
+                        "<td class='py-4 px-6'>" +
+                            "<div class='font-bold text-slate-200'>" + (pet ? pet.nome : 'N/A') + "</div>" +
+                            "<div class='text-xs text-slate-500'>" + (tutor ? tutor.nome : 'N/A') + "</div>" +
+                        "</td>" +
+                        "<td class='py-4 px-6'>" +
+                            "<div class='font-semibold text-slate-300 flex items-center gap-1.5'>" +
+                                                "<i data-lucide='" + (a.servico === 'Consulta Veterinária' ? 'stethoscope' : 'calendar') + "' class='w-4 h-4 text-brand-lime'></i> " + a.servico + "" +
+                            "</div>" +
+                        "</td>" +
+                        "<td class='py-4 px-6 text-slate-300'>" +
+                            "<div>" + formatarDataBr(a.data) + "</div>" +
+                            "<div class='text-xs text-brand-pink font-bold'>" + a.hora + "</div>" +
+                        "</td>" +
+                        "<td class='py-4 px-6 font-bold text-slate-200'>" +
+                            "R$ " + a.valor.toFixed(2) + "" +
+                        "</td>" +
+                        "<td class='py-4 px-6'>" +
+                            badge +
+                        "</td>" +
+                        "<td class='py-4 px-6 text-right'>" +
+                            "<div class='flex justify-end gap-1.5'>" +
+                                actions +
+                            "</div>" +
+                        "</td>" +
+                    "</tr>";
+            });
+            lucide.createIcons();
+        }
+
+        function alterarStatusAgendamento(id, novoStatus) {
+            const agend = agendamentos.find(a => a.id === id);
+            if (agend) {
+                agend.status = novoStatus;
+                renderizarAgendamentos();
+                atualizarKPIs();
+                showToast("Agendamento atualizado para: " + novoStatus.toUpperCase());
+            }
+        }
+
+        function formatarDataBr(dataStr) {
+            const partes = dataStr.split('-');
+            if (partes.length === 3) return partes[2] + "/" + partes[1] + "/" + partes[0];
+            return dataStr;
+        }
+
+        // --- HISTÓRICO EXCLUSIVO DO TUTOR ---
+        function renderizarHistoricoExclusivoTutor() {
+            const timeline = document.getElementById('tutor-historico-timeline');
+            const selectPetExame = document.getElementById('tutor-exame-pet-select');
+            
+            if (!timeline || currentRole !== 'tutor' || !currentUser) return;
+
+            // Popular select de exames do tutor
+            let selectOpts = '<option value="">Escolher meu pet...</option>';
+            const meusPets = pets.filter(p => p.tutorId === currentUser.id);
+            meusPets.forEach(p => {
+                selectOpts += "<option value='" + p.id + "'>" + p.nome + "</option>";
+            });
+            selectPetExame.innerHTML = selectOpts;
+
+            // Carregar timeline exclusiva dos pets desse tutor
+            timeline.innerHTML = '';
+            const meusPetsIds = meusPets.map(p => p.id);
+            const prontuariosFiltrados = historicoClinico.filter(h => meusPetsIds.includes(h.petId));
+
+            document.getElementById('tutor-prontuario-count').innerText = prontuariosFiltrados.length + " registros";
+
+            if (prontuariosFiltrados.length === 0) {
+                timeline.innerHTML = "<div class='text-center py-12 text-slate-500'>Nenhum prontuário médico encontrado para os seus pets.</div>";
+                return;
+            }
+
+            // Ordenação decrescente de data
+            const ordenados = [...prontuariosFiltrados].sort((a,b) => new Date(b.data) - new Date(a.data));
+
+            ordenados.forEach(h => {
+                const pet = pets.find(p => p.id === h.petId);
+                let icone = '';
+                let corBorda = '';
+                let tituloRegistro = '';
+
+                if (h.tipo === 'vacina') {
+                    icone = "<div class='p-2.5 bg-slate-950 text-brand-lime rounded-xl border border-slate-800'><i data-lucide='shield-check' class='w-5 h-5'></i></div>";
+                    corBorda = 'border-l-4 border-l-brand-lime';
+                    tituloRegistro = 'Imunização (Vacina Aplicada)';
+                } else if (h.tipo === 'receita') {
+                    icone = "<div class='p-2.5 bg-slate-950 text-brand-blue rounded-xl border border-slate-800'><i data-lucide='file-text' class='w-5 h-5'></i></div>";
+                    corBorda = 'border-l-4 border-l-brand-blue';
+                    tituloRegistro = 'Receituário Digital Recebido';
+                } else if (h.tipo === 'exame') {
+                    icone = "<div class='p-2.5 bg-slate-950 text-brand-pink rounded-xl border border-slate-800'><i data-lucide='clipboard' class='w-5 h-5'></i></div>";
+                    corBorda = 'border-l-4 border-l-brand-pink';
+                    tituloRegistro = 'Laudo / Exame Médico';
+                }
+
+                timeline.innerHTML += "<div class='bg-slate-950 p-4 rounded-xl flex gap-4 items-start " + corBorda + " border border-slate-850'>" +
+                        icone +
+                        "<div class='flex-1 space-y-1'>" +
+                            "<div class='flex justify-between items-center'>" +
+                                "<h5 class='text-sm font-bold text-slate-100'>" + tituloRegistro + "</h5>" +
+                                "<span class='text-xs text-slate-500 font-semibold'>" + formatarDataBr(h.data) + "</span>" +
+                            "</div>" +
+                            "<p class='text-xs text-slate-400 font-bold'>Paciente: <span class='text-brand-lime'>" + (pet ? pet.nome : 'N/A') + "</span></p>" +
+                            "<div class='bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs text-slate-300 mt-2 font-medium'>" +
+                                h.detalhe +
+                            "</div>" +
+                        "</div>" +
+                    "</div>";
+            });
+            lucide.createIcons();
+        }
+
+        function salvarExameTutor(e) {
+            e.preventDefault();
+            const petId = document.getElementById('tutor-exame-pet-select').value;
+            const nomeExame = document.getElementById('tutor-exame-nome').value;
+            const laudo = document.getElementById('tutor-exame-resultado').value;
+            const dataHoje = new Date().toISOString().split('T')[0];
+
+            if (!petId || !nomeExame || !laudo) {
+                showToast("Preencha todos os campos do seu exame!", "error");
+                return;
+            }
+
+            const novoProntuario = {
+                id: (historicoClinico.length + 401).toString(),
+                petId: petId,
+                tipo: "exame",
+                data: dataHoje,
+                detalhe: "Exame anexado pelo Tutor: " + nomeExame + ". Detalhes/Resultado: " + laudo
+            };
+
+            historicoClinico.push(novoProntuario);
+            document.getElementById('tutor-exame-nome').value = '';
+            document.getElementById('tutor-exame-resultado').value = '';
+
+            renderizarHistoricoExclusivoTutor();
+            renderizarHistoricoClinico();
+            showToast("Resultado de exame adicionado ao histórico clínico do pet!");
+        }
+
+        // --- MÓDULO CLÍNICO (Acesso Veterinário/Gestor) ---
+        function alternarCamposClinicos() {
+            const tipo = document.getElementById('clinico-tipo').value;
+            document.getElementById('campos-vacina').classList.add('hidden');
+            document.getElementById('campos-receita').classList.add('hidden');
+            document.getElementById('campos-exame').classList.add('hidden');
+
+            if (tipo === 'vacina') {
+                document.getElementById('campos-vacina').classList.remove('hidden');
+            } else if (tipo === 'receita') {
+                document.getElementById('campos-receita').classList.remove('hidden');
+            } else if (tipo === 'exame') {
+                document.getElementById('campos-exame').classList.remove('hidden');
+            }
+        }
+
+        // Histórico Clínico Geral
+        function renderizarHistoricoClinico() {
+            const petSelect = document.getElementById('clinico-pet-select');
+            if (!petSelect) return;
+
+            let options = '';
+            pets.forEach(p => {
+                options += "<option value='" + p.id + "'>" + p.nome + "</option>";
+            });
+            petSelect.innerHTML = options;
+
+            // Também popular select de laudo (mesmos pets)
+            const laudoSelect = document.getElementById('laudo-pet-select');
+            if (laudoSelect) laudoSelect.innerHTML = options;
+
+            const timeline = document.getElementById('clinico-timeline');
+            if (!timeline) return;
+            timeline.innerHTML = '';
+            
+            document.getElementById('prontuario-count').innerText = historicoClinico.length + " registros";
+
+            if (historicoClinico.length === 0) {
+                timeline.innerHTML = "<div class='text-center py-12 text-slate-500'>Nenhum prontuário registrado ainda.</div>";
+                return;
+            }
+
+            const ordenados = [...historicoClinico].sort((a,b) => new Date(b.data) - new Date(a.data));
+
+            ordenados.forEach(h => {
+                const pet = pets.find(p => p.id === h.petId);
+                let icone = '';
+                let corBorda = '';
+                let tituloRegistro = '';
+
+                if (h.tipo === 'vacina') {
+                    icone = "<div class='p-2.5 bg-slate-950 text-brand-lime rounded-xl border border-slate-800'><i data-lucide='shield-check' class='w-5 h-5'></i></div>";
+                    corBorda = 'border-l-4 border-l-brand-lime';
+                    tituloRegistro = 'Registro de Imunização (Vacina)';
+                } else if (h.tipo === 'receita') {
+                    icone = "<div class='p-2.5 bg-slate-950 text-brand-blue rounded-xl border border-slate-800'><i data-lucide='file-text' class='w-5 h-5'></i></div>";
+                    corBorda = 'border-l-4 border-l-brand-blue';
+                    tituloRegistro = 'Emissão de Receituário Clínico';
+                } else if (h.tipo === 'exame') {
+                    icone = "<div class='p-2.5 bg-slate-950 text-brand-pink rounded-xl border border-slate-800'><i data-lucide='clipboard' class='w-5 h-5'></i></div>";
+                    corBorda = 'border-l-4 border-l-brand-pink';
+                    tituloRegistro = 'Exame Complementar Cadastrado';
+                } else if (h.tipo === 'laudo') {
+                    icone = "<div class='p-2.5 bg-slate-950 text-brand-lime rounded-xl border border-slate-800'><i data-lucide='file-text' class='w-5 h-5'></i></div>";
+                    corBorda = 'border-l-4 border-l-brand-lime';
+                    tituloRegistro = 'Laudo Médico Veterinário';
+                }
+
+                timeline.innerHTML += "<div class='bg-slate-950 p-4 rounded-xl flex gap-4 items-start " + corBorda + " border border-slate-850 hover:shadow-sm transition-all'>" +
+                        icone +
+                        "<div class='flex-1 space-y-1'>" +
+                            "<div class='flex justify-between items-center'>" +
+                                "<h5 class='text-sm font-bold text-slate-100'>" + tituloRegistro + "</h5>" +
+                                "<span class='text-xs text-slate-500 font-semibold'>" + formatarDataBr(h.data) + "</span>" +
+                            "</div>" +
+                            "<p class='text-xs text-slate-400 font-bold'>Paciente: <span class='text-brand-lime'>" + (pet ? pet.nome : 'Desconhecido') + "</span></p>" +
+                            "<div class='bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs text-slate-300 mt-2 font-medium'>" +
+                                h.detalhe +
+                            "</div>" +
+                            "<button onclick=\"removerRegistroClinico('" + h.id + "')\" class='text-brand-pink hover:opacity-80 font-bold text-[10px] mt-1.5 flex items-center gap-0.5'>" +
+                                "<i data-lucide='trash' class='w-3 h-3'></i> Excluir Registro" +
+                            "</button>" +
+                        "</div>" +
+                    "</div>";
+            });
+            lucide.createIcons();
+        }
+
+        function salvarHistoricoClinico(e) {
+            e.preventDefault();
+            const petId = document.getElementById('clinico-pet-select').value;
+            const tipo = document.getElementById('clinico-tipo').value;
+            const dataHoje = new Date().toISOString().split('T')[0];
+            let detalhe = '';
+
+            if (tipo === 'vacina') {
+                const nome = document.getElementById('vacina-nome').value;
+                const lote = document.getElementById('vacina-lote').value;
+                const venc = document.getElementById('vacina-venc').value;
+                if (!nome || !lote) {
+                    showToast("Preencha as informações de imunização obrigatórias!", "error");
+                    return;
+                }
+                detalhe = "Vacina aplicada: " + nome + ". Lote: " + lote + ". Vencimento: " + (venc ? formatarDataBr(venc) : 'Não informado') + ".";
+            } else if (tipo === 'receita') {
+                const texto = document.getElementById('receita-texto').value;
+                if (!texto) {
+                    showToast("Insira a receita médica veterinária!", "error");
+                    return;
+                }
+                detalhe = "Prescrição digital emitida: " + texto;
+            } else if (tipo === 'exame') {
+                const nomeExame = document.getElementById('exame-nome').value;
+                const laudo = document.getElementById('exame-laudo').value;
+                if (!nomeExame || !laudo) {
+                    showToast("Preencha o tipo de exame e o laudo correspondente!", "error");
+                    return;
+                }
+                detalhe = "Registro de exame: " + nomeExame + ". Laudo clínico: " + laudo;
+            }
+
+            const novo = {
+                id: (historicoClinico.length + 401).toString(),
+                petId: petId, tipo: tipo, data: dataHoje, detalhe: detalhe
+            };
+
+            historicoClinico.push(novo);
+            document.getElementById('vacina-nome').value = '';
+            document.getElementById('vacina-lote').value = '';
+            document.getElementById('vacina-venc').value = '';
+            document.getElementById('receita-texto').value = '';
+            document.getElementById('exame-nome').value = '';
+            document.getElementById('exame-laudo').value = '';
+
+            renderizarHistoricoClinico();
+            renderizarHistoricoExclusivoTutor();
+            showToast("Registro clínico inserido com sucesso!");
+        }
+
+        // Popular os campos do formulário de laudo a partir do pet selecionado
+        function popularLaudoFromPet() {
+            const petId = document.getElementById('laudo-pet-select').value;
+            const pet = pets.find(p => p.id === petId);
+            if (!pet) return;
+            document.getElementById('laudo-paciente-nome').value = pet.nome || '';
+            document.getElementById('laudo-especie').value = pet.especie || '';
+            document.getElementById('laudo-raca').value = pet.raca || '';
+            // idade/sexo/peso podem não existir no mock; manter campos livres
+        }
+
+        function salvarLaudo(e) {
+            e.preventDefault();
+            const petSelect = document.getElementById('laudo-pet-select');
+            const petId = petSelect ? petSelect.value : '';
+            const paciente = document.getElementById('laudo-paciente-nome').value.trim();
+            const especie = document.getElementById('laudo-especie').value.trim();
+            const raca = document.getElementById('laudo-raca').value.trim();
+            const idade = document.getElementById('laudo-idade').value.trim();
+            const sexo = document.getElementById('laudo-sexo').value.trim();
+            const peso = document.getElementById('laudo-peso').value.trim();
+            const tutor = document.getElementById('laudo-tutor').value.trim();
+            const datahora = document.getElementById('laudo-datahora').value;
+            const profissional = document.getElementById('laudo-profissional').value.trim() || (currentUser ? currentUser.nome + ' ' + (currentUser.crm || '') : '');
+            const historico = document.getElementById('laudo-historico').value.trim();
+            const metodo = document.getElementById('laudo-metodologia').value.trim();
+            const achados = document.getElementById('laudo-achados').value.trim();
+            const conclusao = document.getElementById('laudo-conclusao').value.trim();
+            const orientacoes = document.getElementById('laudo-orientacoes').value.trim();
+
+            if (!paciente || !profissional) {
+                showToast('Preencha pelo menos o paciente e o profissional responsável.', 'error');
+                return;
+            }
+
+            const detalhe = `Paciente: ${paciente}\nEspécie: ${especie}\nRaça: ${raca}\nIdade: ${idade}\nSexo: ${sexo}\nPeso: ${peso}\nTutor: ${tutor}\nAtendimento: ${datahora}\nProfissional: ${profissional}\n\nHistórico/Justificativa:\n${historico}\n\nMetodologia:\n${metodo}\n\nAchados:\n${achados}\n\nConclusão/Diagnóstico:\n${conclusao}\n\nOrientações:\n${orientacoes}`;
+
+            const novo = {
+                id: (historicoClinico.length + 401).toString(),
+                petId: petId || null,
+                tipo: 'laudo',
+                data: datahora ? datahora.split('T')[0] : new Date().toISOString().split('T')[0],
+                detalhe: detalhe
+            };
+
+            historicoClinico.push(novo);
+            renderizarHistoricoClinico();
+            showToast('Laudo emitido e salvo no prontuário do pet.');
+            document.getElementById('clinico-laudo-form').reset();
+        }
+
+        function removerRegistroClinico(id) {
+            historicoClinico = historicoClinico.filter(h => h.id !== id);
+            renderizarHistoricoClinico();
+            renderizarHistoricoExclusivoTutor();
+            showToast("Registro excluído.");
+        }
+
+     
+        // Fluxo de estética removido: Banho & Tosa não é mais tratado aqui.
+
+        // --- PRODUTOS & MEDICAMENTOS ---
+        function abrirModalProduto() { document.getElementById('modal-produto').classList.remove('hidden'); }
+        function fecharModalProduto() { document.getElementById('modal-produto').classList.add('hidden'); }
+
+        function salvarProduto(e) {
+            e.preventDefault();
+            const nome = document.getElementById('prod-nome').value;
+            const categoria = document.getElementById('prod-categoria').value;
+            const preco = parseFloat(document.getElementById('prod-preco').value);
+            const estoque = parseInt(document.getElementById('prod-qtd').value);
+
+            const novo = {
+                id: (produtos.length + 301).toString(),
+                nome: nome, categoria: categoria, estoque: estoque, preco: preco
+            };
+
+            produtos.push(novo);
+            fecharModalProduto();
+            document.getElementById('prod-nome').value = '';
+            document.getElementById('prod-preco').value = '';
+            document.getElementById('prod-qtd').value = '';
+
+            renderizarEstoque();
+            atualizarKPIs();
+            showToast("Insumo " + nome + " adicionado ao controle de estoque.");
+        }
+
+        function renderizarEstoque() {
+            const body = document.getElementById('produtos-table-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            produtos.forEach(p => {
+                let badgeEstoque = '';
+                if (p.estoque <= 5) {
+                    badgeEstoque = "<span class='bg-brand-pink/10 text-brand-pink text-xs font-bold px-2.5 py-1 rounded-full border border-brand-pink/20 flex items-center gap-1 w-fit'><i data-lucide='alert-circle' class='w-3.5 h-3.5'></i> Estoque Crítico</span>";
+                } else if (p.estoque <= 15) {
+                    badgeEstoque = "<span class='bg-brand-yellow/10 text-brand-yellow text-xs font-bold px-2.5 py-1 rounded-full border border-brand-yellow/20 flex items-center gap-1 w-fit'><i data-lucide='alert-circle' class='w-3.5 h-3.5'></i> Moderado</span>";
+                } else {
+                    badgeEstoque = "<span class='bg-brand-lime/10 text-brand-lime text-xs font-bold px-2.5 py-1 rounded-full border border-brand-lime/20 flex items-center gap-1 w-fit'><i data-lucide='check' class='w-3.5 h-3.5'></i> Seguro</span>";
+                }
+
+                body.innerHTML += "<tr class='hover:bg-slate-900/60 transition-all border-b border-slate-800/50'>" +
+                        "<td class='py-4 px-6 font-bold text-slate-100'>" + p.nome + "</td>" +
+                        "<td class='py-4 px-6 font-semibold text-slate-400'>" + p.categoria + "</td>" +
+                        "<td class='py-4 px-6'>" + badgeEstoque + "</td>" +
+                        "<td class='py-4 px-6 font-bold text-slate-300'>" + p.estoque + " un</td>" +
+                        "<td class='py-4 px-6 font-semibold text-brand-lime'>R$ " + p.preco.toFixed(2) + "</td>" +
+                        "<td class='py-4 px-6 text-right'>" +
+                            "<button onclick=\"adicionarQtdEstoque('" + p.id + "')\" class='text-brand-blue hover:text-white font-bold text-xs bg-brand-blue/10 border border-brand-blue/20 px-2.5 py-1.5 rounded-lg'><i data-lucide='plus' class='w-3.5 h-3.5 inline'></i> Repor +10</button>" +
+                        "</td>" +
+                    "</tr>";
+            });
+            lucide.createIcons();
+        }
+
+        function adicionarQtdEstoque(id) {
+            const p = produtos.find(item => item.id === id);
+            if (p) {
+                p.estoque += 10;
+                renderizarEstoque();
+                showToast("Reposição de " + p.nome + " realizada (+10 unidades).");
+            }
+        }
+
+        // --- ANALYTICS, FINANCEIRO & DASHBOARDS ---
+        function filtrarPeriodo(periodo) {
+            periodoFaturamento = periodo;
+            document.querySelectorAll('#periodo-diario, #periodo-semanal, #periodo-mensal, #periodo-anual').forEach(b => {
+                b.classList.remove('bg-white', 'shadow-sm', 'text-slate-800', 'bg-slate-900');
+                b.classList.add('text-slate-400');
+            });
+            const targetBtn = document.getElementById("periodo-" + periodo);
+            if (targetBtn) {
+                targetBtn.classList.add('bg-slate-900', 'text-white');
+                targetBtn.classList.remove('text-slate-400');
+            }
+
+            atualizarKPIs();
+            inicializarGraficos();
+        }
+
+        function atualizarKPIs() {
+            const prodKpi = document.getElementById('kpi-produtos-count');
+            if (prodKpi) prodKpi.innerText = produtos.length;
+
+            if (periodoFaturamento === 'diario') {
+                document.getElementById('kpi-faturamento').innerText = "R$ 480,00";
+                document.getElementById('kpi-vendas').innerText = "8";
+                document.getElementById('kpi-consultas').innerText = "3";
+            } else if (periodoFaturamento === 'semanal') {
+                document.getElementById('kpi-faturamento').innerText = "R$ 3.100,00";
+                document.getElementById('kpi-vendas').innerText = "35";
+                document.getElementById('kpi-consultas').innerText = "12";
+            } else if (periodoFaturamento === 'mensal') {
+                document.getElementById('kpi-faturamento').innerText = "R$ 12.850,00";
+                document.getElementById('kpi-vendas').innerText = "142";
+                document.getElementById('kpi-consultas').innerText = "68";
+            } else {
+                document.getElementById('kpi-faturamento').innerText = "R$ 154.200,00";
+                document.getElementById('kpi-vendas').innerText = "1.704";
+                document.getElementById('kpi-consultas').innerText = "816";
+            }
+        }
+
+        function inicializarGraficos() {
+            const ctxFin = document.getElementById('financeChart');
+            if (!ctxFin) return;
+
+            if (financeChartRef) financeChartRef.destroy();
+            if (topProductsChartRef) topProductsChartRef.destroy();
+
+            let labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'];
+            let dataClinica = [4000, 4500, 5100, 4800, 6200, 5800];
+            let dataEstetica = [3200, 3100, 4000, 3900, 4500, 4900];
+
+            if (periodoFaturamento === 'diario') {
+                labels = ['08h', '10h', '12h', '14h', '16h', '18h'];
+                dataClinica = [150, 0, 150, 0, 150, 0];
+                dataEstetica = [0, 90, 0, 90, 0, 0];
+            } else if (periodoFaturamento === 'semanal') {
+                labels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                dataClinica = [450, 600, 300, 900, 750, 300];
+                dataEstetica = [180, 270, 360, 450, 540, 270];
+            }
+
+            financeChartRef = new Chart(ctxFin.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Veterinária (Clínica)',
+                            data: dataClinica,
+                            borderColor: '#8B00FF',
+                            backgroundColor: 'rgba(139, 0, 255, 0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Pet Shop (Banho/Tosa)',
+                            data: dataEstetica,
+                            borderColor: '#CCFF00',
+                            backgroundColor: 'rgba(204, 255, 0, 0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: '#94a3b8' }
+                        } 
+                    },
+                    scales: {
+                        y: { 
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+
+            const ctxProd = document.getElementById('topProductsChart');
+            if (!ctxProd) return;
+
+            const sortedProds = [...produtos].sort((a,b) => b.estoque - a.estoque);
+
+            topProductsChartRef = new Chart(ctxProd.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sortedProds.map(p => p.nome.substring(0, 15) + '...'),
+                    datasets: [{
+                        label: 'Insumo em Estoque',
+                        data: sortedProds.map(p => p.estoque),
+                        backgroundColor: ['#CCFF00', '#FF007F', '#0033FF', '#8B00FF'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false } 
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: { 
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- RELATÓRIOS ANALÍTICOS ---
+        function abrirModalRelatorio() { document.getElementById('modal-relatorio').classList.remove('hidden'); }
+        function fecharModalRelatorio() { document.getElementById('modal-relatorio').classList.add('hidden'); }
+
+        function gerarRelatorio() {
+            document.getElementById('relatorio-data-geracao').innerText = "Gerado em: " + new Date().toLocaleDateString('pt-BR') + " às " + new Date().toLocaleTimeString('pt-BR');
+            document.getElementById('relatorio-faturamento').innerText = document.getElementById('kpi-faturamento').innerText;
+            document.getElementById('relatorio-tutores').innerText = tutores.length;
+            document.getElementById('relatorio-pets').innerText = pets.length;
+
+            const agendBody = document.getElementById('relatorio-agendamentos-body');
+            agendBody.innerHTML = '';
+            agendamentos.forEach(a => {
+                const pet = pets.find(p => p.id === a.petId);
+                const tutor = tutores.find(t => t.id === a.tutorId);
+                agendBody.innerHTML += "<tr class='border-b border-slate-800 py-2 text-slate-300'>" +
+                        "<td class='py-2 font-semibold text-slate-200'>" + (pet ? pet.nome : 'N/A') + "</td>" +
+                        "<td class='py-2 text-slate-400'>" + (tutor ? tutor.nome : 'N/A') + "</td>" +
+                        "<td class='py-2 font-medium text-slate-300'>" + a.servico + "</td>" +
+                        "<td class='py-2 text-xs text-brand-pink font-bold'>" + formatarDataBr(a.data) + " às " + a.hora + "</td>" +
+                        "<td class='py-2 text-right font-bold text-brand-lime'>R$ " + a.valor.toFixed(2) + "</td>" +
+                    "</tr>";
+            });
+
+            const prodBody = document.getElementById('relatorio-produtos-body');
+            prodBody.innerHTML = '';
+            produtos.forEach(p => {
+                prodBody.innerHTML += "<tr class='border-b border-slate-800 py-2 text-slate-300'>" +
+                        "<td class='py-2 font-semibold text-slate-200'>" + p.nome + "</td>" +
+                        "<td class='py-2 text-slate-400'>" + p.categoria + "</td>" +
+                        "<td class='py-2 text-xs font-bold text-brand-lime'>" + (p.estoque <= 5 ? 'REPOSIÇÃO NECESSÁRIA' : 'SEGURO') + "</td>" +
+                        "<td class='py-2 text-slate-300'>" + p.estoque + " un</td>" +
+                        "<td class='py-2 text-right font-bold text-brand-lime'>R$ " + p.preco.toFixed(2) + "</td>" +
+                    "</tr>";
+            });
+
+            abrirModalRelatorio();
+        }
+    </script>
+</body>
+</html>

@@ -1969,12 +1969,15 @@
             const laudoSelect = document.getElementById('laudo-pet-select');
             if (laudoSelect) laudoSelect.innerHTML = options;
 
+<<<<<<< HEAD
             // Preencher campo do profissional com o usuário atual (se houver)
             const profInput = document.getElementById('laudo-profissional');
             if (profInput && currentUser && (currentRole === 'admin' || currentRole === 'veterinario')) {
                 profInput.value = (currentUser.nome || '') + (currentUser.crm ? ' - ' + currentUser.crm : '');
             }
 
+=======
+>>>>>>> e28803388f4f364a4afd970b1850a26d4f933829
             const timeline = document.getElementById('clinico-timeline');
             if (!timeline) return;
             timeline.innerHTML = '';
@@ -2096,11 +2099,14 @@
 
         function salvarLaudo(e) {
             e.preventDefault();
+<<<<<<< HEAD
             // Apenas administradores e veterinários podem emitir laudos
             if (!(currentRole === 'admin' || currentRole === 'veterinario')) {
                 showToast('Sem permissão para emitir laudos.', 'error');
                 return;
             }
+=======
+>>>>>>> e28803388f4f364a4afd970b1850a26d4f933829
             const petSelect = document.getElementById('laudo-pet-select');
             const petId = petSelect ? petSelect.value : '';
             const paciente = document.getElementById('laudo-paciente-nome').value.trim();
@@ -2135,7 +2141,10 @@
 
             historicoClinico.push(novo);
             renderizarHistoricoClinico();
+<<<<<<< HEAD
             renderizarHistoricoExclusivoTutor();
+=======
+>>>>>>> e28803388f4f364a4afd970b1850a26d4f933829
             showToast('Laudo emitido e salvo no prontuário do pet.');
             document.getElementById('clinico-laudo-form').reset();
         }
