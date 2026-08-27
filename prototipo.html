@@ -190,6 +190,13 @@
                     <span>Módulo Clínico</span>
                 </button>
 
+                <!-- Gestão de Usuários (visível para Admin/Gestor; backend valida acesso efetivo) -->
+                <!-- TODO [Integração DB]: mostrar/ocultar via classe 'admin-gestor-only' e validar rotas no backend -->
+                <button onclick="switchTab('usuarios')" id="nav-usuarios" class="nav-btn admin-gestor-only hidden w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="user-cog" class="w-4 h-4 text-brand-yellow"></i>
+                    <span>Gestão de Usuários</span>
+                </button>
+
                
 
                 
@@ -981,6 +988,38 @@
         </div>
     </div>
 
+    <!--  (Placeholder) ABA GESTÃO DE USUÁRIOS - Integração com DB esperada -->
+    <section id="tab-usuarios" class="tab-content hidden space-y-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-bold text-slate-100">Gestão de Usuários</h3>
+                <p class="text-xs text-slate-400">Gerencie contas de administradores, gestores, veterinários e funcionários.</p>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="text-xs text-slate-400 uppercase">
+                        <th class="py-3 px-4">Nome</th>
+                        <th class="py-3 px-4">Papel</th>
+                        <th class="py-3 px-4">CPF</th>
+                        <th class="py-3 px-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="usuarios-table-body" class="divide-y divide-slate-800 text-sm text-slate-300">
+                    <!-- TODO [Integração DB]: substituir conteúdo estático pelo retorno de GET /api/usuarios -->
+                    <tr class="hover:bg-slate-800/50 transition-colors">
+                        <td class="py-3 px-6">Marcos Silva</td>
+                        <td class="py-3 px-6">Veterinário</td>
+                        <td class="py-3 px-6">222.333.444-55</td>
+                        <td class="py-3 px-6">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <!-- ===================== JAVASCRIPT GERAL ===================== -->
     <script>
         // --- BANCO DE DADOS EM MEMÓRIA (MOCKUPS INICIAIS COM CONTAS E SENHAS) ---
@@ -1301,6 +1340,40 @@
                 }
             } catch (err) {
                 console.warn('Erro aplicando visibilidade por role:', err);
+            }
+        }
+    
+        /*
+         * Exemplo de função para integrar com backend e usar o atributo `role`
+         * retornado pelo servidor. Mantém a lógica visual, mas assume autoridade
+         * do backend para autenticação/autorização real.
+         * TODO [Integração DB]: substituir chamadas mock por fetch/axios para
+         * endpoints autenticados (POST /api/login, GET /api/me, GET /api/usuarios ...)
+         */
+        function aplicarPermissoesInterface(role) {
+            // 1. Reset: Oculta tudo por padrão para segurança visual
+            document.querySelectorAll('.admin-only, .tutor-only, .admin-gestor-only, .gestor-only, .vet-only, .func-only').forEach(el => {
+                el.classList.add('hidden');
+                el.style.display = 'none';
+            });
+
+            // 2. Libera acesso baseado no atributo 'role' da entidade do Banco de Dados
+            if (role === 'admin' || role === 'gestor') {
+                document.querySelectorAll('.admin-gestor-only').forEach(el => {
+                    el.classList.remove('hidden');
+                    el.style.display = '';
+                });
+            }
+        
+            if (role === 'admin') {
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.classList.remove('hidden');
+                    el.style.display = '';
+                });
+            }
+        
+            if (role === 'veterinario') {
+                document.querySelectorAll('.vet-only').forEach(el => el.classList.remove('hidden'));
             }
         }
         
