@@ -206,10 +206,10 @@
             // Definir quais abas / navegações ficam visíveis por papel
             const roleTabs = {
                 // Admin reduzido: não mostrar abas de produtos e abas de tutor/tutor-only
-                admin: ['dashboard','agendamentos','clientes','clinica','usuarios'],
-                // Veterinário agora tem acesso a Dashboard, Agendamentos e Módulo Clínico
-                veterinario: ['dashboard','agendamentos','clinica'],
-                gestor: ['dashboard','agendamentos','produtos','clientes','usuarios'],
+                admin: ['dashboard','agendamentos','clientes','clinica','usuarios','historico-tutor'],
+                // Veterinário agora tem acesso a Dashboard, Agendamentos, Módulo Clínico e Histórico dos Pets
+                veterinario: ['dashboard','agendamentos','clinica','historico-tutor'],
+                gestor: ['dashboard','agendamentos','produtos','clientes','usuarios','historico-tutor'],
                 funcionario: ['dashboard','banho-tosa','agendamentos']
             };
 
@@ -397,6 +397,14 @@
         
             if (role === 'veterinario') {
                 document.querySelectorAll('.vet-only').forEach(el => el.classList.remove('hidden'));
+            }
+
+            // Mostrar aba de histórico do tutor (exames) para todos os usuários profissionais
+            if (role === 'admin' || role === 'veterinario' || role === 'gestor') {
+                document.querySelectorAll('.tutor-only').forEach(el => {
+                    el.classList.remove('hidden');
+                    el.style.display = '';
+                });
             }
         }
         
@@ -938,25 +946,40 @@
             const timeline = document.getElementById('tutor-historico-timeline');
             const selectPetExame = document.getElementById('tutor-exame-pet-select');
             
-            if (!timeline || currentRole !== 'tutor' || !currentUser) return;
+            if (!timeline || !selectPetExame || !currentUser) return;
 
-            // Popular select de exames do tutor
-            let selectOpts = '<option value="">Escolher meu pet...</option>';
-            const meusPets = pets.filter(p => p.tutorId === currentUser.id);
-            meusPets.forEach(p => {
+            // Popular select de exames - mostrar todos os pets para profissionais, apenas meus pets para tutores
+            let selectOpts = '<option value="">Escolher um pet...</option>';
+            let petsParaMostrar;
+            
+            if (currentRole === 'tutor') {
+                petsParaMostrar = pets.filter(p => p.tutorId === currentUser.id);
+            } else {
+                // Para veterinários, admins e gestores - mostrar todos os pets
+                petsParaMostrar = pets;
+            }
+            
+            petsParaMostrar.forEach(p => {
                 selectOpts += "<option value='" + p.id + "'>" + p.nome + "</option>";
             });
             selectPetExame.innerHTML = selectOpts;
 
-            // Carregar timeline exclusiva dos pets desse tutor
+            // Carregar timeline - para tutores, apenas seus pets; para profissionais, todos os pets
             timeline.innerHTML = '';
-            const meusPetsIds = meusPets.map(p => p.id);
-            const prontuariosFiltrados = historicoClinico.filter(h => meusPetsIds.includes(h.petId));
+            let prontuariosFiltrados;
+            
+            if (currentRole === 'tutor') {
+                const meusPetsIds = petsParaMostrar.map(p => p.id);
+                prontuariosFiltrados = historicoClinico.filter(h => meusPetsIds.includes(h.petId));
+            } else {
+                // Profissionais veem todos os exames
+                prontuariosFiltrados = historicoClinico.filter(h => h.tipo === 'exame');
+            }
 
             document.getElementById('tutor-prontuario-count').innerText = prontuariosFiltrados.length + " registros";
 
             if (prontuariosFiltrados.length === 0) {
-                timeline.innerHTML = "<div class='text-center py-12 text-slate-500'>Nenhum prontuário médico encontrado para os seus pets.</div>";
+                timeline.innerHTML = "<div class='text-center py-12 text-slate-500'>Nenhum exame encontrado.</div>";
                 return;
             }
 
@@ -983,6 +1006,14 @@
                     tituloRegistro = 'Laudo / Exame Médico';
                 }
 
+                let botoesAcao = '';
+                if (h.tipo === 'exame') {
+                    botoesAcao = "<div class='flex gap-2 mt-3'>" +
+                        "<button type='button' onclick=\"editarExameTutor('" + h.id + "')\" class='text-xs px-2 py-1 bg-brand-lime/20 text-brand-lime rounded hover:bg-brand-lime/30 font-bold transition-all'>Editar</button>" +
+                        "<button type='button' onclick=\"excluirExameTutor('" + h.id + "')\" class='text-xs px-2 py-1 bg-brand-pink/20 text-brand-pink rounded hover:bg-brand-pink/30 font-bold transition-all'>Excluir</button>" +
+                    "</div>";
+                }
+
                 timeline.innerHTML += "<div class='bg-slate-950 p-4 rounded-xl flex gap-4 items-start " + corBorda + " border border-slate-850'>" +
                         icone +
                         "<div class='flex-1 space-y-1'>" +
@@ -994,6 +1025,7 @@
                             "<div class='bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs text-slate-300 mt-2 font-medium'>" +
                                 h.detalhe +
                             "</div>" +
+                            botoesAcao +
                         "</div>" +
                     "</div>";
             });
@@ -1005,6 +1037,7 @@
             const petId = document.getElementById('tutor-exame-pet-select').value;
             const nomeExame = document.getElementById('tutor-exame-nome').value;
             const laudo = document.getElementById('tutor-exame-resultado').value;
+            const editId = document.getElementById('tutor-exame-edit-id').value;
             const dataHoje = new Date().toISOString().split('T')[0];
 
             if (!petId || !nomeExame || !laudo) {
@@ -1012,24 +1045,98 @@
                 return;
             }
 
-            const novoProntuario = {
-                id: (historicoClinico.length + 401).toString(),
-                petId: petId,
-                tipo: "exame",
-                data: dataHoje,
-                detalhe: "Exame anexado pelo Tutor: " + nomeExame + ". Detalhes/Resultado: " + laudo
-            };
+            if (editId) {
+                // Modo edição: atualizar registro existente
+                const registro = historicoClinico.find(h => h.id === editId);
+                if (registro) {
+                    registro.petId = petId;
+                    registro.detalhe = "Exame anexado pelo Tutor: " + nomeExame + ". Detalhes/Resultado: " + laudo;
+                    showToast("Exame atualizado com sucesso!");
+                } else {
+                    showToast("Registro não encontrado!", "error");
+                    return;
+                }
+            } else {
+                // Modo criação: adicionar novo registro
+                const novoProntuario = {
+                    id: (historicoClinico.length + 401).toString(),
+                    petId: petId,
+                    tipo: "exame",
+                    data: dataHoje,
+                    detalhe: "Exame anexado pelo Tutor: " + nomeExame + ". Detalhes/Resultado: " + laudo
+                };
+                historicoClinico.push(novoProntuario);
+                showToast("Resultado de exame adicionado ao histórico clínico do pet!");
+            }
 
-            historicoClinico.push(novoProntuario);
             document.getElementById('tutor-exame-nome').value = '';
             document.getElementById('tutor-exame-resultado').value = '';
+            document.getElementById('tutor-exame-edit-id').value = '';
+            document.getElementById('tutor-exame-submit-btn').textContent = 'Enviar Resultados';
+            document.getElementById('tutor-exame-cancel-btn').classList.add('hidden');
 
             renderizarHistoricoExclusivoTutor();
             renderizarHistoricoClinico();
-            showToast("Resultado de exame adicionado ao histórico clínico do pet!");
+        }
+
+        function editarExameTutor(id) {
+            const registro = historicoClinico.find(h => h.id === id);
+            if (!registro) return;
+
+            const match = registro.detalhe.match(/Exame anexado pelo Tutor: (.+?)\. Detalhes\/Resultado: (.+)$/);
+            if (match) {
+                document.getElementById('tutor-exame-pet-select').value = registro.petId;
+                document.getElementById('tutor-exame-nome').value = match[1].trim();
+                document.getElementById('tutor-exame-resultado').value = match[2].trim();
+            }
+
+            document.getElementById('tutor-exame-edit-id').value = id;
+            document.getElementById('tutor-exame-submit-btn').textContent = 'Atualizar Exame';
+            document.getElementById('tutor-exame-cancel-btn').classList.remove('hidden');
+
+            showToast('Exame carregado para edição.');
+            document.getElementById('tutor-exame-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function excluirExameTutor(id) {
+            if (confirm('Tem certeza que deseja excluir este exame?')) {
+                historicoClinico = historicoClinico.filter(h => h.id !== id);
+                renderizarHistoricoExclusivoTutor();
+                renderizarHistoricoClinico();
+                showToast("Exame excluído com sucesso!");
+            }
+        }
+
+        function cancelarEdicaoExameTutor() {
+            document.getElementById('tutor-exame-nome').value = '';
+            document.getElementById('tutor-exame-resultado').value = '';
+            document.getElementById('tutor-exame-edit-id').value = '';
+            document.getElementById('tutor-exame-submit-btn').textContent = 'Enviar Resultados';
+            document.getElementById('tutor-exame-cancel-btn').classList.add('hidden');
         }
 
         // --- MÓDULO CLÍNICO (Acesso Veterinário/Gestor) ---
+        // Lógica para exibir/ocultar os campos específicos de vacinação
+        function toggleCamposVacina(tipoRegistro) {
+            const blocoVacina = document.getElementById('bloco-vacina') || document.getElementById('campos-vacina');
+            const nomeVacina = document.getElementById('vacina-nome');
+            const loteVacina = document.getElementById('vacina-lote');
+
+            if (!blocoVacina || !nomeVacina || !loteVacina) return;
+
+            if (tipoRegistro === 'vacina') {
+                blocoVacina.classList.remove('hidden');
+                blocoVacina.classList.add('grid');
+                nomeVacina.required = true;
+                loteVacina.required = true;
+            } else {
+                blocoVacina.classList.add('hidden');
+                blocoVacina.classList.remove('grid');
+                nomeVacina.required = false;
+                loteVacina.required = false;
+            }
+        }
+
         function alternarCamposClinicos() {
             const tipo = document.getElementById('clinico-tipo').value;
             document.getElementById('campos-vacina').classList.add('hidden');
@@ -1043,6 +1150,90 @@
             } else if (tipo === 'exame') {
                 document.getElementById('campos-exame').classList.remove('hidden');
             }
+
+            toggleCamposVacina(tipo);
+        }
+
+        function formatarTipoRegistro(tipo) {
+            const labels = {
+                vacina: 'Vacina',
+                receita: 'Receita',
+                exame: 'Exame',
+                laudo: 'Laudo'
+            };
+            return labels[tipo] || 'Registro';
+        }
+
+        function renderizarRegistrosClinicos() {
+            const tbody = document.getElementById('clinico-registros-body');
+            const count = document.getElementById('clinico-registros-count');
+            if (!tbody) return;
+
+            const ordenados = [...historicoClinico].sort((a, b) => new Date(b.data) - new Date(a.data));
+            if (count) count.innerText = ordenados.length + ' registro' + (ordenados.length === 1 ? '' : 's');
+
+            if (ordenados.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='5' class='py-4 text-center text-slate-500'>Nenhum registro clínico cadastrado.</td></tr>";
+                return;
+            }
+
+            tbody.innerHTML = '';
+            ordenados.forEach(h => {
+                const pet = pets.find(p => p.id === h.petId);
+                const resumo = h.detalhe.length > 70 ? h.detalhe.substring(0, 70) + '...' : h.detalhe;
+                tbody.innerHTML += "<tr class='border-b border-slate-800 align-top'>" +
+                    "<td class='py-3 pr-3 font-semibold text-slate-200'>" + (pet ? pet.nome : 'Pet não informado') + "</td>" +
+                    "<td class='py-3 pr-3'><span class='px-2 py-1 rounded-full text-[10px] font-bold border border-slate-700 bg-slate-950 text-slate-200'>" + formatarTipoRegistro(h.tipo) + "</span></td>" +
+                    "<td class='py-3 pr-3 text-slate-400'>" + formatarDataBr(h.data) + "</td>" +
+                    "<td class='py-3 pr-3 text-slate-300 max-w-xs'>" + resumo + "</td>" +
+                    "<td class='py-3 text-right whitespace-nowrap'>" +
+                        "<button type='button' onclick=\"editarRegistroClinico('" + h.id + "')\" class='text-brand-lime hover:opacity-80 text-xs font-bold mr-2'>Editar</button>" +
+                        "<button type='button' onclick=\"removerRegistroClinico('" + h.id + "')\" class='text-brand-pink hover:opacity-80 text-xs font-bold'>Excluir</button>" +
+                    "</td>" +
+                "</tr>";
+            });
+        }
+
+        function editarRegistroClinico(id) {
+            const registro = historicoClinico.find(h => h.id === id);
+            if (!registro) return;
+
+            const form = document.getElementById('clinico-form');
+            const petSelect = document.getElementById('clinico-pet-select');
+            const tipoSelect = document.getElementById('clinico-tipo');
+            if (!form || !petSelect || !tipoSelect) return;
+
+            petSelect.value = registro.petId || petSelect.options[0]?.value || '';
+            tipoSelect.value = registro.tipo || 'vacina';
+            form.dataset.editId = id;
+            alternarCamposClinicos();
+
+            if (registro.tipo === 'vacina') {
+                const match = registro.detalhe.match(/Vacina aplicada: (.+?)\. Lote: (.+?)\. Vencimento: (.+?)\./);
+                if (match) {
+                    document.getElementById('vacina-nome').value = match[1].trim();
+                    document.getElementById('vacina-lote').value = match[2].trim();
+                    const venc = match[3] && match[3].includes('/') ? match[3] : '';
+                    if (venc) {
+                        const [dia, mes, ano] = venc.split('/');
+                        if (dia && mes && ano) {
+                            document.getElementById('vacina-venc').value = ano + '-' + mes.padStart(2,'0') + '-' + dia.padStart(2,'0');
+                        }
+                    }
+                }
+            } else if (registro.tipo === 'receita') {
+                const texto = registro.detalhe.replace('Prescrição digital emitida: ', '').trim();
+                document.getElementById('receita-texto').value = texto;
+            } else if (registro.tipo === 'exame') {
+                const match = registro.detalhe.match(/Registro de exame: (.+?)\. Laudo clínico: (.+)$/);
+                if (match) {
+                    document.getElementById('exame-nome').value = match[1].trim();
+                    document.getElementById('exame-laudo').value = match[2].trim();
+                }
+            }
+
+            showToast('Registro carregado no formulário para edição.');
+            document.getElementById('clinico-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // Histórico Clínico Geral
@@ -1070,6 +1261,7 @@
             timeline.innerHTML = '';
             
             document.getElementById('prontuario-count').innerText = historicoClinico.length + " registros";
+            renderizarRegistrosClinicos();
 
             if (historicoClinico.length === 0) {
                 timeline.innerHTML = "<div class='text-center py-12 text-slate-500'>Nenhum prontuário registrado ainda.</div>";
@@ -1113,9 +1305,14 @@
                             "<div class='bg-slate-900 p-2.5 rounded-lg border border-slate-800 text-xs text-slate-300 mt-2 font-medium'>" +
                                 h.detalhe +
                             "</div>" +
-                            "<button onclick=\"removerRegistroClinico('" + h.id + "')\" class='text-brand-pink hover:opacity-80 font-bold text-[10px] mt-1.5 flex items-center gap-0.5'>" +
-                                "<i data-lucide='trash' class='w-3 h-3'></i> Excluir Registro" +
-                            "</button>" +
+                            "<div class='mt-1.5 flex items-center gap-2'>" +
+                                "<button onclick=\"editarRegistroClinico('" + h.id + "')\" class='text-brand-lime hover:opacity-80 font-bold text-[10px] flex items-center gap-0.5'>" +
+                                    "<i data-lucide='pencil' class='w-3 h-3'></i> Editar" +
+                                "</button>" +
+                                "<button onclick=\"removerRegistroClinico('" + h.id + "')\" class='text-brand-pink hover:opacity-80 font-bold text-[10px] flex items-center gap-0.5'>" +
+                                    "<i data-lucide='trash' class='w-3 h-3'></i> Excluir Registro" +
+                                "</button>" +
+                            "</div>" +
                         "</div>" +
                     "</div>";
             });
@@ -1124,6 +1321,7 @@
 
         function salvarHistoricoClinico(e) {
             e.preventDefault();
+            const form = document.getElementById('clinico-form');
             const petId = document.getElementById('clinico-pet-select').value;
             const tipo = document.getElementById('clinico-tipo').value;
             const dataHoje = new Date().toISOString().split('T')[0];
@@ -1155,22 +1353,40 @@
                 detalhe = "Registro de exame: " + nomeExame + ". Laudo clínico: " + laudo;
             }
 
-            const novo = {
-                id: (historicoClinico.length + 401).toString(),
-                petId: petId, tipo: tipo, data: dataHoje, detalhe: detalhe
-            };
+            const editId = form ? form.dataset.editId : null;
 
-            historicoClinico.push(novo);
+            if (editId) {
+                const registro = historicoClinico.find(h => h.id === editId);
+                if (registro) {
+                    registro.petId = petId;
+                    registro.tipo = tipo;
+                    registro.data = dataHoje;
+                    registro.detalhe = detalhe;
+                }
+                delete form.dataset.editId;
+                showToast("Registro clínico atualizado com sucesso!");
+            } else {
+                const novo = {
+                    id: (historicoClinico.length + 401).toString(),
+                    petId: petId, tipo: tipo, data: dataHoje, detalhe: detalhe
+                };
+                historicoClinico.push(novo);
+                showToast("Registro clínico inserido com sucesso!");
+            }
+
             document.getElementById('vacina-nome').value = '';
             document.getElementById('vacina-lote').value = '';
             document.getElementById('vacina-venc').value = '';
             document.getElementById('receita-texto').value = '';
             document.getElementById('exame-nome').value = '';
             document.getElementById('exame-laudo').value = '';
+            document.getElementById('clinico-form').reset();
+            document.getElementById('clinico-tipo').value = 'vacina';
+            alternarCamposClinicos();
 
             renderizarHistoricoClinico();
             renderizarHistoricoExclusivoTutor();
-            showToast("Registro clínico inserido com sucesso!");
+            renderizarRegistrosClinicos();
         }
 
         // Popular os campos do formulário de laudo a partir do pet selecionado
@@ -1234,6 +1450,7 @@
             historicoClinico = historicoClinico.filter(h => h.id !== id);
             renderizarHistoricoClinico();
             renderizarHistoricoExclusivoTutor();
+            renderizarRegistrosClinicos();
             showToast("Registro excluído.");
         }
 
@@ -1601,3 +1818,6 @@
 
             abrirModalRelatorio();
         }
+
+        const tipoRegistroInicial = document.getElementById('clinico-tipo')?.value || 'vacina';
+        toggleCamposVacina(tipoRegistroInicial);

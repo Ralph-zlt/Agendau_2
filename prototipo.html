@@ -136,7 +136,7 @@
                 <!-- Histórico Médico do Tutor -->
                 <button onclick="switchTab('historico-tutor')" id="nav-historico-tutor" class="nav-btn tutor-only w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
                     <i data-lucide="history" class="w-4 h-4 text-brand-pink"></i>
-                    <span>Histórico dos Pets</span>
+                    <span>Relatórios</span>
                 </button>
 
                 <!-- Módulo Clínico (Restrições de CRM aplicáveis) -->
@@ -404,7 +404,7 @@
                 </section>
 
                 <!-- 3.2 ABA HISTÓRICO DOS PETS (Apenas Tutor) -->
-                <section id="tab-historico-tutor" class="tab-content hidden space-y-6">
+                <section id="tab-historico-tutor" class="tab-content hidden space-y-6 tutor-only">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h3 class="text-lg font-bold text-slate-100">Linha de Tempo & Histórico de Vacinas</h3>
@@ -421,6 +421,7 @@
                             <p class="text-xs text-slate-400">Anexe ou digite o resultado de exames para que os veterinários possam acompanhar o prontuário.</p>
                             
                             <form id="tutor-exame-form" onsubmit="salvarExameTutor(event)" class="space-y-4">
+                                <input type="hidden" id="tutor-exame-edit-id">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Selecione seu Pet</label>
                                     <select id="tutor-exame-pet-select" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none" required>
@@ -435,9 +436,14 @@
                                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Detalhes do Resultado / Laudo</label>
                                     <textarea id="tutor-exame-resultado" rows="4" placeholder="Digite os valores do exame ou observações enviadas pela clínica parceira..." required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-brand-blue outline-none"></textarea>
                                 </div>
-                                <button type="submit" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition-all shadow-md">
-                                    Enviar Resultados
-                                </button>
+                                <div class="flex gap-2">
+                                    <button type="submit" class="flex-1 bg-brand-blue hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition-all shadow-md" id="tutor-exame-submit-btn">
+                                        Enviar Resultados
+                                    </button>
+                                    <button type="button" id="tutor-exame-cancel-btn" class="hidden flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg transition-all shadow-md" onclick="cancelarEdicaoExameTutor()">
+                                        Cancelar
+                                    </button>
+                                </div>
                             </form>
                         </div>
 
@@ -543,6 +549,33 @@
                             </form>
                         </div>
 
+                        <!-- Cadastro de Registros: lista para edição e exclusão futura (DB) -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-bold text-slate-100 flex items-center gap-2">
+                                    <i data-lucide="list-checks" class="text-brand-lime w-5 h-5"></i> Registros Cadastrados
+                                </h4>
+                                <span id="clinico-registros-count" class="text-xs bg-brand-purple/20 text-brand-lime border border-brand-purple/30 px-2.5 py-1 rounded-full font-bold">0 registros</span>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm text-slate-300">
+                                    <thead>
+                                        <tr class="border-b border-slate-800 text-xs text-slate-400 uppercase">
+                                            <th class="py-2 pr-3">Pet</th>
+                                            <th class="py-2 pr-3">Tipo</th>
+                                            <th class="py-2 pr-3">Data</th>
+                                            <th class="py-2 pr-3">Resumo</th>
+                                            <th class="py-2 text-right">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="clinico-registros-body" class="divide-y divide-slate-800">
+                                        <!-- TODO [Integração DB]: substituir por fetch('/api/clinica/registros') e renderizar tabela dinâmica -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+ 
                         <!-- Emissão de Laudo (visível para Veterinário e Administrador) -->
                         <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm space-y-4 vet-only admin-only">
                             <h4 class="font-bold text-slate-100 flex items-center gap-2">
