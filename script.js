@@ -181,6 +181,7 @@
         function realizarLogin(userObj, role) {
             currentUser = userObj;
             currentRole = role;
+            localStorage.setItem('userRole', role); // Salvar role no localStorage para uso posterior
 
             // Esconde a tela de login
             document.getElementById('login-screen').classList.add('hidden');
@@ -209,7 +210,8 @@
                 admin: ['dashboard','agendamentos','clientes','clinica','usuarios','historico-tutor'],
                 // Veterinário agora tem acesso a Dashboard, Agendamentos, Módulo Clínico e Histórico dos Pets
                 veterinario: ['dashboard','agendamentos','clinica','historico-tutor'],
-                gestor: ['dashboard','agendamentos','produtos','clientes','usuarios','historico-tutor'],
+                // Gestor: Dashboard, Agendamentos, Clientes, Usuários, Serviços, Dados Agro, Relatórios
+                gestor: ['dashboard','agendamentos','clientes','usuarios','servicos','dados-agro','historico-tutor'],
                 funcionario: ['dashboard','banho-tosa','agendamentos']
             };
 
@@ -240,6 +242,8 @@
             else if (role === 'gestor') {
                 document.getElementById('current-user-role-label').innerText = "Gestor";
                 document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('hidden'));
+                // Mostrar relatório do gestor (não do tutor)
+                aplicarPermissaoGestor();
                 switchTab(allowed[0] || 'dashboard');
             } 
             else if (role === 'funcionario') {
@@ -1821,3 +1825,134 @@
 
         const tipoRegistroInicial = document.getElementById('clinico-tipo')?.value || 'vacina';
         toggleCamposVacina(tipoRegistroInicial);
+
+        // ========================================
+        // FUNCIONALIDADES DO GESTOR
+        // ========================================
+
+        // --- CADASTRO DE SERVIÇOS ---
+        function abrirModalServico() {
+            // TODO [Frontend]: Abrir modal de cadastro de serviço (criar ou editar)
+            alert('Modal de Serviço será implementado');
+        }
+
+        function salvarServico() {
+            // TODO [API]: POST /api/servicos ou PUT /api/servicos/:id
+            // Dados a enviar:
+            // {
+            //   "name": valor de #servico-nome,
+            //   "type": valor de #servico-tipo,
+            //   "price": valor de #servico-preco,
+            //   "duration": valor de #servico-duracao,
+            //   "description": valor de #servico-descricao
+            // }
+            console.log('Serviço salvo');
+        }
+
+        function editarServico(servicoId) {
+            // TODO [API]: GET /api/servicos/:id para carregar dados do serviço
+            // Preencher form com dados
+            // Abrir modal de edição
+            console.log('Editando serviço:', servicoId);
+        }
+
+        function excluirServico(servicoId) {
+            // TODO [API]: DELETE /api/servicos/:id
+            // Pedir confirmação antes de excluir
+            if (confirm('Tem certeza que deseja excluir este serviço?')) {
+                console.log('Serviço excluído:', servicoId);
+            }
+        }
+
+        // --- EDITAR DADOS AGROPECUÁRIOS ---
+        function salvarDadosAgro() {
+            // TODO [API]: PUT /api/company/info
+            // Dados a enviar:
+            // {
+            //   "name": document.getElementById('agro-nome').value,
+            //   "cnpj": document.getElementById('agro-cnpj').value,
+            //   "phone": document.getElementById('agro-telefone').value,
+            //   "email": document.getElementById('agro-email').value,
+            //   "address": document.getElementById('agro-endereco').value,
+            //   "city": document.getElementById('agro-cidade').value,
+            //   "state": document.getElementById('agro-estado').value,
+            //   "zip_code": document.getElementById('agro-cep').value,
+            //   "description": document.getElementById('agro-descricao').value,
+            //   "logo": arquivo de #agro-logo (multipart upload)
+            // }
+            alert('Dados agropecuários salvos');
+            console.log('Dados Agro salvos');
+        }
+
+        // --- RELATÓRIOS GESTOR ---
+        function carregarRelatorios() {
+            // TODO [API]: GET /api/reports/revenue, /api/reports/bookings, etc
+            // Filtrar por:
+            // - Data inicial: document.getElementById('relatorio-data-inicio').value
+            // - Data final: document.getElementById('relatorio-data-fim').value
+            // - Serviço: document.getElementById('relatorio-servico-filter').value
+            
+            console.log('Carregando relatórios...');
+            // Atualizar gráficos (Chart.js)
+            // TODO [Frontend]: Integrar Chart.js
+            // carregarGraficoReceita();
+            // carregarGraficoServicos();
+            // carregarTabelaTopServicos();
+        }
+
+        function exportarRelatorios() {
+            // TODO [API]: GET /api/reports/export?format=pdf ou xlsx
+            // Retornar arquivo para download
+            alert('Exportação será implementada');
+            console.log('Exportando relatórios...');
+        }
+
+        function carregarGraficoReceita() {
+            // TODO [Frontend - Chart.js]:
+            // const ctx = document.getElementById('chart-receita').getContext('2d');
+            // new Chart(ctx, {
+            //   type: 'line',
+            //   data: {
+            //     labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+            //     datasets: [{
+            //       label: 'Receita',
+            //       data: [2000, 2500, 3000, 2800, 3500, 4000],
+            //       borderColor: '#84cc16',
+            //       backgroundColor: 'rgba(132, 204, 22, 0.1)',
+            //       tension: 0.4
+            //     }]
+            //   }
+            // });
+        }
+
+        function carregarGraficoServicos() {
+            // TODO [Frontend - Chart.js]:
+            // Pie Chart com distribuição de agendamentos por serviço
+            // Dados: GET /api/reports/bookings/by-service
+        }
+
+        function carregarTabelaTopServicos() {
+            // TODO [API]: GET /api/reports/top-services
+            // Preencher tabela com:
+            // - Nome do serviço
+            // - Quantidade de agendamentos
+            // - Receita total
+            // - Percentual
+        }
+
+        // --- SUPORTE A PERMISSÕES (gestor-only, admin-gestor-only) ---
+        // Adicionar classes ao documento quando necessário
+        function aplicarPermissaoGestor() {
+            const currentRole = localStorage.getItem('userRole');
+            
+            // Mostrar elementos gestor-only apenas se role for 'gestor'
+            if (currentRole === 'gestor') {
+                document.querySelectorAll('.gestor-only').forEach(el => {
+                    el.classList.remove('hidden');
+                });
+                
+                // Mostrar relatório do gestor, não do tutor
+                document.getElementById('relatorio-tutor-content')?.classList.add('hidden');
+                document.getElementById('relatorio-gestor-content')?.classList.remove('hidden');
+            }
+        }

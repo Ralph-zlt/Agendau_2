@@ -152,7 +152,19 @@
                     <span>Gerenciamento de Contas</span>
                 </button>
 
-               
+                <!-- Cadastro de Serviços (visível apenas para Gestor) -->
+                <button onclick="switchTab('servicos')" id="nav-servicos" class="nav-btn gestor-only hidden w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="package" class="w-4 h-4 text-brand-blue"></i>
+                    <span>Cadastro de Serviços</span>
+                </button>
+
+                <!-- Editar Dados Agro (visível apenas para Gestor) -->
+                <button onclick="switchTab('dados-agro')" id="nav-dados-agro" class="nav-btn gestor-only hidden w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <i data-lucide="building" class="w-4 h-4 text-brand-lime"></i>
+                    <span>Dados Agropecuários</span>
+                </button>
+
+                
 
                 
             <!-- Rodapé com Usuário Logado e Logout -->
@@ -404,15 +416,17 @@
                 </section>
 
                 <!-- 3.2 ABA HISTÓRICO DOS PETS (Apenas Tutor) -->
-                <section id="tab-historico-tutor" class="tab-content hidden space-y-6 tutor-only">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <h3 class="text-lg font-bold text-slate-100">Linha de Tempo & Histórico de Vacinas</h3>
-                            <p class="text-xs text-slate-400">Veja o histórico de consultas aplicadas, vacinas recebidas e envie novos exames médicos de seus pets.</p>
+                <section id="tab-historico-tutor" class="tab-content hidden space-y-6">
+                    <!-- CONTEÚDO TUTOR/VET: Histórico de Exames -->
+                    <div id="relatorio-tutor-conten t" class="tutor-only hidden">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-100">Linha de Tempo & Histórico de Vacinas</h3>
+                                <p class="text-xs text-slate-400">Veja o histórico de consultas aplicadas, vacinas recebidas e envie novos exames médicos de seus pets.</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- Envio Rápido de Exame por parte do Tutor -->
                         <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 shadow-sm space-y-4">
                             <h4 class="font-bold text-slate-100 flex items-center gap-2">
@@ -457,6 +471,180 @@
                             <div id="tutor-historico-timeline" class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
                                 <!-- Prontuários exclusivos do Tutor logado -->
                             </div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- CONTEÚDO GESTOR: Análises de Negócio -->
+                    <div id="relatorio-gestor-content" class="gestor-only hidden">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-100">Relatórios & Análises de Negócio</h3>
+                                <p class="text-xs text-slate-400">Acompanhe receita, agendamentos, performance e métricas da empresa.</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="exportarRelatorios()" class="bg-brand-lime hover:bg-green-600 text-slate-950 font-bold px-4 py-2 rounded-lg transition-all flex items-center gap-2">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Exportar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Filtros -->
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-300">Data Inicial</label>
+                                    <input type="date" id="relatorio-data-inicio" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-300">Data Final</label>
+                                    <input type="date" id="relatorio-data-fim" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-300">Filtrar por Serviço</label>
+                                    <select id="relatorio-servico-filter" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                                        <option value="">Todos os Serviços</option>
+                                        <!-- TODO [API]: Popular com GET /api/servicos -->
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button onclick="carregarRelatorios()" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg transition-all">
+                                        Filtrar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Métricas Principais -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <!-- TODO [API]: GET /api/reports/revenue
+                                 Retornar: { "total_revenue": 15000, "month_revenue": 3500 }
+                                 Atualizar cartão de receita com os valores
+                            -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs text-slate-400">Receita Total</p>
+                                        <h4 class="text-2xl font-bold text-brand-lime">R$ 45.320,00</h4>
+                                        <p class="text-xs text-green-400 mt-1">+12% vs mês anterior</p>
+                                    </div>
+                                    <i data-lucide="trending-up" class="w-8 h-8 text-brand-lime opacity-20"></i>
+                                </div>
+                            </div>
+
+                            <!-- TODO [API]: GET /api/reports/bookings
+                                 Retornar: { "total_bookings": 120, "completed": 95, "cancelled": 5 }
+                            -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs text-slate-400">Agendamentos</p>
+                                        <h4 class="text-2xl font-bold text-brand-blue">120</h4>
+                                        <p class="text-xs text-slate-400 mt-1">95 realizados</p>
+                                    </div>
+                                    <i data-lucide="calendar" class="w-8 h-8 text-brand-blue opacity-20"></i>
+                                </div>
+                            </div>
+
+                            <!-- TODO [API]: GET /api/reports/users
+                                 Retornar: { "active_users": 45, "new_this_month": 8 }
+                            -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs text-slate-400">Usuários Ativos</p>
+                                        <h4 class="text-2xl font-bold text-brand-pink">45</h4>
+                                        <p class="text-xs text-slate-400 mt-1">8 novos este mês</p>
+                                    </div>
+                                    <i data-lucide="users" class="w-8 h-8 text-brand-pink opacity-20"></i>
+                                </div>
+                            </div>
+
+                            <!-- TODO [API]: GET /api/reports/satisfaction
+                                 Retornar: { "average_rating": 4.8, "total_reviews": 42 }
+                            -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-xs text-slate-400">Satisfação</p>
+                                        <h4 class="text-2xl font-bold text-yellow-400">4.8/5.0</h4>
+                                        <p class="text-xs text-slate-400 mt-1">42 avaliações</p>
+                                    </div>
+                                    <i data-lucide="star" class="w-8 h-8 text-yellow-400 opacity-20"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <!-- TODO [Frontend - Integração Chart.js/ApexCharts]:
+                                 Gráfico de Receita Mensal
+                                 - Eixo X: Meses (Jan-Dez)
+                                 - Eixo Y: Valores em R$
+                                 - Dados: GET /api/reports/revenue/monthly
+                                 - Tipo: Line Chart ou Bar Chart
+                                 Exemplo HTML:
+                                 <canvas id="chart-receita"></canvas>
+                                 
+                                 JavaScript:
+                                 const ctx = document.getElementById('chart-receita').getContext('2d');
+                                 new Chart(ctx, {
+                                   type: 'line',
+                                   data: { labels: [...meses], datasets: [{label: 'Receita', data: [...valores]}] },
+                                   options: {...}
+                                 });
+                            -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                                <h4 class="font-bold text-slate-100 mb-4">Receita Mensal</h4>
+                                <canvas id="chart-receita" height="80"></canvas>
+                            </div>
+
+                            <!-- TODO [Frontend - Integração Chart.js/ApexCharts]:
+                                 Gráfico de Agendamentos por Serviço
+                                 - Tipo: Pie Chart ou Doughnut
+                                 - Dados: GET /api/reports/bookings/by-service
+                                 Exemplo:
+                                 {
+                                   "data": [
+                                     {"service": "Consulta", "count": 45},
+                                     {"service": "Banho", "count": 30},
+                                     {"service": "Tosa", "count": 25}
+                                   ]
+                                 }
+                            -->
+                            <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                                <h4 class="font-bold text-slate-100 mb-4">Agendamentos por Serviço</h4>
+                                <canvas id="chart-servicos" height="80"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Tabela de Top Serviços -->
+                        <!-- TODO [API]: GET /api/reports/top-services
+                             Retornar: 
+                             {
+                               "data": [
+                                 {"name": "Consulta Veterinária", "count": 85, "revenue": 12750},
+                                 {"name": "Banho", "count": 60, "revenue": 6000},
+                                 {"name": "Tosa", "count": 45, "revenue": 4500}
+                               ]
+                             }
+                             Popular a tabela dinamicamente
+                        -->
+                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+                            <h4 class="font-bold text-slate-100 mb-4">Serviços Mais Procurados</h4>
+                            <table class="w-full text-sm text-left">
+                                <thead>
+                                    <tr class="text-xs text-slate-400 uppercase border-b border-slate-800">
+                                        <th class="py-3 px-4">Serviço</th>
+                                        <th class="py-3 px-4">Agendamentos</th>
+                                        <th class="py-3 px-4">Receita</th>
+                                        <th class="py-3 px-4">%</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="relatorio-top-servicos" class="divide-y divide-slate-800 text-slate-300">
+                                    <!-- Preenchido por JavaScript -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </section>
@@ -1071,6 +1259,181 @@
             </table>
         </div>
     </section>
+
+    <!-- ===================== CADASTRO DE SERVIÇOS (GESTOR) ===================== -->
+    <section id="tab-servicos" class="tab-content hidden space-y-6 gestor-only hidden">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-bold text-slate-100">Cadastro de Serviços</h3>
+                <p class="text-xs text-slate-400">Gerencie os serviços oferecidos: criar, editar, visualizar preços e duração.</p>
+            </div>
+            <div>
+                <button onclick="abrirModalServico()" class="bg-brand-blue hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4 text-brand-lime"></i> Novo Serviço
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="text-xs text-slate-400 uppercase">
+                        <th class="py-3 px-4">Nome</th>
+                        <th class="py-3 px-4">Tipo</th>
+                        <th class="py-3 px-4">Preço</th>
+                        <th class="py-3 px-4">Duração</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="servicos-table-body" class="divide-y divide-slate-800 text-sm text-slate-300">
+                    <!-- TODO [API - Integração Backend]:
+                         Implementar fetch('GET /api/servicos') que retorna JSON:
+                         {
+                           "data": [
+                             { "id": "1", "name": "Consulta", "type": "veterinario", "price": 150.00, "duration": 30, "active": true },
+                             ...
+                           ]
+                         }
+                         Popular dinamicamente a tabela com os dados retornados.
+                         
+                         Endpoints necessários:
+                         - GET /api/servicos (listar todos)
+                         - POST /api/servicos (criar novo)
+                         - PUT /api/servicos/:id (editar)
+                         - DELETE /api/servicos/:id (excluir)
+                         
+                         Database - Tabela 'services':
+                         - id (UUID)
+                         - name (VARCHAR 255)
+                         - type (VARCHAR: veterinario, pet-shop, banho, tosa, etc)
+                         - price (DECIMAL 10,2)
+                         - duration (INT - minutos)
+                         - description (TEXT)
+                         - active (BOOLEAN)
+                         - created_at, updated_at (TIMESTAMP)
+                    -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ===================== EDITAR DADOS AGROPECUÁRIOS (GESTOR) ===================== -->
+    <section id="tab-dados-agro" class="tab-content hidden space-y-6 gestor-only hidden">
+        <div>
+            <h3 class="text-lg font-bold text-slate-100">Editar Dados Agropecuários</h3>
+            <p class="text-xs text-slate-400">Configure as informações da sua empresa agropecuária.</p>
+        </div>
+
+        <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-sm space-y-4">
+            <!-- TODO [API - Integração Backend]:
+                 Implementar fetch('GET /api/company/info') que retorna JSON:
+                 {
+                   "data": {
+                     "name": "Agendau Veterinária",
+                     "cnpj": "12.345.678/0001-99",
+                     "address": "Rua xyz, 123",
+                     "city": "São Paulo",
+                     "state": "SP",
+                     "zip_code": "01234-567",
+                     "phone": "(11) 3000-0000",
+                     "email": "contato@agendau.com",
+                     "logo_url": "https://...",
+                     "description": "Clínica veterinária especializada..."
+                   }
+                 }
+                 Preencher o form automaticamente ao carregar.
+                 
+                 Endpoints necessários:
+                 - GET /api/company/info (obter dados atuais)
+                 - PUT /api/company/info (atualizar dados)
+                 
+                 Database - Tabela 'company_info':
+                 - id (UUID)
+                 - name (VARCHAR 255)
+                 - cnpj (VARCHAR 18) - validar CNPJ
+                 - address (VARCHAR 255)
+                 - city (VARCHAR 100)
+                 - state (VARCHAR 2)
+                 - zip_code (VARCHAR 10)
+                 - phone (VARCHAR 15)
+                 - email (VARCHAR 255)
+                 - logo_url (TEXT)
+                 - description (TEXT)
+                 - created_at, updated_at (TIMESTAMP)
+                 
+                 Funcionalidades:
+                 - Upload de logo com preview
+                 - Validação de CNPJ
+                 - Salvar com botão "Atualizar"
+            -->
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-300">Nome da Empresa</label>
+                    <input type="text" id="agro-nome" placeholder="Ex: Agendau Veterinária" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300">CNPJ</label>
+                    <input type="text" id="agro-cnpj" placeholder="00.000.000/0000-00" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-300">Telefone</label>
+                    <input type="tel" id="agro-telefone" placeholder="(11) 3000-0000" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300">Email</label>
+                    <input type="email" id="agro-email" placeholder="contato@agendau.com" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-300">Endereço</label>
+                    <input type="text" id="agro-endereco" placeholder="Rua/Av. e número" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300">Cidade</label>
+                    <input type="text" id="agro-cidade" placeholder="São Paulo" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-300">Estado</label>
+                    <input type="text" id="agro-estado" placeholder="SP" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none" maxlength="2">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-300">CEP</label>
+                    <input type="text" id="agro-cep" placeholder="00000-000" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="text-xs font-semibold text-slate-300">Descrição</label>
+                <textarea id="agro-descricao" placeholder="Descrição da empresa..." class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:border-brand-blue focus:outline-none" rows="3"></textarea>
+            </div>
+
+            <div>
+                <label class="text-xs font-semibold text-slate-300">Logo</label>
+                <input type="file" id="agro-logo" accept="image/*" class="w-full bg-slate-800 text-slate-100 text-sm rounded-lg px-3 py-2 border border-slate-700">
+            </div>
+
+            <div class="flex gap-2 pt-4">
+                <button onclick="salvarDadosAgro()" class="bg-brand-blue hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg transition-all flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Atualizar
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== RELATÓRIOS GESTOR (diferente do veterinário) ===================== -->
+    <!-- NOTE: Este tab sobrescreve/substitui o relatório do veterinário para gestores -->
+    <!-- O veterinário vê: histórico de exames dos pets
+         O gestor vê: análises de negócio, receita, agendamentos, usuários -->
 
     <!-- ===================== JAVASCRIPT GERAL ===================== -->
     <script src="script.js"></script>
