@@ -145,25 +145,30 @@
                     <span>Módulo Clínico</span>
                 </button>
 
-                <!-- Gerenciamento de Contas (visível para Admin/Gestor; backend valida acesso efetivo) -->
+<!-- Gerenciamento de Contas (visível para Admin/Gestor; backend valida acesso efetivo) -->
                 <!-- TODO [Integração DB]: mostrar/ocultar via classe 'admin-gestor-only' e validar rotas no backend -->
-                <button onclick="switchTab('usuarios')" id="nav-usuarios" class="nav-btn admin-gestor-only hidden w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
-                    <i data-lucide="user-cog" class="w-4 h-4 text-brand-yellow"></i>
-                    <span>Gerenciamento de Contas</span>
+                <button onclick="switchTab('usuarios')" id="nav-usuarios" class="nav-btn admin-gestor-only hidden w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <div class="flex items-center gap-3 w-full">
+                        <i data-lucide="user-cog" class="w-4 h-4 text-brand-yellow"></i>
+                        <span>Gerenciamento de Contas</span>
+                    </div>
                 </button>
 
                 <!-- Cadastro de Serviços (visível apenas para Gestor) -->
-                <button onclick="switchTab('servicos')" id="nav-servicos" class="nav-btn gestor-only hidden w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
-                    <i data-lucide="package" class="w-4 h-4 text-brand-blue"></i>
-                    <span>Cadastro de Serviços</span>
+                <button onclick="switchTab('servicos')" id="nav-servicos" class="nav-btn gestor-only hidden w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <div class="flex items-center gap-3 w-full">
+                        <i data-lucide="package" class="w-4 h-4 text-brand-blue"></i>
+                        <span>Cadastro de Serviços</span>
+                    </div>
                 </button>
 
                 <!-- Editar Dados Agro (visível apenas para Gestor) -->
-                <button onclick="switchTab('dados-agro')" id="nav-dados-agro" class="nav-btn gestor-only hidden w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
-                    <i data-lucide="building" class="w-4 h-4 text-brand-lime"></i>
-                    <span>Dados Agropecuários</span>
+                <button onclick="switchTab('dados-agro')" id="nav-dados-agro" class="nav-btn gestor-only hidden w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-slate-900 hover:text-white text-slate-400">
+                    <div class="flex items-center gap-3 w-full">
+                        <i data-lucide="building" class="w-4 h-4 text-brand-lime"></i>
+                        <span>Dados Agropecuários</span>
+                    </div>
                 </button>
-
                 
 
                 
