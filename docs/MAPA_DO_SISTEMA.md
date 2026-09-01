@@ -57,11 +57,20 @@
 ## 6. Temas claro/escuro (importante)
 - **Mecanismo**: atributo `data-theme` no `<html>`. Padrão = `prefers-color-scheme` do sistema (com acompanhamento ao vivo); escolha manual salva em `localStorage` (chave `dayvet-tema`).
 - **Botão**: `#btn-tema` no header (ícone lua/sol). Lógica: `script.js` SEÇÃO 12.
-- **Onde editar cores do modo claro**: `styles.css`, seção **"7. TEMA CLARO"** — regras `:root[data-theme='light'] .<classe> { ... }` sobrescrevem cada classe utilitária do Tailwind usada no HTML.
-  - Fluxo: (1) localize a classe no elemento em `index.html`; (2) adicione/edite `:root[data-theme='light'] .<classe>`.
-- **Exceção login**: bloco `:root[data-theme='light'] #login-screen ...` mantém o neon escuro — **não** alterar se a intenção for clarear o app todo.
-- **Modo escuro**: bloco **"6. TEMA ESCURO"** reforça o contraste dos textos acinzentados (`text-slate-300/400/500...`).
-- **PENDENTE**: as **cores do modo claro devem ser refinadas** numa próxima iteração.
+- **Método padrão com variáveis CSS**: cada tema tem um **bloco de paleta** no `dayvet/styles.css` — `:root[data-theme='dark'] { ... }` (seção **"6. TEMA ESCURO"**) e `:root[data-theme='light'] { ... }` (seção **"7. TEMA CLARO"**). **Para escolher/dar nova cor a um tema, edite APENAS os valores das variáveis `--...`** — nomes em pt-BR com comentários (fundos, textos, bordas, marca, status, sombras, login).
+- As regras de aplicação (logo abaixo) só espelham as variáveis nas classes utilitárias do Tailwind — **não** precisam ser editadas para mudar cores.
+- **Tela de login**: usa as variáveis `--login-*` (no fim do bloco claro) e o bloco `:root[data-theme='light'] #login-screen ...` para manter o neon escuro — **não** alterar se a intenção for clarear o app todo.
+- **PENDENTE**: as **cores do modo claro devem ser refinadas** numa próxima iteração — basta ajustar as variáveis (nomes abaixo);
+
+| Grupo | Variáveis (modo claro) |
+|---|---|
+| Fundos | `--pagina` · `--card` · `--nav-fundo` · `--nav-fundo-90` · `--branco*` · `--elemento` · `--elemento-hover` · `--suave-1/2` |
+| Textos | `--texto-primario` · `--texto-secundario` · `--texto-corpo` · `--texto-suave` · `--texto-fraco` · `--texto-600…900` · `--texto-base` |
+| Bordas | `--borda` · `--borda-suave` · `--borda-clara` · `--borda-divisora` · `--borda-50/60` |
+| Marca | `--lime-texto/cheio` · `--pink-texto` · `--azul-texto/cheio` · `--roxo-texto/cheio` · `--amarelo-texto` (+ variantes `*-10/20/30/40/50`, hovers) |
+| Status | `--rosa-texto/cheio/suave-*` · `--ambar-texto/suave/borda` |
+| Efeitos | `--sombra-*` · `--anel-azul` · `--backdrop-modal*` · `--vidro-*` · `--neon-*` · `--trilha` · `--polegar` |
+| Login | `--login-*` (fundo, textos, borda, marca neon) |
 
 ## 7. Convenções
 - Comentários `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` marcam os pontos de plugar a API.

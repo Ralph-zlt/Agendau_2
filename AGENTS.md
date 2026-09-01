@@ -23,9 +23,9 @@ Instruções para **IAs e colaboradores** que forem editar este código.
 - Ao remover funcionalidade: conferir com busca (grep) que não sobraram referências em `index.html` e `script.js`.
 
 ## Cores / Temas
-- Modo claro: editar em `styles.css`, seção **"7. TEMA CLARO"** — regras `:root[data-theme='light'] .<classe> { ... }` sobrescrevem as classes Tailwind uma a uma.
-- Exceção: a tela de login mantém o neon escuro (bloco `:root[data-theme='light'] #login-screen`).
-- **Pendente:** as cores do modo claro devem ser refinadas (detalhes no MAPA).
+- **Método padrão com variáveis CSS**: para mudar a cor de um tema, edite **apenas os valores das variáveis** no bloco `:root[data-theme='light'] { ... }` (seção **"7. TEMA CLARO"**) ou `:root[data-theme='dark'] { ... }` (seção "6. TEMA ESCURO") de `dayvet/styles.css`. Cada variável tem comentário em pt-BR (fundos, textos, bordas, marca, status, login). Não é preciso mexer nas regras de aplicação — elas apenas espelham as variáveis nas classes Tailwind.
+- Exceção: a tela de login mantém o neon escuro nos dois temas (variáveis `--login-*` no fim do bloco claro; bloco `:root[data-theme='light'] #login-screen ...`).
+- **Pendente:** ainda falta refinar a escolha de cores da paleta do modo claro (nomes das variáveis estão em `styles.css` seção 7 e no `docs/MAPA_DO_SISTEMA.md` §6).
 
 ## A cada commit (manutenção do doc)
 - Adicione uma entrada no topo de `docs/CHANGELOG.md` (data + o que mudou + por quê + onde).
