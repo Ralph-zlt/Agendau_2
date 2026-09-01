@@ -51,6 +51,17 @@
 
     <!-- Estilos do projeto -->
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Aplicação antecipada do tema para evitar flash -->
+    <script>
+        (function() {
+            var tema = localStorage.getItem('dayvet-tema');
+            if (!tema) {
+                tema = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            }
+            document.documentElement.setAttribute('data-theme', tema);
+        })();
+    </script>
 </head>
 <body class="flex flex-col min-h-screen custom-scrollbar antialiased selection:bg-brand-purple selection:text-white">
 
@@ -148,6 +159,9 @@
                     <span id="current-user-role-label" class="text-[10px] font-bold bg-brand-blue/20 text-brand-blue border border-brand-blue/30 px-2 py-0.5 rounded-full uppercase ml-1">Admin</span>
                 </div>
 
+                <button onclick="alternarTema()" id="btn-tema" class="p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-slate-400 hover:text-brand-yellow transition-all" title="Alternar tema">
+                    <i data-lucide="sun" class="w-4 h-4"></i>
+                </button>
                 <button onclick="handleLogout()" class="p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl text-slate-400 hover:text-brand-pink transition-all" title="Sair do Sistema">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                 </button>
@@ -172,10 +186,6 @@
                 <button id="nav-clinica" onclick="switchTab('clinica')" class="nav-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all text-slate-400 hover:text-white">
                     <i data-lucide="stethoscope" class="w-4 h-4 text-brand-yellow"></i>
                     <span>Módulo Clínico</span>
-                </button>
-                <button id="nav-produtos" onclick="switchTab('produtos')" class="nav-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all text-slate-400 hover:text-white">
-                    <i data-lucide="package" class="w-4 h-4 text-teal-400"></i>
-                    <span>Estoque & Produtos</span>
                 </button>
                 <button id="nav-relatorios" onclick="switchTab('relatorios')" class="nav-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all text-slate-400 hover:text-white">
                     <i data-lucide="bar-chart-4" class="w-4 h-4 text-brand-purple"></i>
@@ -250,21 +260,11 @@
                         </span>
                     </div>
 
-                    <div id="card-produtos-kpi" class="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-2 relative overflow-hidden">
-                        <div class="flex items-center justify-between text-slate-400">
-                            <span class="text-xs font-bold uppercase tracking-wider">Estoque Alerta</span>
-                            <i data-lucide="alert-triangle" class="w-5 h-5 text-brand-yellow"></i>
-                        </div>
-                        <div id="kpi-produtos-count" class="text-2xl font-black text-white">2 Itens Baixos</div>
-                        <span class="text-[11px] text-brand-yellow font-bold flex items-center gap-1">
-                            <i data-lucide="package" class="w-3.5 h-3.5"></i> Reposição recomendada
-                        </span>
-                    </div>
                 </div>
 
                 <!-- Gráficos -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-4">
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-4">
                         <div class="flex items-center justify-between">
                             <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
                                 <i data-lucide="line-chart" class="w-4 h-4 text-brand-blue"></i>
@@ -273,16 +273,6 @@
                         </div>
                         <div class="h-64 relative">
                             <canvas id="financeChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-4">
-                        <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
-                            <i data-lucide="pie-chart" class="w-4 h-4 text-brand-pink"></i>
-                            <span>Serviços & Produtos Mais Vendidos</span>
-                        </h4>
-                        <div class="h-64 relative flex items-center justify-center">
-                            <canvas id="topProductsChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -457,40 +447,8 @@
                 </div>
             </section>
 
-            <!-- TAB 5: ESTOQUE DE PRODUTOS -->
-            <section id="tab-produtos" class="tab-content hidden space-y-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950 p-6 rounded-3xl border border-slate-850">
-                    <div>
-                        <h3 class="text-xl font-black text-white">Controle de Estoque & Insumos</h3>
-                        <p class="text-xs text-slate-400">Gestão de medicamentos, vacinas e acessórios de uso veterinário.</p>
-                    </div>
-                    <button onclick="abrirModalProduto()" class="px-5 py-3 bg-gradient-to-r from-teal-500 to-emerald-600 hover:opacity-90 font-bold text-xs text-white rounded-xl shadow-lg flex items-center gap-2">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        <span>Cadastrar Produto</span>
-                    </button>
-                </div>
 
-                <div class="bg-slate-950 rounded-3xl border border-slate-850 overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider font-extrabold border-b border-slate-800">
-                                <tr>
-                                    <th class="py-4 px-6">Nome do Produto</th>
-                                    <th class="py-4 px-6">Categoria</th>
-                                    <th class="py-4 px-6">Quantidade</th>
-                                    <th class="py-4 px-6">Preço Unitário</th>
-                                    <th class="py-4 px-6 text-right">Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="produtos-table-body" class="divide-y divide-slate-850">
-                                <!-- Preenchido dinamicamente via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 6: RELATÓRIOS -->
+            <!-- TAB 5: RELATÓRIOS -->
             <section id="tab-relatorios" class="tab-content hidden space-y-6">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950 p-6 rounded-3xl border border-slate-850">
                     <div>
@@ -887,40 +845,6 @@
         </div>
     </div>
 
-    <!-- Modal: Cadastrar / Editar Produto -->
-    <div id="modal-produto" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div class="bg-slate-950 border border-slate-850 w-full max-w-lg p-6 rounded-3xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h4 id="modal-produto-titulo" class="font-black text-white text-base">Cadastrar Produto</h4>
-                <button onclick="fecharModalProduto()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form onsubmit="salvarProduto(event)" class="space-y-3">
-                <input type="hidden" id="edit-prod-id" value="">
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome do Produto</label>
-                    <input type="text" id="prod-nome" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Categoria</label>
-                    <input type="text" id="prod-categoria" required placeholder="Ex: Medicamento, Vacina, Acessório..." class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Quantidade em Estoque</label>
-                        <input type="number" id="prod-estoque" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Preço Unitário (R$)</label>
-                        <input type="number" step="0.01" id="prod-preco" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
-                    </div>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="fecharModalProduto()" class="px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 text-xs font-bold text-white rounded-xl">Salvar Produto</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- Modal: Registrar / Editar Valores do Agendamento -->
     <div id="modal-registrar-valor" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -1016,7 +940,6 @@
                         <option value="financeiro">Relatório Financeiro Completo</option>
                         <option value="agendamentos">Relatório de Agendamentos & Consultas</option>
                         <option value="laudos">Relatório de Laudos e Receituários Emitidos</option>
-                        <option value="estoque">Relatório de Giro de Estoque</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">

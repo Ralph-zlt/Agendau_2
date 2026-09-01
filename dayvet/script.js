@@ -3,8 +3,8 @@
 // Mapa de seções: [1] Mock DB · [2] Permissões RBAC ·
 // [3] Autenticação/Login · [4] Toasts · [5] Navegação/Tabs ·
 // [6] Agendamentos · [7] Tutores & Pets · [8] Clínico ·
-// [9] Estoque · [10] Relatórios · [11] Usuários ·
-// [12] Gráficos · [13] Inicialização
+// [9] Relatórios · [10] Usuários · [11] Gráficos ·
+// [12] Tema · [13] Inicialização
 // ==========================================================
 
 // ==========================================================
@@ -36,12 +36,6 @@ let agendamentos = [
     { id: "204", petId: "102", tutorId: "2", servico: "Consulta Veterinária", data: "2026-05-19", hora: "11:00", valor: 150.00, status: "pendente" }
 ];
 
-let produtos = [
-    { id: "301", nome: "Dipirona Veterinária Gotas", categoria: "Medicamento", estoque: 15, preco: 35.00 },
-    { id: "302", nome: "Coleira Antipulgas Frontline", categoria: "Acessório", estoque: 22, preco: 89.90 },
-    { id: "303", nome: "Vacina V10 Imunizante", categoria: "Vacina", estoque: 1, preco: 120.00 }
-];
-
 let historicoClinico = [
     { id: "401", petId: "101", tipo: "laudo", data: "2026-05-15", detalhe: "LAUDO DIAGNÓSTICO: Ultrassonografia abdominal sem alterações hepáticas ou renais significativas. Animal em ótimas condições gerais." },
     { id: "402", petId: "102", tipo: "receita", data: "2026-05-12", detalhe: "PRESCRIÇÃO: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." },
@@ -65,7 +59,6 @@ let configRestricao = "comercial";
 let filtroAgendamentosStatus = "todos";
 
 let financeChartRef = null;
-let topProductsChartRef = null;
 
 // ==========================================================
 // SEÇÃO 2: MATRIZ DE PERMISSÕES POR PERFIL (RBAC)
@@ -204,7 +197,6 @@ function showToast(mensagem, tipo) {
 function atualizarPermissoesNavegacao() {
     // Admin assume todas as funções que eram do gestor (acesso irrestrito via '*')
     const podeUsuarios = (currentRole === 'admin');
-    const podeProdutos = (currentRole === 'admin');
     const podeRelatorios = (currentRole === 'admin');
     const podeClinica = true; // Todos os perfis podem acessar o Módulo Clínico
     const podeClientes = (currentRole === 'admin' || currentRole === 'funcionario');
@@ -212,7 +204,6 @@ function atualizarPermissoesNavegacao() {
 
     // Abas de navegação
     toggleEl('nav-usuarios', podeUsuarios);
-    toggleEl('nav-produtos', podeProdutos);
     toggleEl('nav-relatorios', podeRelatorios);
     toggleEl('nav-clinica', podeClinica);
     toggleEl('nav-clientes', podeClientes);
@@ -260,10 +251,6 @@ function switchTab(tabId) {
         showToast("Acesso restrito: perfil sem permissão para gerenciar usuários.", "error");
         return;
     }
-    if (tabId === 'produtos' && currentRole !== 'admin') {
-        showToast("Acesso restrito: perfil sem permissão para gerenciar estoque.", "error");
-        return;
-    }
     if (tabId === 'clientes' && currentRole === 'veterinario') {
         showToast("Acesso restrito: perfil sem permissão para Tutores & Pets.", "error");
         return;
@@ -301,8 +288,6 @@ function switchTab(tabId) {
     } else if (tabId === 'clinica') {
         renderizarHistoricoClinico();
         popularPetsDropdowns();
-    } else if (tabId === 'produtos') {
-        renderizarEstoque();
     } else if (tabId === 'relatorios') {
         switchRelatorioTab('servicos');
     } else if (tabId === 'usuarios') {
@@ -790,80 +775,7 @@ function imprimirDocumentoGenerico(id) {
 }
 
 // ==========================================================
-// SEÇÃO 9: ESTOQUE & PRODUTOS
-// ==========================================================
-
-function renderizarEstoque() {
-    const body = document.getElementById('produtos-table-body');
-    if (!body) return;
-    body.innerHTML = '';
-
-    produtos.forEach(p => {
-        let statusEstoque = p.estoque < 5
-            ? `<span class='text-brand-pink font-bold'>${p.estoque} un (Baixo)</span>`
-            : `<span class='text-slate-200 font-bold'>${p.estoque} un</span>`;
-
-        body.innerHTML += `
-            <tr class='hover:bg-slate-900/60 border-b border-slate-800/50'>
-                <td class='py-3.5 px-6 font-bold text-slate-200'>${p.nome}</td>
-                <td class='py-3.5 px-6 text-slate-400'>${p.categoria}</td>
-                <td class='py-3.5 px-6'>${statusEstoque}</td>
-                <td class='py-3.5 px-6 text-slate-200 font-bold'>R$ ${p.preco.toFixed(2)}</td>
-                <td class='py-3.5 px-6 text-right'>
-                    <button onclick="adicionarEstoque('${p.id}')" class='px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white rounded-lg'>+ Repor</button>
-                </td>
-            </tr>
-        `;
-    });
-}
-
-function adicionarEstoque(id) {
-    const prod = produtos.find(p => p.id === id);
-    if (prod) {
-        prod.estoque += 5;
-        renderizarEstoque();
-        showToast("Estoque atualizado (+5 unidades)!");
-    }
-}
-
-function abrirModalProduto() {
-    document.getElementById('edit-prod-id').value = '';
-    document.getElementById('modal-produto-titulo').innerText = 'Cadastrar Produto';
-    document.getElementById('prod-nome').value = '';
-    document.getElementById('prod-categoria').value = '';
-    document.getElementById('prod-estoque').value = '';
-    document.getElementById('prod-preco').value = '';
-    document.getElementById('modal-produto').classList.remove('hidden');
-}
-function fecharModalProduto() { document.getElementById('modal-produto').classList.add('hidden'); }
-
-function salvarProduto(e) {
-    e.preventDefault();
-    const editId = document.getElementById('edit-prod-id').value;
-    const nome = document.getElementById('prod-nome').value;
-    const categoria = document.getElementById('prod-categoria').value;
-    const estoque = parseInt(document.getElementById('prod-estoque').value);
-    const preco = parseFloat(document.getElementById('prod-preco').value);
-
-    if (editId) {
-        const prod = produtos.find(p => p.id === editId);
-        if (prod) {
-            prod.nome = nome;
-            prod.categoria = categoria;
-            prod.estoque = estoque;
-            prod.preco = preco;
-        }
-        showToast("Produto atualizado com sucesso!");
-    } else {
-        produtos.unshift({ id: Date.now().toString(), nome, categoria, estoque, preco });
-        showToast("Produto adicionado ao estoque!");
-    }
-    fecharModalProduto();
-    renderizarEstoque();
-}
-
-// ==========================================================
-// SEÇÃO 10: RELATÓRIOS
+// SEÇÃO 9: RELATÓRIOS
 // ==========================================================
 
 function switchRelatorioTab(tipo) {
@@ -1060,7 +972,7 @@ function executarGeracaoRelatorio() {
 }
 
 // ==========================================================
-// SEÇÃO 11: USUÁRIOS & PERMISSÕES
+// SEÇÃO 10: USUÁRIOS & PERMISSÕES
 // ==========================================================
 
 function renderizarUsuarios() {
@@ -1151,12 +1063,11 @@ function popularPetsDropdowns() {
 }
 
 // ==========================================================
-// SEÇÃO 12: GRÁFICOS (Chart.js)
+// SEÇÃO 11: GRÁFICOS (Chart.js)
 // ==========================================================
 
 function inicializarGraficos() {
     const ctx1 = document.getElementById('financeChart')?.getContext('2d');
-    const ctx2 = document.getElementById('topProductsChart')?.getContext('2d');
 
     if (ctx1) {
         if (financeChartRef) financeChartRef.destroy();
@@ -1184,24 +1095,52 @@ function inicializarGraficos() {
             }
         });
     }
+}
 
-    if (ctx2) {
-        if (topProductsChartRef) topProductsChartRef.destroy();
-        topProductsChartRef = new Chart(ctx2, {
-            type: 'doughnut',
-            data: {
-                labels: ['Consultas', 'Exames', 'Medicamentos', 'Vacinas'],
-                datasets: [{
-                    data: [45, 30, 15, 10],
-                    backgroundColor: ['#0066ff', '#ff007f', '#ccff00', '#8b00ff']
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } }
+// ==========================================================
+// SEÇÃO 12: TEMA CLARO/ESCURO
+// ==========================================================
+
+function aplicarTema(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+}
+
+function temaSistema() {
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function inicializarTema() {
+    const salvo = localStorage.getItem('dayvet-tema');
+    if (salvo) {
+        aplicarTema(salvo);
+    } else {
+        aplicarTema(temaSistema());
+        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function(e) {
+            if (!localStorage.getItem('dayvet-tema')) {
+                aplicarTema(e.matches ? 'light' : 'dark');
+                atualizarIconeTema();
             }
         });
+    }
+    atualizarIconeTema();
+}
+
+function alternarTema() {
+    const atual = document.documentElement.getAttribute('data-theme');
+    const novo = atual === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('dayvet-tema', novo);
+    aplicarTema(novo);
+    atualizarIconeTema();
+    lucide.createIcons();
+}
+
+function atualizarIconeTema() {
+    const tema = document.documentElement.getAttribute('data-theme');
+    const btn = document.getElementById('btn-tema');
+    if (!btn) return;
+    const icone = btn.querySelector('i');
+    if (icone) {
+        icone.setAttribute('data-lucide', tema === 'dark' ? 'sun' : 'moon');
     }
 }
 
@@ -1210,12 +1149,12 @@ function inicializarGraficos() {
 // ==========================================================
 
 window.onload = function() {
+    inicializarTema();
     lucide.createIcons();
     atualizarPermissoesNavegacao();
     renderizarAgendamentos();
     renderizarTutores();
     renderizarHistoricoClinico();
-    renderizarEstoque();
     renderizarUsuarios();
     inicializarGraficos();
 };
