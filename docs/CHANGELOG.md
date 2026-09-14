@@ -9,6 +9,13 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-14 · (próximo commit) — Entrada para demonstração no GitHub Pages
+**O que:** adicionada uma página de entrada na raiz que encaminha para a SPA em `dayvet/`, além de `.nojekyll` para publicação estática direta.
+**Por quê:** permitir uma URL única de entrega e demonstração sem duplicar os arquivos do produto.
+**Onde:** `index.html` e `.nojekyll` na raiz do repositório.
+
+---
+
 ## 2026-09-01 · (próximo commit) — Temas refatorados para **variáveis CSS** (facilidade de edição)
 **O que:** os blocos de tema de `dayvet/styles.css` (seções "6. TEMA ESCURO" e "7. TEMA CLARO") passaram a usar o **método padrão com variáveis CSS**: cada tema agora declara sua paleta em `:root[data-theme='...'] { --variavel: valor }` e as regras de aplicação apenas espelham essas variáveis nas classes Tailwind.
 **Por quê:** permitir que a parceira (ou qualquer IA/colaborador) **escolha as cores de um tema editando só o bloco de variáveis**, sem caçar classes utilitárias — nomes em pt-BR, comentados e agrupados (fundos, textos, bordas, marca, status, sombras, login).
