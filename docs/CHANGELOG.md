@@ -9,6 +9,13 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-14 · (próximo commit) — Artefato compilado para demonstração pública
+**O que:** criado o workflow de GitHub Pages que monta `dist/` com uma página de entrega e a SPA funcional em `dist/demo/`.
+**Por quê:** manter o repositório privado como fonte e publicar apenas o artefato estático necessário para a demonstração.
+**Onde:** `.github/workflows/deploy-pages.yml` e `site/index.html`.
+
+---
+
 ## 2026-09-14 · (próximo commit) — Entrada para demonstração no GitHub Pages
 **O que:** adicionada uma página de entrada na raiz que encaminha para a SPA em `dayvet/`, além de `.nojekyll` para publicação estática direta.
 **Por quê:** permitir uma URL única de entrega e demonstração sem duplicar os arquivos do produto.

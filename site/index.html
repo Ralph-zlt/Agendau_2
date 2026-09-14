@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DayVet-Gestão | Demonstração</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+      body { margin: 0; min-height: 100vh; color: #f5f7ff; background: #03001e; }
+      main { width: min(980px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0; }
+      .tag { color: #ccff00; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+      h1 { max-width: 720px; margin: 16px 0; font-size: clamp(2.4rem, 7vw, 5.4rem); line-height: .98; }
+      p { max-width: 680px; color: #b9bfd5; font-size: 1.1rem; line-height: 1.7; }
+      .actions { display: flex; flex-wrap: wrap; gap: 14px; margin: 32px 0 52px; }
+      a { display: inline-block; padding: 14px 20px; border-radius: 10px; color: #03001e; background: #ccff00; font-weight: 800; text-decoration: none; }
+      a.secondary { color: #f5f7ff; border: 1px solid #494367; background: transparent; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+      article { padding: 20px; border: 1px solid #272044; border-radius: 14px; background: #0a0029; }
+      h2 { margin-top: 0; font-size: 1.05rem; color: #ccff00; }
+      code { color: #ccff00; }
+      footer { margin-top: 52px; color: #77708f; font-size: .9rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="tag">DayVet-Gestão</div>
+      <h1>Agenda e gestão para clínicas veterinárias.</h1>
+      <p>
+        Demonstração navegável da SPA com autenticação mock, perfis de acesso,
+        agendamentos, tutores, pets, módulo clínico, relatórios e temas claro/escuro.
+      </p>
+      <div class="actions">
+        <a href="demo/">Abrir aplicação</a>
+        <a class="secondary" href="https://github.com/Ralph-zlt/Agendau_2">Ver repositório</a>
+      </div>
+      <section class="grid">
+        <article><h2>Admin</h2><p>CPF <code>1</code> · senha <code>111</code></p></article>
+        <article><h2>Veterinário</h2><p>CPF <code>2</code> · senha <code>222</code></p></article>
+        <article><h2>Funcionário</h2><p>CPF <code>3</code> · senha <code>333</code></p></article>
+      </section>
+      <footer>Protótipo demonstrativo · dados em memória · integração com banco prevista.</footer>
+    </main>
+  </body>
+</html>
