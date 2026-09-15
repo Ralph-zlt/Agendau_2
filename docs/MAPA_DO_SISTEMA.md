@@ -17,6 +17,7 @@
 | `dayvet/index.html` | Estrutura/marcação (SPA) | <head> com config Tailwind + cores de marca; tela de login; header; nav de tabs; seções `<section id="tab-...">`; modais `#modal-*`; CDNs |
 | `dayvet/styles.css` | Estilo (seções) | Base, scrollbar, neon, glass, impressão, **sistemas de tema escuro/claro** |
 | `dayvet/script.js` | Lógica (13 seções) | Mock data, RBAC, login, toasts, navegação, agendamentos, tutores & pets, clínico, relatórios, usuários, gráficos, tema, inicialização |
+| `docs/requisitos-funcionais-dayvet.docx` | Requisitos (fonte de RFs/RNFRs/RNFS) | RF-01–RF-10 + RNFS; sincronizado com o código na v2; frontend/temas fora (só roadmap) |
 
 ## 3. Autenticação e perfis (RBAC)
 - **Login por CPF ou e-mail + senha** — campo aceita ambos; erro sempre genérico "Credenciais inválidas" (não revela existência de conta).

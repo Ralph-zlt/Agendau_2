@@ -5,6 +5,7 @@ Instruções para **IAs e colaboradores** que forem editar este código.
 ## Antes de editar (obrigatório)
 - Leia **`docs/MAPA_DO_SISTEMA.md`** — estrutura, RBAC, temas e onde vive cada funcionalidade.
 - Leia **`docs/CHANGELOG.md`** — histórico do que foi feito e por quê.
+- Consulte **`docs/requisitos-funcionais-dayvet.docx`** — fonte de RFs/RNFRs/RNFS (funcionalidades e casos de uso; frontend/temas ficam só no roadmap).
 - Consulte `../PROJETOS.md` para o estado geral e os documentos da metodologia.
 - Só altere o que a tarefa pede; mantenha as convenções do projeto (pt-BR, seções comentadas).
 

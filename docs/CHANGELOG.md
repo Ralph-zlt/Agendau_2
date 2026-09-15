@@ -9,6 +9,13 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-15 · (teste) — Requisitos funcionais versionados no repo
+**O que:** `docs/requisitos-funcionais-dayvet.docx` (v2) agora versionado; referências em `AGENTS.md`, `ROADMAP.md` §2 e `MAPA_DO_SISTEMA.md` §2.
+**Por quê:** documento de requisitos passa a morar no GitHub como fonte de RFs/RNFRs/RNFS.
+**Onde:** `docs/requisitos-funcionais-dayvet.docx`, `AGENTS.md`, `ROADMAP.md`, `docs/MAPA_DO_SISTEMA.md`, `docs/CHANGELOG.md`.
+
+---
+
 ## 2026-09-15 · (teste) — Método de implantação (substitui /setup)
 **O que:** descartada a rota `/setup` virgem (F1 futuro); método definido: admin cadastra CPF+e-mail do responsável, 1º acesso exige troca de senha para todos os perfis (`mustChange`, já implementado em `salvarNovoUsuario()`).
 **Por quê:** decisão do dono — implantação por cadastro direto, sem setup single-use.

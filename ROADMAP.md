@@ -16,6 +16,8 @@
 
 ## 2. Congruência RF × Status
 
+> Fonte oficial: `docs/requisitos-funcionais-dayvet.docx` (RF-01–RF-10 + RNFS, sincronizado com o código). A tabela abaixo é um retrato auxiliar.
+
 | RF | Descrição | Status | Gap |
 |---|---|---|---|
 | RF-01 | Cadastro de usuário (nome, CPF, e-mail, senha) | **Parcial** | Validação de CPF único e regras de senha (8+ caracteres) não implementadas; só existe mock |
