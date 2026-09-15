@@ -28,8 +28,19 @@ ou da professora têm prioridade sobre convenções genéricas.
 - HTML/CSS/JS puros + CDNs externas: Tailwind CSS, Lucide (ícones), Chart.js (gráficos), Google Fonts. Sem build e sem servidor.
 
 ## Validação de mudanças
-- `node --check dayvet/script.js` (sintaxe sem erros).
-- Testar no navegador abrindo `dayvet/index.html`: logins de teste CPF `1` (Admin), `2` (Veterinário), `3` (Funcionário); alternância de tema claro/escuro.
+
+**Antes de qualquer commit ou entrega, execute a skill de testes automatizados:**
+→ `../.github/skills/testar-frontend/SKILL.md`
+
+A skill cobre 4 verificações obrigatórias via `node` (sem browser):
+1. `node --check dayvet/script.js` — sintaxe JS sem erros.
+2. IDs referenciados no JS existem no HTML (nenhum getElementById quebrado).
+3. Z-index de modais que operam sobre o login — devem ser `z-[60]` ou superior quando `login-screen` usa `backdrop-blur` (que cria stacking context).
+4. Funções `onclick="fn()"` no HTML definidas no JS.
+
+Adicionalmente, teste no navegador abrindo `dayvet/index.html`:
+- Logins de teste CPF `1` (Admin), `2` (Veterinário), `3` (Funcionário); alternância de tema claro/escuro.
+- Fluxo "Esqueci a senha?" deve abrir o modal por cima da tela de login.
 - Ao remover funcionalidade: conferir com busca (grep) que não sobraram referências em `index.html` e `script.js`.
 
 ## Cores / Temas

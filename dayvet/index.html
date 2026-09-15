@@ -1056,7 +1056,9 @@
     </div>
 
     <!-- Modal: Recuperar Senha -->
-    <div id="modal-recuperar-senha" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <!-- BUGFIX 2026-09-15: z-[60] em vez de z-50 — login-screen usa backdrop-blur-xl que cria
+         stacking context isolado; modais que aparecem sobre o login precisam de z-index maior. -->
+    <div id="modal-recuperar-senha" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <div class="flex items-center justify-between">
                 <h4 class="font-black text-white text-base">Recuperar Senha</h4>
@@ -1130,8 +1132,9 @@
     <!-- O QUE: Obriga usuario a definir senha forte no primeiro login.
          PORQUÊ: Usuarios novos recebem senha temporaria e devem trocar.
          DEMO (mock): Modal fullscreen sobre login; confirma login automatico.
+         BUGFIX 2026-09-15: z-[60] em vez de z-50 — mesmo motivo do modal-recuperar-senha.
          TODO [DB] Fluxo via email com token JWT + POST /api/users/:id/change-password. -->
-    <div id="forcar-senha-etapa" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+    <div id="forcar-senha-etapa" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 rounded-xl bg-brand-blue/20 text-brand-blue flex items-center justify-center">
