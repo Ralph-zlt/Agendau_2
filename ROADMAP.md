@@ -72,15 +72,17 @@
 
 ### Fase 2 — Auth empresarial
 **Objetivo:** Implementar autenticação empresarial com requisitos específicos (RNF-05).
-**Status:** `EM TESTE` — branch `teste/auth-empresarial`
+**Status:** `CONCLUÍDA` — mergeada em `main` em 2026-09-15
 
-- [ ] RNFR-05.1: Email obrigatório e único
-- [ ] RNFR-05.2: Login CPF ou e-mail com erro genérico
-- [ ] RNFR-05.3: Primeiro acesso força senha 8+1Maiusc+1Num+1Especial
-- [ ] RNFR-05.4: Recovery demo mesma mensagem exista ou não
-- [ ] RNFR-05.5: Só admin cria 3 roles (admin/vet/func)
+- [x] RNFR-05.1: Email obrigatório e único
+- [x] RNFR-05.2: Login CPF ou e-mail com erro genérico
+- [x] RNFR-05.3: Primeiro acesso força senha 8+1Maiusc+1Num+1Especial (usuários 2 e 3)
+- [x] RNFR-05.4: Recovery demo mesma mensagem exista ou não
+- [x] RNFR-05.5: Só admin cria 3 roles (admin/vet/func)
+- [x] Tema claro refinado com nova paleta (#F8FAFC, #2F80ED, #10B981, #F97316)
+- [x] Botão sol/lua na tela de login
 
-**Critérios de aceite:** Fluxo de auth empresarial implementado e testado; `node --check` passa; CHANGELOG atualizado.
+**Critérios de aceite:** ✓ Fluxo de auth empresarial implementado e testado; `node --check` passa; CHANGELOG atualizado.
 
 ---
 
@@ -107,6 +109,18 @@
 - [ ] **NÃO implementar código de banco nesta fase**
 
 **Critérios de aceite:** `docs/DB_LEVANTAMENTO.md` existe e contém: entidades, endpoints mapeados, opções com prós/contras, decisão pendente, considerações LGPD. Nenhuma linha de código de banco é escrita.
+
+---
+
+### Fase 5 — UX do veterinário + login claro + agendamentos completos
+**Objetivo:** Melhorar experiência do usuário veterinário e refinar o tema claro.
+**Status:** `PLANEJADA`
+
+- [ ] Login modo claro: fundo branco, sem neon, visual consistente com o app claro
+- [ ] Dashboard do veterinário: substituir KPIs financeiros por agendamentos do dia (lista hora/pet/tutor/serviço/status + contadores hoje)
+- [ ] Aba Agendamentos: exibir todos os dias (passados e futuros), não apenas o dia atual; manter opções de editar/cancelar/confirmar
+
+**Critérios de aceite:** `node --check` passa; logins 1/2/3 funcionais; tema claro/escuro sem regressão; CHANGELOG atualizado.
 
 ---
 

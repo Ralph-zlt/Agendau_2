@@ -9,6 +9,12 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-15 · (merge main) — Merge teste/auth-empresarial → main (Fase 2 concluída)
+**O que:** merge da branch `teste/auth-empresarial` na `main`. Atualização de docs: ROADMAP (Fase 2 concluída, Fase 5 planejada), MAPA_DO_SISTEMA (auth empresarial, nova paleta claro, botão tema login), CHANGELOG.
+**Por quê:** Fase 2 validada — auth empresarial, tema claro refinado, mustChange u2/u3, botão tema no login, bugfixes do modal "Esqueci a senha" (z-index + fora do form).
+**Onde:** `main` branch · `ROADMAP.md` · `docs/MAPA_DO_SISTEMA.md` · `docs/CHANGELOG.md`.
+**Próximo ciclo (Fase 5):** login claro, dashboard veterinário com agendamentos do dia, aba agendamentos completa (todos os dias).
+
 ## 2026-09-15 · (auth-empresarial teste) — Bugfix real "Esqueci a senha": botão fora do form + hover roxo
 **O que:** movido o botão "Esqueci a senha?" para fora do `<form id="auth-form">`. Adicionado `hover:text-brand-purple` (era `hover:text-brand-lime`).
 **Por quê:** o botão tinha `type="button"` mas estava dentro do form com campos `required`. Alguns browsers bloqueiam o clique em qualquer botão dentro de um form inválido (campos não preenchidos), mesmo com `type="button"`. Mover para fora do form resolve definitivamente.
