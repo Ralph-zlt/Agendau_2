@@ -1,7 +1,7 @@
 # MAPA DO SISTEMA — DayVet-Gestão
 
 > Referência para IAs e colaboradores editarem o código com contexto.
-> Última revisão: 01/09/2026 · Base: commit `3ea1cdd`
+> Última revisão: 15/09/2026 · Base: merge `teste/auth-empresarial` → `main`
 > Atenção: números de linha são referências — confirme antes de editar.
 
 ## 1. Visão geral
@@ -19,11 +19,14 @@
 | `dayvet/script.js` | Lógica (13 seções) | Mock data, RBAC, login, toasts, navegação, agendamentos, tutores & pets, clínico, relatórios, usuários, gráficos, tema, inicialização |
 
 ## 3. Autenticação e perfis (RBAC)
-- **Login por CPF + senha** (senha aceita qualquer valor até o backend existir).
-- **Usuários de teste**: CPF `1`/`111` = Admin · CPF `2`/`222` = Veterinário · CPF `3`/`333` = Funcionário. CPF não cadastrado não loga (toast de erro).
-- **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico/consultas), `funcionario` (operacional/agendamentos). O cargo `gestor` foi **removido** — o admin assumiu as funções.
-- Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`). Navegação filtrada por perfil e guards de tab em `switchTab`.
-- **TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]**: tabela `users` com `role` vinculado ao CPF, `POST /api/login`, `GET /api/me`, validação de autorização no servidor.
+- **Login por CPF ou e-mail + senha** — campo aceita ambos; erro sempre genérico "Credenciais inválidas" (não revela existência de conta).
+- **Usuários de teste**: CPF `1`/senha `1` = Admin · CPF `2`/senha `2` = Veterinário (mustChange=true) · CPF `3`/senha `3` = Funcionário (mustChange=true).
+- **Primeiro acesso (mustChange=true)**: usuários 2 e 3 são obrigados a trocar a senha antes de entrar. Política: 8+ chars, 1 maiúscula, 1 número, 1 especial. Indicadores visuais em tempo real. Mock: flag reseta ao recarregar (sem banco).
+- **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
+- **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
+- **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico/consultas), `funcionario` (operacional/agendamentos). O cargo `gestor` foi **removido**.
+- Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
+- **TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]**: tabela `users` com `role` vinculado ao CPF/email, bcrypt, JWT, `POST /api/login`, `GET /api/me`.
 
 ## 4. Mapa de seções (script.js)
 
@@ -47,30 +50,32 @@
 
 | Item | Linha (aprox.) | Nota |
 |---|---|---|
-| Config Tailwind (cores `brand-*`) | `<head>` | brand-dark #03001e · brand-card #0a0029 · brand-lime #ccff00 · brand-pink #ff007f · brand-blue #0066ff · brand-purple #8b00ff · brand-yellow #ffcc00 |
+| Config Tailwind (cores `brand-*`) | `<head>` | brand-dark #03001e · brand-lime #ccff00 · brand-pink #ff007f · brand-blue #0066ff · brand-purple #8b00ff · brand-yellow #ffcc00 |
 | Script inline do tema | ~56-64 | Aplica `data-theme` no `<html>` antes do render (evita flash) |
-| `#login-screen` | ~72 | Tela de login neon (mantém aparência escura nos dois temas) |
-| `header` (topbar) | ~120 | Perfil do usuário, `#btn-tema` (~162), logout |
-| `nav` (tabs) | ~172 | Botões `#nav-<tab>` |
-| Modais | ~636+ | `#modal-*` (editar pet, tutor, agendamento, valores, permissões, usuários, relatórios etc.) |
+| `#login-screen` | ~72 | Tela de login neon; mantém aparência escura nos dois temas (variáveis `--login-*`) |
+| `#btn-tema-login` | ~75 | Botão sol/lua no canto sup-dir do header do login (z-[61]) — alterna tema antes do login |
+| `#btn-esqueci-senha` | ~120 | Fora do `<form>` (evita bloqueio por campos required); hover roxo via `setProperty` |
+| `header` (topbar) | ~130 | Perfil do usuário, `#btn-tema`, logout |
+| `nav` (tabs) | ~180 | Botões `#nav-<tab>` |
+| Modais sobre login | ~1060+ | `#modal-recuperar-senha` e `#forcar-senha-etapa` com `z-[60]` (acima do login z-50 com backdrop-blur) |
+| Demais modais | ~640+ | `#modal-*` com `z-50` (usados pós-login) |
 
 ## 6. Temas claro/escuro (importante)
-- **Mecanismo**: atributo `data-theme` no `<html>`. Padrão = `prefers-color-scheme` do sistema (com acompanhamento ao vivo); escolha manual salva em `localStorage` (chave `dayvet-tema`).
-- **Botão**: `#btn-tema` no header (ícone lua/sol). Lógica: `script.js` SEÇÃO 12.
-- **Método padrão com variáveis CSS**: cada tema tem um **bloco de paleta** no `dayvet/styles.css` — `:root[data-theme='dark'] { ... }` (seção **"6. TEMA ESCURO"**) e `:root[data-theme='light'] { ... }` (seção **"7. TEMA CLARO"**). **Para escolher/dar nova cor a um tema, edite APENAS os valores das variáveis `--...`** — nomes em pt-BR com comentários (fundos, textos, bordas, marca, status, sombras, login).
-- As regras de aplicação (logo abaixo) só espelham as variáveis nas classes utilitárias do Tailwind — **não** precisam ser editadas para mudar cores.
-- **Tela de login**: usa as variáveis `--login-*` (no fim do bloco claro) e o bloco `:root[data-theme='light'] #login-screen ...` para manter o neon escuro — **não** alterar se a intenção for clarear o app todo.
-- **PENDENTE**: as **cores do modo claro devem ser refinadas** numa próxima iteração — basta ajustar as variáveis (nomes abaixo);
+- **Mecanismo**: atributo `data-theme` no `<html>`. Padrão = `prefers-color-scheme` do sistema; escolha manual salva em `localStorage` (chave `dayvet-tema`).
+- **Botões de tema**: `#btn-tema` no header (pós-login) e `#btn-tema-login` no canto sup-dir do login (pré-login). Ambos chamam `alternarTema()` e são sincronizados por `atualizarIconeTema()`.
+- **Método padrão com variáveis CSS**: edite **apenas os valores das variáveis** nos blocos `:root[data-theme='dark']` (seção 6) e `:root[data-theme='light']` (seção 7) de `styles.css`.
+- **Tela de login**: mantém neon escuro em ambos os temas via variáveis `--login-*` e bloco `:root[data-theme='light'] #login-screen ...` — **PENDENTE Fase 5**: clarear o login quando tema claro estiver ativo.
+- **Paleta atual do modo claro** (aplicada em 2026-09-15):
 
-| Grupo | Variáveis (modo claro) |
-|---|---|
-| Fundos | `--pagina` · `--card` · `--nav-fundo` · `--nav-fundo-90` · `--branco*` · `--elemento` · `--elemento-hover` · `--suave-1/2` |
-| Textos | `--texto-primario` · `--texto-secundario` · `--texto-corpo` · `--texto-suave` · `--texto-fraco` · `--texto-600…900` · `--texto-base` |
-| Bordas | `--borda` · `--borda-suave` · `--borda-clara` · `--borda-divisora` · `--borda-50/60` |
-| Marca | `--lime-texto/cheio` · `--pink-texto` · `--azul-texto/cheio` · `--roxo-texto/cheio` · `--amarelo-texto` (+ variantes `*-10/20/30/40/50`, hovers) |
-| Status | `--rosa-texto/cheio/suave-*` · `--ambar-texto/suave/borda` |
-| Efeitos | `--sombra-*` · `--anel-azul` · `--backdrop-modal*` · `--vidro-*` · `--neon-*` · `--trilha` · `--polegar` |
-| Login | `--login-*` (fundo, textos, borda, marca neon) |
+| Grupo | Variáveis principais | Cores |
+|---|---|---|
+| Fundos | `--pagina` · `--card` · `--nav-fundo` | #F8FAFC · #FFFFFF · #D9E6F2 |
+| Textos | `--texto-primario` · `--texto-suave` | #111827 · #497285 |
+| Marca (azul) | `--azul-cheio` | #2F80ED |
+| Marca (verde) | `--lime-cheio` | #10B981 |
+| Destaque | `--ambar-texto` | #F97316 (laranja/pendente) |
+| Bordas | `--borda` · `--elemento` | #DFEBED · #DFEBED |
+| Scrollbar | `--trilha` · `--polegar` | #D9E6F2 · #8ecae6 |
 
 ## 7. Convenções
 - Comentários `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` marcam os pontos de plugar a API.

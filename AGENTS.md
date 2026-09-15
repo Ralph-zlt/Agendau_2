@@ -5,7 +5,17 @@ Instruções para **IAs e colaboradores** que forem editar este código.
 ## Antes de editar (obrigatório)
 - Leia **`docs/MAPA_DO_SISTEMA.md`** — estrutura, RBAC, temas e onde vive cada funcionalidade.
 - Leia **`docs/CHANGELOG.md`** — histórico do que foi feito e por quê.
+- Consulte `../PROJETOS.md` para o estado geral e os documentos da metodologia.
 - Só altere o que a tarefa pede; mantenha as convenções do projeto (pt-BR, seções comentadas).
+
+## Metodologia e fases
+
+Este é um produto de mercado e segue o nível profissional da programação
+automatizada. Antes de implementar, enriquecer o pedido, registrar requisitos,
+decisões e critérios de aceitação e dividir o trabalho em fases. Ao encerrar
+cada fase, relatar resultado, documentos alterados, validações, riscos,
+pendências e próximo agente. As exigências acadêmicas do arquivo de requisitos
+ou da professora têm prioridade sobre convenções genéricas.
 
 ## Onde está o código
 - O produto fica em **`dayvet/`**: `index.html` (estrutura), `styles.css` (estilos), `script.js` (lógica). Nada fora dessa pasta é o produto.
@@ -18,8 +28,19 @@ Instruções para **IAs e colaboradores** que forem editar este código.
 - HTML/CSS/JS puros + CDNs externas: Tailwind CSS, Lucide (ícones), Chart.js (gráficos), Google Fonts. Sem build e sem servidor.
 
 ## Validação de mudanças
-- `node --check dayvet/script.js` (sintaxe sem erros).
-- Testar no navegador abrindo `dayvet/index.html`: logins de teste CPF `1` (Admin), `2` (Veterinário), `3` (Funcionário); alternância de tema claro/escuro.
+
+**Antes de qualquer commit ou entrega, execute a skill de testes automatizados:**
+→ `../.github/skills/testar-frontend/SKILL.md`
+
+A skill cobre 4 verificações obrigatórias via `node` (sem browser):
+1. `node --check dayvet/script.js` — sintaxe JS sem erros.
+2. IDs referenciados no JS existem no HTML (nenhum getElementById quebrado).
+3. Z-index de modais que operam sobre o login — devem ser `z-[60]` ou superior quando `login-screen` usa `backdrop-blur` (que cria stacking context).
+4. Funções `onclick="fn()"` no HTML definidas no JS.
+
+Adicionalmente, teste no navegador abrindo `dayvet/index.html`:
+- Logins de teste CPF `1` (Admin), `2` (Veterinário), `3` (Funcionário); alternância de tema claro/escuro.
+- Fluxo "Esqueci a senha?" deve abrir o modal por cima da tela de login.
 - Ao remover funcionalidade: conferir com busca (grep) que não sobraram referências em `index.html` e `script.js`.
 
 ## Cores / Temas

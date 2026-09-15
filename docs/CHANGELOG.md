@@ -9,25 +9,35 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-15 · (merge main) — Merge teste/auth-empresarial → main (Fase 2 concluída)
+**O que:** merge da branch `teste/auth-empresarial` na `main`. Atualização de docs: ROADMAP (Fase 2 concluída, Fase 5 planejada), MAPA_DO_SISTEMA (auth empresarial, nova paleta claro, botão tema login), CHANGELOG.
+**Por quê:** Fase 2 validada — auth empresarial, tema claro refinado, mustChange u2/u3, botão tema no login, bugfixes do modal "Esqueci a senha" (z-index + fora do form).
+**Onde:** `main` branch · `ROADMAP.md` · `docs/MAPA_DO_SISTEMA.md` · `docs/CHANGELOG.md`.
+**Próximo ciclo (Fase 5):** login claro, dashboard veterinário com agendamentos do dia, aba agendamentos completa (todos os dias).
+
+## 2026-09-15 · (auth-empresarial teste) — Bugfix real "Esqueci a senha": botão fora do form + hover roxo
+**O que:** movido o botão "Esqueci a senha?" para fora do `<form id="auth-form">`. Adicionado `hover:text-brand-purple` (era `hover:text-brand-lime`).
+**Por quê:** o botão tinha `type="button"` mas estava dentro do form com campos `required`. Alguns browsers bloqueiam o clique em qualquer botão dentro de um form inválido (campos não preenchidos), mesmo com `type="button"`. Mover para fora do form resolve definitivamente.
+**Onde:** `dayvet/index.html` (botão movido para depois do `</form>`).
+**Validações:** node --check ✓, 108 IDs ✓, z-[60] ✓, 33 funções inline ✓.
+
+## 2026-09-15 · (auth-empresarial teste) — Bugfix modal "Esqueci a senha" (z-index)
+**O que:** corrigido `z-50` → `z-[60]` nos modais `#modal-recuperar-senha` e `#forcar-senha-etapa` em `dayvet/index.html`. Criada skill `.github/skills/testar-frontend/SKILL.md` com 4 verificações automáticas via `node`. Atualizado `AGENTS.md` do projeto e do `/Projetos/` com instrução de usar a skill antes de qualquer commit.
+**Por quê:** o modal "Esqueci a senha?" ficava invisível/inacessível porque `#login-screen` usa `backdrop-blur-xl` (que cria stacking context CSS isolado); modais com mesmo `z-50` ficavam presos nesse contexto em alguns browsers. Solução: z-index superior (`z-[60]`).
+**Onde:** `dayvet/index.html` (z-index dos 2 modais de login), `AGENTS.md`, `../AGENTS.md`, `.github/skills/testar-frontend/SKILL.md`.
+**Validações:** `node --check` ✓, 108 IDs verificados ✓, z-[60] confirmado ✓, 33 funções inline ✓.
+
+## 2026-09-15 · (auth-empresarial teste) — Atualização de docs para auth empresarial
+**O que:** atualização de `ROADMAP.md` com RNF-05 Auth empresarial (subitens 05.1-05.5), Fase 2 EM TESTE, Fase 3 BLOQUEADA, F1 futuro; `docs/DB_LEVANTAMENTO.md` §1.1 users com campos de auth empresarial e LGPD; `docs/CHANGELOG.md` com esta entrada; criação de `local/RELATORIO_METODOLOGIA_AUTH.md` (não versionado).
+**Por quê:** preparar terreno para implementação de autenticação empresarial com requisitos específicos, seguindo metodologia do projeto.
+**Onde:** `ROADMAP.md`, `docs/DB_LEVANTAMENTO.md`, `docs/CHANGELOG.md`, `local/RELATORIO_METODOLOGIA_AUTH.md`.
+**⚠ PENDENTE:** implementação do código de auth na branch `teste/auth-empresarial`.
+
 ## 2026-09-15 · (pending) — Roadmap, levantamento DB, fluxo Git e pausa de styling
 **O que:** adição de `ROADMAP.md` (Fase 2 EM TESTE, Fase 3 BLOQUEADA stakeholders), `docs/DB_LEVANTAMENTO.md` (mapeamento de tabelas para o BD) e estruturação do fluxo Git (`main` estável vs branches de teste) neste CHANGELOG. Fluxo de testes de "Recuperar Senha" (mock) em branch `teste/recuperar-senha` — modal funcional sem backend.
 **Por quê:** organizar o desenvolvimento com separação clara entre código estável (main) e experimentos (branches teste), documentar dependências de banco de dados antes de implementar, e pausar refinamento de temas até que o fluxo funcional esteja validado.
 **Onde:** `ROADMAP.md`, `docs/DB_LEVANTAMENTO.md`, `docs/CHANGELOG.md`, `dayvet/index.html` (modal recuperar senha — mantido só em branch teste). O `dayvet/styles.css` **não foi alterado** neste conjunto; styling continua pausado.
 **⚠ PENDENTE:** `dayvet/styles.css` (temas) aguarda revisão; `docs/MAPA_DO_SISTEMA.md` deve ser atualizado quando o fluxo de testes for mergeado em main.
-
----
-
-## 2026-09-14 · (próximo commit) — Artefato compilado para demonstração pública
-**O que:** criado o workflow de GitHub Pages que monta `dist/` com uma página de entrega e a SPA funcional em `dist/demo/`.
-**Por quê:** manter o repositório privado como fonte e publicar apenas o artefato estático necessário para a demonstração.
-**Onde:** `.github/workflows/deploy-pages.yml` e `site/index.html`.
-
----
-
-## 2026-09-14 · (próximo commit) — Entrada para demonstração no GitHub Pages
-**O que:** adicionada uma página de entrada na raiz que encaminha para a SPA em `dayvet/`, além de `.nojekyll` para publicação estática direta.
-**Por quê:** permitir uma URL única de entrega e demonstração sem duplicar os arquivos do produto.
-**Onde:** `index.html` e `.nojekyll` na raiz do repositório.
 
 ---
 
