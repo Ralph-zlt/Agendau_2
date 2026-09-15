@@ -84,12 +84,12 @@
             <div class="p-8 space-y-6">
                 <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF</label>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF ou E-mail</label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
                                 <i data-lucide="user" class="w-4 h-4"></i>
                             </span>
-                            <input type="text" id="login-cpf" placeholder="Ex: 1, 2 ou 3" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
+                            <input type="text" id="login-cpf" placeholder="CPF ou email@dominio.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
                         </div>
                     </div>
 
@@ -102,7 +102,7 @@
                             </span>
                             <input type="password" id="login-password" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-2 leading-snug italic" id="login-hint">Usuários de teste — CPF 1 (Admin), CPF 2 (Veterinário), CPF 3 (Funcionário)</p>
+                        <p class="text-[10px] text-slate-400 mt-2 leading-snug italic" id="login-hint">Usuarios de teste — CPF 1, 2 ou 3 com senha correspondente</p>
                     </div>
 
                     <!-- Botão de Login -->
@@ -985,6 +985,14 @@
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF (Identificador)</label>
                     <input type="text" id="user-new-cpf" placeholder="000.000.000-00" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
                 </div>
+                <!-- O QUE: Campo de e-mail obrigatório para auth empresarial.
+                     PORQUÊ: E-mail serve como alternativa de login ao CPF.
+                     DEMO (mock): Input HTML simples; validacao em JS (validarEmail).
+                     TODO [DB] UNIQUE constraint no campo email da tabela users. -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">E-mail</label>
+                    <input type="email" id="user-new-email" placeholder="usuario@dominio.com" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
+                </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Cargo / Papel</label>
                     <select id="user-new-role" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
@@ -1055,16 +1063,16 @@
                 <button onclick="fecharModalRecuperarSenha()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
-            <!-- Etapa 1: Informar CPF -->
+            <!-- Etapa 1: Informar CPF ou e-mail -->
             <div id="recuperar-etapa-1">
-                <p class="text-xs text-slate-400 mb-4">Informe seu CPF para receber um código de verificação simulado.</p>
+                <p class="text-xs text-slate-400 mb-4">Informe seu CPF ou e-mail para receber um código de verificação simulado.</p>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF</label>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF ou E-mail</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
                             <i data-lucide="user" class="w-4 h-4"></i>
                         </span>
-                        <input type="text" id="recuperar-cpf" placeholder="Ex: 1, 2 ou 3" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
+                        <input type="text" id="recuperar-cpf" placeholder="CPF ou email@dominio.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
                     </div>
                 </div>
             </div>
@@ -1079,7 +1087,7 @@
                             <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
                                 <i data-lucide="lock" class="w-4 h-4"></i>
                             </span>
-                            <input type="password" id="recuperar-nova-senha" placeholder="Mín. 8 caracteres" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
+                            <input type="password" id="recuperar-nova-senha" oninput="atualizarIndicadoresRegraSenha(this.value)" placeholder="Min. 8 caracteres" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
                         </div>
                     </div>
                     <div>
@@ -1091,13 +1099,17 @@
                             <input type="password" id="recuperar-confirmar-senha" placeholder="Repita a senha" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
                         </div>
                     </div>
-                    <!-- Regras de validação RNFR-03.2 -->
+                    <!-- Regras de validacao — politica 8+1Maiusc+1Num+1Especial -->
+                    <!-- O QUE: Indicadores visuais das regras de senha forte.
+                         PORQUÊ: Feedback em tempo real para o usuario durante reset.
+                         DEMO (mock): Regras atualizadas via JS (atualizarIndicadoresRegraSenha).
+                         TODO [DB] Mesma politica validada no backend com bcrypt. -->
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-1">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Regras (RNFR-03.2):</p>
-                        <p class="text-[10px] text-slate-500" id="regra-tamanho"><span class="inline-block w-3 mr-1">○</span> Mínimo de 8 caracteres</p>
-                        <p class="text-[10px] text-slate-500" id="regra-simbolo"><span class="inline-block w-3 mr-1">○</span> Pelo menos 1 símbolo (!@#$%...)</p>
-                        <p class="text-[10px] text-slate-500" id="regra-letras"><span class="inline-block w-3 mr-1">○</span> Pelo menos 3 letras</p>
-                        <p class="text-[10px] text-slate-500" id="regra-numeros"><span class="inline-block w-3 mr-1">○</span> Pelo menos 3 números</p>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Regras de senha:</p>
+                        <p class="text-[10px] text-slate-500" id="regra-tamanho"><span class="inline-block w-3 mr-1">&#9675;</span> Minimo de 8 caracteres</p>
+                        <p class="text-[10px] text-slate-500" id="regra-simbolo"><span class="inline-block w-3 mr-1">&#9675;</span> Pelo menos 1 caractere especial (!@#$%...)</p>
+                        <p class="text-[10px] text-slate-500" id="regra-letras"><span class="inline-block w-3 mr-1">&#9675;</span> Pelo menos 1 letra maiuscula</p>
+                        <p class="text-[10px] text-slate-500" id="regra-numeros"><span class="inline-block w-3 mr-1">&#9675;</span> Pelo menos 1 numero</p>
                     </div>
                 </div>
             </div>
@@ -1109,6 +1121,56 @@
                 </button>
                 <button type="button" id="btn-recuperar-confirmar" onclick="recuperarSenhaConfirmar()" class="hidden px-4 py-2 bg-brand-blue hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center gap-2">
                     <span>Alterar Senha</span> <i data-lucide="key-round" class="w-3 h-3"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Troca Forçada de Senha (mustChange=true) -->
+    <!-- O QUE: Obriga usuario a definir senha forte no primeiro login.
+         PORQUÊ: Usuarios novos recebem senha temporaria e devem trocar.
+         DEMO (mock): Modal fullscreen sobre login; confirma login automatico.
+         TODO [DB] Fluxo via email com token JWT + POST /api/users/:id/change-password. -->
+    <div id="forcar-senha-etapa" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-10 h-10 rounded-xl bg-brand-blue/20 text-brand-blue flex items-center justify-center">
+                    <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                </div>
+                <h4 class="font-black text-white text-base">Alteração Obrigatória de Senha</h4>
+            </div>
+            <p class="text-xs text-slate-400">Você deve definir uma nova senha para acessar o sistema.</p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nova Senha</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                        </span>
+                        <input type="password" id="forcar-senha-nova" oninput="atualizarIndicadoresForcarSenha(this.value)" placeholder="Min. 8 caracteres" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Confirmar Senha</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                        </span>
+                        <input type="password" id="forcar-senha-confirmar" placeholder="Repita a senha" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2.5 text-sm text-slate-100 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 outline-none">
+                    </div>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-1">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Regras de senha:</p>
+                    <p class="text-[10px] text-slate-500" id="forcar-regra-tamanho"><span class="inline-block w-3 mr-1">&#9675;</span> Mínimo de 8 caracteres</p>
+                    <p class="text-[10px] text-slate-500" id="forcar-regra-simbolo"><span class="inline-block w-3 mr-1">&#9675;</span> Pelo menos 1 caractere especial (!@#$%...)</p>
+                    <p class="text-[10px] text-slate-500" id="forcar-regra-letras"><span class="inline-block w-3 mr-1">&#9675;</span> Pelo menos 1 letra maiúscula</p>
+                    <p class="text-[10px] text-slate-500" id="forcar-regra-numeros"><span class="inline-block w-3 mr-1">&#9675;</span> Pelo menos 1 número</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" onclick="fecharModalForcarTrocaSenha()" class="px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Cancelar</button>
+                <button type="button" onclick="confirmarForcarTrocaSenha()" class="px-4 py-2 bg-brand-blue hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center gap-2">
+                    <span>Alterar e Entrar</span> <i data-lucide="key-round" class="w-3 h-3"></i>
                 </button>
             </div>
         </div>

@@ -36,7 +36,7 @@
 | RNF-02 | LGPD — dados pessoais protegidos | **Ausente** | Sem criptografia, sem consentimento, sem política de retenção |
 | RNF-03 | Modo claro/escuro acessível | **Parcial** | Funcional mas cores do modo claro precisam de refinamento de contraste |
 | RNF-04 | Responsividade (mobile-first) | **Parcial** | Tailwind helper classes presentes; testes mobile não documentados |
-| RNF-05 | Recuperação de senha | **Ausente** | Não existe fluxo de recuperação de senha |
+| RNF-05 | Auth empresarial | **Ausente** | Não existe fluxo de autenticação empresarial com requisitos específicos |
 
 ---
 
@@ -70,16 +70,17 @@
 
 ---
 
-### Fase 2 — Recuperação de senha
-**Objetivo:** Implementar fluxo de recuperação de senha (RNF-05).
-**Status:** `EM TESTE` — branch `teste/recuperar-senha` (sem commit/push ainda)
+### Fase 2 — Auth empresarial
+**Objetivo:** Implementar autenticação empresarial com requisitos específicos (RNF-05).
+**Status:** `EM TESTE` — branch `teste/auth-empresarial`
 
-- [x] Tela "Esqueci minha senha" com CPF + e-mail
-- [x] Fluxo mock: envio simulado de código por e-mail
-- [x] Redefinição de senha (≥ 8 caracteres) com confirmação
-- [x] Integração com tela de login (link "Esqueci minha senha")
+- [ ] RNFR-05.1: Email obrigatório e único
+- [ ] RNFR-05.2: Login CPF ou e-mail com erro genérico
+- [ ] RNFR-05.3: Primeiro acesso força senha 8+1Maiusc+1Num+1Especial
+- [ ] RNFR-05.4: Recovery demo mesma mensagem exista ou não
+- [ ] RNFR-05.5: Só admin cria 3 roles (admin/vet/func)
 
-**Critérios de aceite:** Usuário pode solicitar recuperação, inserir código e redefinir senha; senhas antigas deixam de funcionar; `node --check` passa; CHANGELOG atualizado.
+**Critérios de aceite:** Fluxo de auth empresarial implementado e testado; `node --check` passa; CHANGELOG atualizado.
 
 ---
 
@@ -106,6 +107,19 @@
 - [ ] **NÃO implementar código de banco nesta fase**
 
 **Critérios de aceite:** `docs/DB_LEVANTAMENTO.md` existe e contém: entidades, endpoints mapeados, opções com prós/contras, decisão pendente, considerações LGPD. Nenhuma linha de código de banco é escrita.
+
+---
+
+### F1 Futuro — Setup virgem /setup single-use
+**Objetivo:** Implementar rota `/setup` para configuração inicial do sistema (setup virgem, uso único).
+**Status:** `FUTURO` — aguardando definição de requisitos e priorização.
+
+- [ ] Definir requisitos do setup (criação de admin inicial, configurações gerais)
+- [ ] Implementar rota `/setup` com validação de uso único
+- [ ] Garantir que após execução, a rota seja desativada ou bloqueada
+- [ ] Integrar com fluxo de auth empresarial (criação do primeiro admin)
+
+**Critérios de aceite:** Setup permite configuração inicial; após execução, não pode ser refeito; documentação atualizada.
 
 ---
 

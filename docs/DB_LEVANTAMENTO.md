@@ -9,16 +9,28 @@
 ## 1. Entidades identificadas
 
 ### 1.1 Usuario (tabela `users`)
-- **id** (PK, string/UUID)
-- **cpf** (único, indexed) — chave de acesso no login
-- **nome** (string)
-- **role** (enum: `admin`, `veterinario`, `funcionario`)
-- **senha** (hash, nunca em plaintext)
-- **email** (string, opcional — útil para recuperação de senha)
-- **criadoEm** (timestamp)
-- **ativo** (boolean, default true)
+- **cpf** (PK, string) — chave primária
+- **email** (string, UNIQUE NOT NULL) — email obrigatório e único
+- **password_hash** (string, bcrypt12) — hash da senha
+- **must_change** (boolean, default false) — força redefinição no primeiro acesso
+- **reset_token_hash** (string, opcional) — hash do token de redefinição
+- **reset_expires** (timestamp, opcional) — expiração do token (1h)
+- **failed_attempts** (integer, default 0) — tentativas falhas de login
+- **locked_until** (timestamp, opcional) — bloqueio temporário após muitas tentativas
+- **created_by** (string, opcional) — ID do usuário que criou
+- **created_at** (timestamp) — data de criação
+- **active** (boolean, default true) — status ativo
 
 **Relacionamento:** Um `Usuario` pode ser `administradores` (se role = `admin`/`veterinario`, com CRMV adicional).
+
+**Endpoints relacionados:**
+- POST `/api/bootstrap` — criar admin inicial (setup virgem)
+- POST `/api/login` — autenticar (CPF ou email + senha)
+- POST `/api/users` — criar usuário (admin only)
+- POST `/api/password-recover` — solicitar recuperação de senha
+- POST `/api/password-reset` — redefinir senha com token
+
+**LGPD:** Criptografia at-rest, sem senha em log, consentimento e retenção de dados.
 
 ### 1.2 Administrador (tabela `administradores`)
 - **id** (PK, FK → users.id)
