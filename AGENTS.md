@@ -17,6 +17,12 @@ cada fase, relatar resultado, documentos alterados, validações, riscos,
 pendências e próximo agente. As exigências acadêmicas do arquivo de requisitos
 ou da professora têm prioridade sobre convenções genéricas.
 
+## Branches (obrigatório)
+- `main` = estável, só o dono valida e mergeia. IA NUNCA commita/pusha direto na `main`.
+- `teste` = única branch de trabalho da IA. Todo código novo vai para `teste`.
+- PROIBIDO criar `teste/*`, `test/*`, `feature/*` ou qualquer outra branch sem autorização explícita do dono.
+- Antes de codar: `git fetch origin` + conferir `git branch -r` — se já existe `teste`, usar ela.
+
 ## Onde está o código
 - O produto fica em **`dayvet/`**: `index.html` (estrutura), `styles.css` (estilos), `script.js` (lógica). Nada fora dessa pasta é o produto.
 - SPA sem backend: dados mock em memória; integração futura com banco (comentários `TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:`).
@@ -44,8 +50,8 @@ Adicionalmente, teste no navegador abrindo `dayvet/index.html`:
 - Ao remover funcionalidade: conferir com busca (grep) que não sobraram referências em `index.html` e `script.js`.
 
 ## Cores / Temas
-- **Método padrão com variáveis CSS**: para mudar a cor de um tema, edite **apenas os valores das variáveis** no bloco `:root[data-theme='light'] { ... }` (seção **"7. TEMA CLARO"**) ou `:root[data-theme='dark'] { ... }` (seção "6. TEMA ESCURO") de `dayvet/styles.css`. Cada variável tem comentário em pt-BR (fundos, textos, bordas, marca, status, login). Não é preciso mexer nas regras de aplicação — elas apenas espelham as variáveis nas classes Tailwind.
-- Exceção: a tela de login mantém o neon escuro nos dois temas (variáveis `--login-*` no fim do bloco claro; bloco `:root[data-theme='light'] #login-screen ...`).
+- **Método padrão com variáveis CSS**: para mudar a cor de um tema, edite **apenas os valores das variáveis** no bloco `:root[data-theme='light'] { ... }` (seção **"7. TEMA CLARO"**) ou `:root[data-theme='dark'] { ... }` (seção "6. TEMA ESCURO") de `dayvet/styles.css`. Cada variável tem comentário em pt-BR (fundos, textos, bordas, marca, status). Não é preciso mexer nas regras de aplicação — elas apenas espelham as variáveis nas classes Tailwind.
+- **Tela de login**: desde a Fase 5 (branch `teste`) o login **segue o tema ativo** — claro = card branco sem neon; escuro = neon original. As antigas variáveis `--login-*` foram removidas.
 - **Pendente:** ainda falta refinar a escolha de cores da paleta do modo claro (nomes das variáveis estão em `styles.css` seção 7 e no `docs/MAPA_DO_SISTEMA.md` §6).
 
 ## A cada commit (manutenção do doc)

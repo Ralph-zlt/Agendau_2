@@ -24,6 +24,7 @@
 - **Primeiro acesso (mustChange=true)**: usuários 2 e 3 são obrigados a trocar a senha antes de entrar. Política: 8+ chars, 1 maiúscula, 1 número, 1 especial. Indicadores visuais em tempo real. Mock: flag reseta ao recarregar (sem banco).
 - **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
 - **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
+- **Implantação (método do dono)**: sem rota de setup — admin cadastra CPF+e-mail do responsável; 1º acesso exige troca de senha para todos os perfis (admin/vet/func) via `mustChange`.
 - **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico/consultas), `funcionario` (operacional/agendamentos). O cargo `gestor` foi **removido**.
 - Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
 - **TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]**: tabela `users` com `role` vinculado ao CPF/email, bcrypt, JWT, `POST /api/login`, `GET /api/me`.
@@ -37,7 +38,7 @@
 | 3 · AUTENTICAÇÃO E LOGIN | ~99 | Login por CPF, sessão mock (`currentUser`/`currentRole`), logout |
 | 4 · TOASTS | ~166 | Notificações `showToast` |
 | 5 · NAVEGAÇÃO E TABS | ~194 | `switchTab`, guards RBAC, `atualizarPermissoesNavegacao` |
-| 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos (filtros por status/data) |
+| 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos (filtros por status + período: todos/hoje/futuros/passados, ordenado por data/hora); painel do vet (`renderizarPainelVet`, `atualizarDashboardPorPerfil`) |
 | 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns |
 | 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: laudo/guia/receita/vacina + impressão |
 | 9 · RELATÓRIOS | ~778 | Relatórios de serviços, tutor e período |
@@ -52,7 +53,9 @@
 |---|---|---|
 | Config Tailwind (cores `brand-*`) | `<head>` | brand-dark #03001e · brand-lime #ccff00 · brand-pink #ff007f · brand-blue #0066ff · brand-purple #8b00ff · brand-yellow #ffcc00 |
 | Script inline do tema | ~56-64 | Aplica `data-theme` no `<html>` antes do render (evita flash) |
-| `#login-screen` | ~72 | Tela de login neon; mantém aparência escura nos dois temas (variáveis `--login-*`) |
+| `#login-screen` | ~72 | Tela de login (neon no escuro; clara sem neon no modo claro — Fase 5, branch `teste`); `#login-cabecalho` = faixa azul→roxo no claro p/ contraste do nome |
+| `#painel-vet-hoje` | dashboard | Agenda do dia do veterinário (contadores + lista hora/pet/tutor/serviço/status); `#painel-financeiro` fica oculto p/ vet — ver `atualizarDashboardPorPerfil()` |
+| `#filtro-data-ag` | agendamentos | Select de período (todos/hoje/futuros/passados) → `filtrarAgendamentosData()` |
 | `#btn-tema-login` | ~75 | Botão sol/lua no canto sup-dir do header do login (z-[61]) — alterna tema antes do login |
 | `#btn-esqueci-senha` | ~120 | Fora do `<form>` (evita bloqueio por campos required); hover roxo via `setProperty` |
 | `header` (topbar) | ~130 | Perfil do usuário, `#btn-tema`, logout |
@@ -64,7 +67,7 @@
 - **Mecanismo**: atributo `data-theme` no `<html>`. Padrão = `prefers-color-scheme` do sistema; escolha manual salva em `localStorage` (chave `dayvet-tema`).
 - **Botões de tema**: `#btn-tema` no header (pós-login) e `#btn-tema-login` no canto sup-dir do login (pré-login). Ambos chamam `alternarTema()` e são sincronizados por `atualizarIconeTema()`.
 - **Método padrão com variáveis CSS**: edite **apenas os valores das variáveis** nos blocos `:root[data-theme='dark']` (seção 6) e `:root[data-theme='light']` (seção 7) de `styles.css`.
-- **Tela de login**: mantém neon escuro em ambos os temas via variáveis `--login-*` e bloco `:root[data-theme='light'] #login-screen ...` — **PENDENTE Fase 5**: clarear o login quando tema claro estiver ativo.
+- **Tela de login**: segue o tema ativo (Fase 5, branch `teste`) — modo claro = card branco sem neon; modo escuro = neon original. Variáveis `--login-*` removidas.
 - **Paleta atual do modo claro** (aplicada em 2026-09-15):
 
 | Grupo | Variáveis principais | Cores |

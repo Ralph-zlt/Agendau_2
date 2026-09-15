@@ -114,30 +114,46 @@
 
 ### Fase 5 — UX do veterinário + login claro + agendamentos completos
 **Objetivo:** Melhorar experiência do usuário veterinário e refinar o tema claro.
-**Status:** `PLANEJADA`
+**Status:** `CONCLUÍDA EM TESTE` — 2026-09-15, branch `teste` (aguarda validação do dono p/ merge em `main`)
 
-- [ ] Login modo claro: fundo branco, sem neon, visual consistente com o app claro
-- [ ] Dashboard do veterinário: substituir KPIs financeiros por agendamentos do dia (lista hora/pet/tutor/serviço/status + contadores hoje)
-- [ ] Aba Agendamentos: exibir todos os dias (passados e futuros), não apenas o dia atual; manter opções de editar/cancelar/confirmar
+- [x] Login modo claro: removido o bloco neon-forçado (`#login-screen` herda o tema; neon-*-login neutralizados no claro)
+- [x] Login claro — contraste do cabeçalho: faixa em gradiente de marca (`#login-cabecalho` azul→roxo) p/ nome do sistema não ficar preto sobre o card branco
+- [x] Dashboard do veterinário: `#painel-vet-hoje` (contadores hoje + lista hora/pet/tutor/serviço/status); `#painel-financeiro` oculto p/ vet via `atualizarDashboardPorPerfil()`
+- [x] Aba Agendamentos: filtro `#filtro-data-ag` (todos/hoje/futuros/passados, padrão todos) + ordenação data/hora; mocks 205-207 com data atual p/ demo
+
+**Critérios de aceite:** `node --check` passa (ou equivalente — sem node no ambiente, validado via script python de IDs/onclick); logins 1/2/3 funcionais; tema claro/escuro sem regressão; CHANGELOG atualizado.
 
 **Critérios de aceite:** `node --check` passa; logins 1/2/3 funcionais; tema claro/escuro sem regressão; CHANGELOG atualizado.
 
 ---
 
-### F1 Futuro — Setup virgem /setup single-use
-**Objetivo:** Implementar rota `/setup` para configuração inicial do sistema (setup virgem, uso único).
-**Status:** `FUTURO` — aguardando definição de requisitos e priorização.
+### Follow-ups futuros (pós-Fase 5)
+**Objetivo:** Registrar pendências de UI/negócio sem abrir fase nova antes da validação do dono.
+**Status:** `PLANEJADO`
 
-- [ ] Definir requisitos do setup (criação de admin inicial, configurações gerais)
-- [ ] Implementar rota `/setup` com validação de uso único
-- [ ] Garantir que após execução, a rota seja desativada ou bloqueada
-- [ ] Integrar com fluxo de auth empresarial (criação do primeiro admin)
+- [ ] Paleta do sistema ainda fora do padrão de mercado — refinamento geral de cores pendente (relacionado à Fase 3, bloqueada por stakeholders)
+- [ ] Revisar demais contrastes do modo claro após definição da paleta (login, botões, badges)
 
-**Critérios de aceite:** Setup permite configuração inicial; após execução, não pode ser refeito; documentação atualizada.
+---
+
+### Implantação na empresa (método do dono)
+**Objetivo:** Definir como o sistema entra em operação na empresa, sem rota de setup.
+**Status:** `DEFINIDO` — 2026-09-15 (substitui o antigo F1 Setup virgem `/setup`, descartado)
+
+- [x] Sem rota `/setup`: implantação por cadastro direto do responsável
+- [x] Admin cadastra CPF + e-mail do responsável pela empresa
+- [x] Primeiro acesso exige troca de senha (fluxo `mustChange`, mesma política 8+1Maiusc+1Num+1Especial)
+- [x] Regra vale para todo novo usuário (admin, veterinário, funcionário)
+
+**Critérios de aceite:** todo usuário novo cai na troca forçada no 1º login, qualquer que seja o perfil; `salvarNovoUsuario()` já cria com `mustChange=true`; CHANGELOG atualizado.
 
 ---
 
 ## 4. Regras da metodologia
+
+### Divisão da documentação (decisão do dono, 2026-09-15)
+- **Requisitos funcionais / casos de uso / funcionalidades** → documento de requisitos (o dono vai atualizar o arquivo de requisitos funcionais com o que há no sistema + alterações futuras). As tabelas RF/RNF deste roadmap (§2) são um retrato auxiliar e serão sincronizadas com esse documento.
+- **Frontend, modo claro/escuro e demais temas visuais** → ficam SOMENTE neste roadmap, fora do documento de requisitos.
 
 ### Validação obrigatória
 - `node --check dayvet/script.js` — sintaxe sem erros antes de qualquer commit.
@@ -166,5 +182,5 @@
 
 ### Fluxo Git
 - **`main`** — branch estável, sempre deployável. Produção em https://ralph-zlt.github.io/Agendau_2/dayvet/
-- **`teste/*`** — branches de teste para código novo antes de merge em main
+- **`teste`** — ÚNICA branch de teste para código novo antes de merge em main. PROIBIDO criar `teste/*`, `test/*` ou `feature/*` sem autorização do dono. As antigas `teste/auth-empresarial` e `teste/recuperar-senha` foram consolidadas nesta `teste` única (base = `main` mais recente, que já as continha).
 - **`docs/`** — sincronizadas ao push; CHANGELOG e ROADMAP atualizados antes de merge

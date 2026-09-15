@@ -9,6 +9,36 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-15 · (teste) — Método de implantação (substitui /setup)
+**O que:** descartada a rota `/setup` virgem (F1 futuro); método definido: admin cadastra CPF+e-mail do responsável, 1º acesso exige troca de senha para todos os perfis (`mustChange`, já implementado em `salvarNovoUsuario()`).
+**Por quê:** decisão do dono — implantação por cadastro direto, sem setup single-use.
+**Onde:** `ROADMAP.md` (F1 → Implantação), `docs/MAPA_DO_SISTEMA.md` §3, `docs/CHANGELOG.md`.
+
+---
+
+## 2026-09-15 · (teste) — Login claro: contraste do cabeçalho + follow-ups no roadmap
+**O que:** faixa do cabeçalho do login (`#login-cabecalho`) em gradiente de marca azul→roxo no modo claro — nome do sistema voltou a branco/lima legível em vez de preto sobre o card branco. Registrados follow-ups (paleta fora do padrão de mercado, revisão de contrastes) e a divisão documental: requisitos/casos de uso → doc de requisitos do dono; frontend/temas → só roadmap.
+**Por quê:** feedback de validação do preview — contraste do nome do sistema reprovado no login claro.
+**Onde:** `dayvet/index.html` (`#login-cabecalho`), `dayvet/styles.css` (regras light do cabeçalho), `ROADMAP.md` (Fase 5 + follow-ups + §4 divisão documental), `docs/MAPA_DO_SISTEMA.md`.
+
+---
+
+## 2026-09-15 · (teste) — Fase 5: login claro + painel do vet + filtro por período
+**O que:** (1) login segue o tema — removido bloco neon-forçado e vars `--login-*` de `styles.css`; (2) `#painel-vet-hoje` no dashboard (contadores + lista do dia) com `#painel-financeiro` oculto p/ veterinário (`atualizarDashboardPorPerfil`, chamada em `realizarLogin` e `switchTab`); (3) `#filtro-data-ag` na aba Agendamentos (todos/hoje/futuros/passados + ordenação) + 3 mocks (205-207) com data atual p/ demo.
+**Por quê:** Fase 5 do ROADMAP (UX do veterinário, login claro, agendamentos todos os dias).
+**Onde:** `dayvet/index.html` (`#painel-vet-hoje`, `#painel-financeiro`, `#filtro-data-ag`), `dayvet/script.js` (SEÇÃO 1 mocks hoje, SEÇÃO 6 filtro+ordenação, painel vet), `dayvet/styles.css` (login claro), `ROADMAP.md` (Fase 5 concluída em teste), `docs/MAPA_DO_SISTEMA.md`, `AGENTS.md`.
+**Validações:** sem node no ambiente — IDs 170/refs 113 (4 prefixos dinâmicos `nav-`/`tab-`/`rel-*` OK), 33 onclick todas definidas; teste de navegador pendente (logins 1/2/3 + temas).
+
+---
+
+## 2026-09-15 · (teste) — Consolidação em branch `teste` única + blindagem de branches
+**O que:** criada a branch única `teste` a partir de `origin/main` (`ea16f37`, a versão mais recente). Verificado que `teste/auth-empresarial` (`5b03074`) e `teste/recuperar-senha` (`59be1ec`) já eram ancestrais de `main` (merge `ec22d55`) — `merge --no-commit` retornou "Already up to date", nada a portar. Blindagem: seção `## Branches` em `AGENTS.md` e fluxo Git em `ROADMAP.md` proibindo `teste/*` e determinando `main` estável / `teste` única.
+**Por quê:** impedir que IAs criem múltiplas branches de teste e fragmentem o trabalho; dono validou `main` como estável.
+**Onde:** `AGENTS.md`, `ROADMAP.md`, `docs/CHANGELOG.md`, branch `teste`.
+**Validações:** sem node no ambiente (só python3) — validação JS feita via checagem de IDs/onclick por script python (ver commit da Fase 5).
+
+---
+
 ## 2026-09-15 · (merge main) — Merge teste/auth-empresarial → main (Fase 2 concluída)
 **O que:** merge da branch `teste/auth-empresarial` na `main`. Atualização de docs: ROADMAP (Fase 2 concluída, Fase 5 planejada), MAPA_DO_SISTEMA (auth empresarial, nova paleta claro, botão tema login), CHANGELOG.
 **Por quê:** Fase 2 validada — auth empresarial, tema claro refinado, mustChange u2/u3, botão tema no login, bugfixes do modal "Esqueci a senha" (z-index + fora do form).
