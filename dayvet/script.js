@@ -54,8 +54,12 @@ let historicoClinico = [
 //   Senhas armazenadas com bcrypt; LGPD exige minimização de dados.
 let usuariosMock = [
     { id: 'u1', nome: 'Dr. Douglas Ferreira', cpf: '111.111.111-11', email: 'douglas@dayvet.com', role: 'admin', password_demo: '1', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
-    { id: 'u2', nome: 'Dr. Carlos Silva', cpf: '333.333.333-33', email: 'carlos@dayvet.com', role: 'veterinario', password_demo: '2', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
-    { id: 'u3', nome: 'Lucas Atendente', cpf: '444.444.444-44', email: 'lucas@dayvet.com', role: 'funcionario', password_demo: '3', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' }
+    // mustChange: true — primeiro acesso obrigatório: usuários criados pelo sistema devem
+    // definir senha forte (8+ chars, 1 maiúscula, 1 número, 1 especial) antes de entrar.
+    // DEMO (mock): flag reseta a cada F5 pois não há banco. Comportamento esperado e documentado.
+    // TODO [DB] (tabela users): mustChange persistido no banco; após troca → false permanente.
+    { id: 'u2', nome: 'Dr. Carlos Silva', cpf: '333.333.333-33', email: 'carlos@dayvet.com', role: 'veterinario', password_demo: '2', mustChange: true, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
+    { id: 'u3', nome: 'Lucas Atendente', cpf: '444.444.444-44', email: 'lucas@dayvet.com', role: 'funcionario', password_demo: '3', mustChange: true, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' }
 ];
 
 let currentUser = { id: "1", nome: "Dr. Douglas Ferreira", role: "admin", profissao: "admin" };
@@ -1480,13 +1484,25 @@ function alternarTema() {
     lucide.createIcons();
 }
 
+// O QUE: Atualiza ícone sol/lua nos botões de tema (header principal e login).
+// PORQUÊ: Dois botões exibem o tema atual — header (pós-login) e login screen.
+//   No modo escuro mostra sol (clicar vai para claro); no claro mostra lua (clicar vai para escuro).
 function atualizarIconeTema() {
     const tema = document.documentElement.getAttribute('data-theme');
+    const novoIcone = tema === 'dark' ? 'sun' : 'moon';
+
+    // Botão do header principal (visível pós-login)
     const btn = document.getElementById('btn-tema');
-    if (!btn) return;
-    const icone = btn.querySelector('i');
-    if (icone) {
-        icone.setAttribute('data-lucide', tema === 'dark' ? 'sun' : 'moon');
+    if (btn) {
+        const icone = btn.querySelector('i');
+        if (icone) icone.setAttribute('data-lucide', novoIcone);
+    }
+
+    // Botão do login screen (visível antes do login)
+    const btnLogin = document.getElementById('btn-tema-login');
+    if (btnLogin) {
+        const iconeLogin = btnLogin.querySelector('i');
+        if (iconeLogin) iconeLogin.setAttribute('data-lucide', novoIcone);
     }
 }
 

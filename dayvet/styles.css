@@ -119,58 +119,63 @@ body {
     color-scheme: light;
 
     /* --- FUNDOS (superfícies) --- */
-    --pagina: #f4f6fb;               /* fundo geral do app (body) */
+    /* Paleta aplicada: #F8FAFC (página), #FFFFFF (card), #D9E6F2 (nav/inputs), #DFEBED (suave) */
+    --pagina: #F8FAFC;               /* fundo geral do app (body) */
     --card: #ffffff;                 /* cards e superfícies principais */
-    --nav-fundo: #eef1f7;            /* header/navegação (sólido) */
-    --nav-fundo-90: rgba(238,241,247,0.92); /* header/navegação translúcido */
+    --nav-fundo: #D9E6F2;            /* header/navegação (sólido) */
+    --nav-fundo-90: rgba(217,230,242,0.95); /* header/navegação translúcido */
     --branco: #ffffff;
-    --branco-suave: rgba(255,255,255,0.85); /* painéis translúcidos */
-    --branco-muito-suave: rgba(255,255,255,0.62);
-    --branco-forte: rgba(255,255,255,0.92);
-    --elemento: #e8ecf3;             /* elementos internos (badges, chips) */
-    --elemento-hover: #d9dfe9;       /* hover de elementos */
-    --apontador-hover: #f1f3f9;      /* hover de cards/menus */
-    --linha-hover: rgba(15,23,42,0.035); /* hover de linha em tabelas */
-    --suave-1: #eef1f6;              /* painel muito suave */
-    --suave-2: #e4e8ef;              /* painel suave alternativo */
+    --branco-suave: rgba(255,255,255,0.88); /* painéis translúcidos */
+    --branco-muito-suave: rgba(255,255,255,0.65);
+    --branco-forte: rgba(255,255,255,0.95);
+    --elemento: #DFEBED;             /* elementos internos (badges, chips) */
+    --elemento-hover: #c8dde8;       /* hover de elementos */
+    --apontador-hover: #f1f7fb;      /* hover de cards/menus */
+    --linha-hover: rgba(17,24,39,0.04); /* hover de linha em tabelas */
+    --suave-1: #F1F5F9;              /* painel muito suave */
+    --suave-2: #DFEBED;              /* painel suave alternativo */
 
     /* --- TEXTOS (do mais escuro ao mais claro) --- */
-    --texto-primario: #16202f;       /* títulos/fortes (white, slate-50/100/950) */
-    --texto-secundario: #22304a;     /* subtítulos (slate-200) */
-    --texto-corpo: #3b4761;          /* corpo de texto (slate-300) */
-    --texto-suave: #5b6982;          /* textos suaves (slate-400) */
-    --texto-fraco: #6b7890;          /* textos discretos (slate-500) */
-    --texto-600: #4a5872;
-    --texto-700: #39455c;
-    --texto-800: #2a3648;
-    --texto-900: #1f2a3b;            /* textos bem escuros (slate-900, inputs) */
-    --texto-base: #2a3446;           /* cor padrão do body */
+    /* Paleta: #111827 (títulos), #1E293B (subtítulos), #497285 (corpo/labels) */
+    --texto-primario: #111827;       /* títulos/fortes */
+    --texto-secundario: #1E293B;     /* subtítulos */
+    --texto-corpo: #2B4450;          /* corpo de texto */
+    --texto-suave: #497285;          /* textos suaves (labels, hints) */
+    --texto-fraco: #6b8a9a;          /* textos discretos */
+    --texto-600: #3d6070;
+    --texto-700: #2B4450;
+    --texto-800: #1E293B;
+    --texto-900: #111827;            /* textos bem escuros (inputs) */
+    --texto-base: #1E293B;           /* cor padrão do body */
 
     /* --- BORDAS E DIVISORES --- */
-    --borda: #d3dae5;                /* borda principal */
-    --borda-suave: #d9e0ea;          /* borda secundária */
-    --borda-50: rgba(217,224,234,0.65);
-    --borda-60: rgba(217,224,234,0.7);
-    --borda-clara: #e3e7ee;          /* borda bem clara (selects, toasts) */
-    --borda-divisora: #e7ebf2;       /* divisores de linha (border-b) */
+    /* Paleta: #DFEBED (borda principal), #D9E6F2 (borda suave) */
+    --borda: #DFEBED;                /* borda principal */
+    --borda-suave: #D9E6F2;          /* borda secundária */
+    --borda-50: rgba(223,235,237,0.7);
+    --borda-60: rgba(223,235,237,0.8);
+    --borda-clara: #e8f0f3;          /* borda bem clara (selects, toasts) */
+    --borda-divisora: #e2ecef;       /* divisores de linha (border-b) */
 
     /* --- MARCA (cores do sistema)
+           Paleta: #2F80ED (azul primário), #10B981 (verde/confirmado),
+                   #F97316 (laranja/pendente), #FDE047 (amarelo/aviso)
            OBS.: mantenha os <texto> escuros o bastante p/ contraste AA sobre branco. --- */
-    --lime-texto: #4d7c0f;           --lime-cheio: #84cc16;
-    --lime-hover-texto: #3f610f;     --lime-hover-borda: #65a30d;
-    --lime-10: rgba(77,124,15,0.12);
-    --lime-20: rgba(77,124,15,0.2);
-    --lime-borda-20: rgba(77,124,15,0.22);
-    --lime-borda-40: rgba(77,124,15,0.4);
-    --lime-borda-50: rgba(77,124,15,0.5);
+    --lime-texto: #0d7a5f;           --lime-cheio: #10B981;
+    --lime-hover-texto: #0a6650;     --lime-hover-borda: #059669;
+    --lime-10: rgba(16,185,129,0.12);
+    --lime-20: rgba(16,185,129,0.2);
+    --lime-borda-20: rgba(16,185,129,0.25);
+    --lime-borda-40: rgba(16,185,129,0.4);
+    --lime-borda-50: rgba(16,185,129,0.5);
 
     --pink-texto: #be185d;           --pink-hover-texto: #9d0f52;
     --pink-hover-borda: #db2777;     --pink-10: rgba(190,24,93,0.10);
 
-    --azul-texto: #1d4ed8;           --azul-cheio: #2563eb;
-    --azul-10: rgba(29,78,216,0.10);
-    --azul-20: rgba(29,78,216,0.16);
-    --azul-borda-30: rgba(29,78,216,0.32);
+    --azul-texto: #1a5fb4;           --azul-cheio: #2F80ED;
+    --azul-10: rgba(47,128,237,0.10);
+    --azul-20: rgba(47,128,237,0.16);
+    --azul-borda-30: rgba(47,128,237,0.32);
 
     --roxo-texto: #6d28d9;           --roxo-cheio: #7c3aed;
     --roxo-20: rgba(124,58,237,0.14);
@@ -178,43 +183,44 @@ body {
     --roxo-borda-20: rgba(109,40,217,0.22);
     --roxo-selecao: rgba(124,58,237,0.2);
 
-    --amarelo-texto: #a16207;        --amarelo-hover-texto: #854d0e;
-    --amarelo-10: rgba(161,98,7,0.12);
-    --amarelo-borda-20: rgba(161,98,7,0.25);
+    --amarelo-texto: #92560a;        --amarelo-hover-texto: #7a4508;
+    --amarelo-10: rgba(253,224,71,0.25);
+    --amarelo-borda-20: rgba(253,224,71,0.4);
 
     /* --- STATUS (cancelado / pendente / aviso) --- */
+    /* Paleta: #F97316 (laranja/pendente), #F78536 (variante) */
     --rosa-texto: #e11d48;           --rosa-cheio: #f43f5e;
     --rosa-suave-10: rgba(225,29,72,0.10);
     --rosa-suave-12: rgba(225,29,72,0.12);
     --rosa-borda-30: rgba(225,29,72,0.30);
     --rosa-borda-35: rgba(225,29,72,0.35);
 
-    --ambar-texto: #92400e;
-    --ambar-suave: rgba(180,83,9,0.12);
-    --ambar-borda: rgba(180,83,9,0.35);
+    --ambar-texto: #c2410c;
+    --ambar-suave: rgba(249,115,22,0.12);
+    --ambar-borda: rgba(249,115,22,0.35);
 
     /* --- SOMBRAS, ANÉIS E VIDRO --- */
-    --sombra-azul: 0 10px 30px rgba(37,99,235,0.18);
-    --sombra-lime: 0 8px 24px rgba(101,163,13,0.16);
-    --sombra-2xl: 0 18px 44px rgba(15,23,42,0.10);
-    --sombra-xl: 0 10px 30px rgba(15,23,42,0.08);
-    --sombra-lg: 0 6px 18px rgba(15,23,42,0.06);
-    --sombra-md: 0 4px 12px rgba(15,23,42,0.05);
-    --sombra-toast: 0 8px 24px rgba(15,23,42,0.10);
-    --anel-azul: rgba(37,99,235,0.25);
-    --backdrop-modal: rgba(15,23,42,0.5);
-    --backdrop-modal-forte: rgba(15,23,42,0.55);
-    --vidro-fundo: rgba(255,255,255,0.74);
-    --vidro-borda: rgba(15,23,42,0.08);
+    --sombra-azul: 0 10px 30px rgba(47,128,237,0.16);
+    --sombra-lime: 0 8px 24px rgba(16,185,129,0.14);
+    --sombra-2xl: 0 18px 44px rgba(17,24,39,0.08);
+    --sombra-xl: 0 10px 30px rgba(17,24,39,0.06);
+    --sombra-lg: 0 6px 18px rgba(17,24,39,0.05);
+    --sombra-md: 0 4px 12px rgba(17,24,39,0.04);
+    --sombra-toast: 0 8px 24px rgba(17,24,39,0.10);
+    --anel-azul: rgba(47,128,237,0.25);
+    --backdrop-modal: rgba(17,24,39,0.45);
+    --backdrop-modal-forte: rgba(17,24,39,0.55);
+    --vidro-fundo: rgba(255,255,255,0.80);
+    --vidro-borda: rgba(17,24,39,0.08);
 
-    /* --- BRILHOS NEON reduzidos (app; o login mantém neon forte) --- */
-    --neon-azul: rgba(37,99,235,0.14);
-    --neon-pink: rgba(219,39,119,0.14);
-    --neon-lime: rgba(101,163,13,0.16);
+    /* --- BRILHOS (sem neon no modo claro — minimalista) --- */
+    --neon-azul: rgba(47,128,237,0.10);
+    --neon-pink: rgba(219,39,119,0.10);
+    --neon-lime: rgba(16,185,129,0.12);
 
     /* --- SCROLLBAR --- */
-    --trilha: #e8ecf3;
-    --polegar: #9aa6b8;
+    --trilha: #D9E6F2;
+    --polegar: #8ecae6;
 
     /* --- TELA DE LOGIN: mantém o neon escuro (padrão de mercado).
            Edite aqui se quiser mudar as cores do login no modo claro. --- */
