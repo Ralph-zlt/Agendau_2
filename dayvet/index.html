@@ -110,13 +110,14 @@
                         <span>Acessar o Painel</span> <i data-lucide="arrow-right" class="w-4 h-4 text-brand-lime"></i>
                     </button>
 
-                    <!-- Link Esqueci a Senha -->
-                    <div class="text-center">
-                        <button type="button" onclick="abrirModalRecuperarSenha()" class="text-[11px] text-slate-400 hover:text-brand-lime transition-colors font-semibold">
-                            Esqueci a senha?
-                        </button>
-                    </div>
                 </form>
+                <!-- Link Esqueci a Senha — fora do <form> para não ser bloqueado pela validação
+                     nativa do browser nos campos required (login-cpf / login-password) -->
+                <div class="text-center mt-3">
+                    <button type="button" onclick="abrirModalRecuperarSenha()" class="text-[11px] text-slate-400 hover:text-brand-purple transition-colors font-semibold">
+                        Esqueci a senha?
+                    </button>
+                </div>
             </div>
         </div>
     </div>
