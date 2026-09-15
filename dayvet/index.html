@@ -116,8 +116,8 @@
                      Hover via onmouseover/out inline — Tailwind CDN sobrescreve classes CSS customizadas. -->
                 <div class="text-center mt-3">
                     <button id="btn-esqueci-senha" type="button" onclick="abrirModalRecuperarSenha()"
-                        onmouseover="this.style.color='#8b00ff'"
-                        onmouseout="this.style.color=''"
+                        onmouseover="this.style.setProperty('color','#8b00ff','important')"
+                        onmouseout="this.style.removeProperty('color')"
                         class="text-[11px] text-slate-400 transition-colors font-semibold">
                         Esqueci a senha?
                     </button>
