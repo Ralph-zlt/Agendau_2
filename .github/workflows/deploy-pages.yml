@@ -24,9 +24,9 @@ jobs:
       - name: Preparar artefato estático
         run: |
           rm -rf dist
-          mkdir -p dist/demo
+          mkdir -p dist/dayvet
           cp site/index.html dist/index.html
-          cp dayvet/index.html dayvet/styles.css dayvet/script.js dist/demo/
+          cp dayvet/index.html dayvet/styles.css dayvet/script.js dist/dayvet/
           touch dist/.nojekyll
 
       - name: Publicar artefato
