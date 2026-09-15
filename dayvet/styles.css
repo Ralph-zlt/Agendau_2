@@ -433,3 +433,6 @@ body {
 :root[data-theme='light'] #login-screen .neon-text-lime-login,
 :root[data-theme='light'] #login-screen .neon-text-pink-login { /* mantém neon original do login */ }
 :root[data-theme='light'] #login-screen input { background-color: var(--login-input-fundo) !important; color: var(--login-texto-secundario) !important; border-color: var(--login-borda) !important; }
+
+/* Hover roxo do botão "Esqueci a senha?" — classe Tailwind customizada não gerada pelo CDN */
+#btn-esqueci-senha:hover { color: #8b00ff; }

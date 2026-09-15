@@ -112,9 +112,11 @@
 
                 </form>
                 <!-- Link Esqueci a Senha — fora do <form> para não ser bloqueado pela validação
-                     nativa do browser nos campos required (login-cpf / login-password) -->
+                     nativa do browser nos campos required (login-cpf / login-password).
+                     Hover roxo via #btn-esqueci-senha no styles.css (brand-purple não é gerado
+                     pelo Tailwind CDN em classes hover: customizadas). -->
                 <div class="text-center mt-3">
-                    <button type="button" onclick="abrirModalRecuperarSenha()" class="text-[11px] text-slate-400 hover:text-brand-purple transition-colors font-semibold">
+                    <button id="btn-esqueci-senha" type="button" onclick="abrirModalRecuperarSenha()" class="text-[11px] text-slate-400 transition-colors font-semibold">
                         Esqueci a senha?
                     </button>
                 </div>
