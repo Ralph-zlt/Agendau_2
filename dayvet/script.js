@@ -37,7 +37,6 @@ let agendamentos = [
 ];
 
 let historicoClinico = [
-    { id: "401", petId: "101", tipo: "laudo", data: "2026-05-15", detalhe: "LAUDO DIAGNÓSTICO: Ultrassonografia abdominal sem alterações hepáticas ou renais significativas. Animal em ótimas condições gerais." },
     { id: "402", petId: "102", tipo: "receita", data: "2026-05-12", detalhe: "PRESCRIÇÃO: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." },
     { id: "403", petId: "101", tipo: "guia", data: "2026-05-10", detalhe: "GUIA DE ENCAMINHAMENTO: Solicitação de Ecocardiograma Veterinário de rotina." }
 ];
@@ -755,7 +754,6 @@ function renderizarHistoricoClinico() {
         const pet = pets.find(p => p.id === h.petId);
         let tipoTagColor = "text-brand-lime";
         let docLabel = "RECEITA";
-        if (h.tipo === 'laudo') { tipoTagColor = "text-brand-blue"; docLabel = "LAUDO DIAGNÓSTICO"; }
         if (h.tipo === 'guia') { tipoTagColor = "text-brand-pink"; docLabel = "GUIA DE ENCAMINHAMENTO"; }
 
         const btnImprimir = temPermissao('clinica_imprimir')
@@ -796,8 +794,7 @@ function prepararNovoDocumentoClinico(tipoDoc) {
 function atualizarLabelDocumento() {
     const tipo = document.getElementById('clinica-tipo').value;
     const label = document.getElementById('clinica-detalhe-label');
-    if (tipo === 'laudo') label.innerText = "Detalhamento do Laudo Médico / Exame";
-    else if (tipo === 'guia') label.innerText = "Instruções e Encaminhamento da Guia";
+    if (tipo === 'guia') label.innerText = "Instruções e Encaminhamento da Guia";
     else if (tipo === 'receita') label.innerText = "Prescrição e Posologia de Medicamentos";
     else label.innerText = "Detalhamento / Vacina";
 }
@@ -862,7 +859,6 @@ function imprimirDocumentoGenerico(id) {
 
     let titulos = {
         receita: "Prescrição Médica Veterinária (Receituário)",
-        laudo: "Laudo Médico Veterinário / Diagnóstico",
         guia: "Guia de Encaminhamento Veterinário",
         vacina: "Comprovante de Imunização"
     };

@@ -1,7 +1,7 @@
 # ROADMAP — DayVet-Gestão
 
 > Visão geral, fases de evolução e critérios de aceite.
-> Última atualização: 2026-09-15.
+> Última atualização: 2026-09-17.
 
 ---
 
@@ -28,7 +28,7 @@
 | RF-06 | Cadastro de vacina (nome, data, doses, pet) | **Conforme** | Funcional com mock |
 | RF-07 | Relatório em PDF (por tutor, período, serviço) | **Parcial** | Relatórios existem mas exportação PDF não implementada (usa print) |
 | RF-08 | Receita veterinária (assinatura vet + CRMV) | **Parcial** | Receita criada mas CRMV vem do mock fixo; sem assinatura digital |
-| RF-09 | Laudo veterinário | **Conforme** | Funcional com mock |
+| RF-09 | Laudo veterinário | **CANCELADO** | **Fora de escopo** — decisão da clínica (2026-09-17): não haverá laudos emitidos pelo sistema. Mantido apenas no protótipo histórico. |
 
 **RNFs:**
 
@@ -66,7 +66,6 @@
 - [ ] RF-05: Validar janela 07h–19h no frontend ao criar agendamento
 - [ ] RF-07: Melhorar exportação PDF (layout dedicado para impressão)
 - [ ] RF-08: Exibir CRMV do veterinário logado na receita
-- [ ] RF-09: Garantir laudo completo com campos obrigatórios
 
 **Critérios de aceite:** `node --check dayvet/script.js` passa; validações frontend impedem cadastro/login com dados inválidos; testes manuais CPF 1/2/3 continuam funcionando; CHANGELOG atualizado.
 

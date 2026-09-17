@@ -1,7 +1,7 @@
 # MAPA DO SISTEMA — DayVet-Gestão
 
 > Referência para IAs e colaboradores editarem o código com contexto.
-> Última revisão: 15/09/2026 · Base: merge `teste/auth-empresarial` → `main`
+> Última revisão: 17/09/2026 · Base: decisão clínica — laudos fora de escopo
 > Atenção: números de linha são referências — confirme antes de editar.
 
 ## 1. Visão geral
@@ -41,7 +41,7 @@
 | 5 · NAVEGAÇÃO E TABS | ~194 | `switchTab`, guards RBAC, `atualizarPermissoesNavegacao` |
 | 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos (filtros por status + período: todos/hoje/futuros/passados, ordenado por data/hora); painel do vet (`renderizarPainelVet`, `atualizarDashboardPorPerfil`) |
 | 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns |
-| 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: laudo/guia/receita/vacina + impressão |
+| 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: guia/receita/vacina + impressão (**laudo FORA DE ESCOPO** — decisão clínica 2026-09-17) |
 | 9 · RELATÓRIOS | ~778 | Relatórios de serviços, tutor e período |
 | 10 · USUÁRIOS & PERMISSÕES | ~975 | Gestão de logins mock (CRUD simulado) |
 | 11 · GRÁFICOS (Chart.js) | ~1066 | `financeChart` (gráfico de receita) |

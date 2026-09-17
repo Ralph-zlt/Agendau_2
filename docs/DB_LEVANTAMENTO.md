@@ -1,8 +1,9 @@
 # LEVANTAMENTO — Banco de Dados (DayVet-Gestão)
 
 > Documento de levantamento **sem código**. Define entidades, mapeia TODOs existentes e lista opções de persistência.
-> Última atualização: 2026-09-15.
+> Última atualização: 2026-09-17.
 > Status: **Decisão pendente** — requer aprovação antes de implementar.
+> **Nota (2026-09-17):** Laudos foram removidos do escopo por decisão da clínica. Não criar tabela nem endpoint para laudo.
 
 ---
 
@@ -78,22 +79,19 @@
 ### 1.6 HistoricoClinico (tabela `historico_clinico`)
 - **id** (PK, string/UUID)
 - **petId** (FK → pets.id)
-- **tipo** (enum: `laudo`, `receita`, `guia`, `vacina`)
+- **tipo** (enum: `receita`, `guia`, `vacina`) ~~`laudo`~~ **FORA DE ESCOPO** — decisão clínica 2026-09-17
 - **data** (date)
 - **detalhe** (text)
 
 **Regra de negócio:** Registros são **imutáveis** após criação (auditoria).
 
-### 1.7 Receita / Laudo (subtipos de `historico_clinico`)
+### 1.7 Receita (subtipo de `historico_clinico`)
 
 **Receita** (campos adicionais):
 - **veterinarioId** (FK → users.id) — assinatura do vet
 - **crmv** (string) — CRMV do veterinário responsável
 
-**Laudo** (campos adicionais):
-- **veterinarioId** (FK → users.id)
-- **crmv** (string)
-- **diagnostico** (text)
+> **⚠ Laudo — FORA DE ESCOPO:** A entidade `Laudo` (com `diagnostico`, `veterinarioId`, `crmv`) foi removida do escopo por decisão da clínica em 2026-09-17. O sistema não emitirá laudos. Não criar tabela nem endpoint para laudo.
 
 ### 1.8 Vacina (pode ser tabela separada ou subtipo de `historico_clinico`)
 - **id** (PK)
@@ -193,7 +191,7 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:`:
 - **CPF é dado sensível** (pode ser usado para identificação única) — deve ser armazenado com criptografia/hash.
 - **Senhas:** nunca em plaintext; usar bcrypt ou argon2.
 - **Consentimento:** Ao cadastrar tutor/usuário, registrar consentimento (termo de uso).
-- **Retenção:** Definir política de retenção (ex: dados de agendamentos por 5 anos, laudos permanentes por obrigação profissional).
+- **Retenção:** Definir política de retenção (ex: dados de agendamentos por 5 anos). **Nota:** laudos foram removidos do escopo (decisão clínica 2026-09-17) — não há documentos permanentes de obrigação profissional a manter neste sistema.
 - **Acesso:** RBAC controla quem vê o quê; logs de acesso devem ser registrados.
 - **Portabilidade:** Usuário pode solicitar exportação de seus dados (RF futuro).
 - **Exclusão:** Tutor/pet podem ser "arquivados" (soft delete) mantendo integridade referencial.

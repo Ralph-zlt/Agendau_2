@@ -9,6 +9,20 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-17 · (código) — Remoção de laudos do código (dayvet/)
+**O que:** removida toda a funcionalidade de laudos do produto: mock de laudo no `historicoClinico` (SEÇÃO 1), branches condicionais `if (tipo==='laudo')` e `if (h.tipo==='laudo')` (SEÇÃO 8), mapeamento `laudo` no `titulos` de impressão, botão "Incluir Laudo", option "Laudo Diagnóstico" no select de tipo, option "Laudos e Receituários" no relatório, textos de referência a laudo em labels e comentários HTML. Valores: guia/receita/vacina mantidos intactos.
+**Por quê:** decisão clínica 2026-09-17 — laudos FORA DE ESCOPO (documentada em ROADMAP RF-09 CANCELADO, MAPA_DO_SISTEMA §8, DB_LEVANTAMENTO). O código não deve mais expor funcionalidade descontinuada.
+**Onde:** `dayvet/script.js` (4 edições), `dayvet/index.html` (6 edições).
+**Validações:** `node --check dayvet/script.js` ✓, grep por `laudo` em `dayvet/` e `site/` = zero ocorrências, guia/receita/vacina intactos.
+
+## 2026-09-17 · (docs) — Decisão clínica: laudos FORA DE ESCOPO
+**O que:** remoção de laudos do escopo do sistema por decisão da clínica (2026-09-17). Atualização de documentação: ROADMAP (RF-09 cancelado, removido de pendências), MAPA_DO_SISTEMA (módulo clínico sem laudo), DB_LEVANTAMENTO (entidade/tipo laudo fora de escopo, retenção LGPD ajustada), CHANGELOG (esta entrada).
+**Por quê:** a clínica decidiu que não haverá laudos emitidos pelo sistema. O fluxo de laudo continua existindo apenas no protótipo histórico (`dayvet/`), mas não será implementado em produção.
+**Onde:** `ROADMAP.md` · `docs/MAPA_DO_SISTEMA.md` · `docs/DB_LEVANTAMENTO.md` · `docs/CHANGELOG.md`.
+**Decisão registrada:** "não haverá mais laudos por parte da clínica" — data 2026-09-17. Mantidas menções históricas sinalizadas como descontinuadas.
+
+---
+
 ## 2026-09-15 · (teste) — Requisitos funcionais versionados no repo
 **O que:** `docs/requisitos-funcionais-dayvet.docx` (v2) agora versionado; referências em `AGENTS.md`, `ROADMAP.md` §2 e `MAPA_DO_SISTEMA.md` §2.
 **Por quê:** documento de requisitos passa a morar no GitHub como fonte de RFs/RNFRs/RNFS.
