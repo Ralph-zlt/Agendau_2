@@ -33,6 +33,8 @@
 
 **LGPD:** Criptografia at-rest, sem senha em log, consentimento e retenção de dados.
 
+> ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
+
 ### 1.2 Administrador (tabela `administradores`)
 - **id** (PK, FK → users.id)
 - **crm** (string, ex: "CRM-SP 45678")

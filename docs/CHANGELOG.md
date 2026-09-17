@@ -9,6 +9,12 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-17 · (código + docs) — Bypass 1/2/3: mustChange:false + alertas de segurança
+**O que:** contas teste u2/u3 agora têm `mustChange:false` em `usuariosMock` para login direto (CPF 1/2/3) nos 3 roles. Comentários `CONTAS TESTE: bypass troca` e `TODO [SECURITY]` adicionados em `perfisTestes` e `usuariosMock`. Alertas RISCO ALTO inseridos em `AGENTS.md`, `ROADMAP.md` (Fase 2 + checkbox pendente), `MAPA_DO_SISTEMA.md` §3 e `DB_LEVANTAMENTO.md` §1/LGPD.
+**Por quê:** prototipação permite login rápido sem troca de senha; em produção, `mustChange:true` + hash obrigatório para todos os primeiro-acesso.
+**Onde:** `dayvet/script.js` (linhas 54–62 e 125), `AGENTS.md`, `ROADMAP.md`, `docs/MAPA_DO_SISTEMA.md`, `docs/DB_LEVANTAMENTO.md`.
+**Validações:** `node --check dayvet/script.js` ✓, grep `perfisTestes` existe, login demo (1/2/3) bypassa mustChange, novos usuários via admin continuam mustChange:true.
+
 ## 2026-09-17 · (código) — Remoção de laudos do código (dayvet/)
 **O que:** removida toda a funcionalidade de laudos do produto: mock de laudo no `historicoClinico` (SEÇÃO 1), branches condicionais `if (tipo==='laudo')` e `if (h.tipo==='laudo')` (SEÇÃO 8), mapeamento `laudo` no `titulos` de impressão, botão "Incluir Laudo", option "Laudo Diagnóstico" no select de tipo, option "Laudos e Receituários" no relatório, textos de referência a laudo em labels e comentários HTML. Valores: guia/receita/vacina mantidos intactos.
 **Por quê:** decisão clínica 2026-09-17 — laudos FORA DE ESCOPO (documentada em ROADMAP RF-09 CANCELADO, MAPA_DO_SISTEMA §8, DB_LEVANTAMENTO). O código não deve mais expor funcionalidade descontinuada.

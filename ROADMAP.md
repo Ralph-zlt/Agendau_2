@@ -78,6 +78,9 @@
 - [x] RNFR-05.1: Email obrigatório e único
 - [x] RNFR-05.2: Login CPF ou e-mail com erro genérico
 - [x] RNFR-05.3: Primeiro acesso força senha 8+1Maiusc+1Num+1Especial (usuários 2 e 3)
+- [ ] Remover bypass 1/2/3 antes da implantação (perfisTestes + password_demo + mustChange:false)
+
+> ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
 - [x] RNFR-05.4: Recovery demo mesma mensagem exista ou não
 - [x] RNFR-05.5: Só admin cria 3 roles (admin/vet/func)
 - [x] Tema claro refinado com nova paleta (#F8FAFC, #2F80ED, #10B981, #F97316)

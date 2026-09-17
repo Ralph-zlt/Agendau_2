@@ -1,5 +1,7 @@
 # AGENTS.md — DayVet-Gestão
 
+> ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
+
 Instruções para **IAs e colaboradores** que forem editar este código.
 
 ## Antes de editar (obrigatório)

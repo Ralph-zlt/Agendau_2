@@ -57,8 +57,10 @@ let usuariosMock = [
     // definir senha forte (8+ chars, 1 maiúscula, 1 número, 1 especial) antes de entrar.
     // DEMO (mock): flag reseta a cada F5 pois não há banco. Comportamento esperado e documentado.
     // TODO [DB] (tabela users): mustChange persistido no banco; após troca → false permanente.
-    { id: 'u2', nome: 'Dr. Carlos Silva', cpf: '333.333.333-33', email: 'carlos@dayvet.com', role: 'veterinario', password_demo: '2', mustChange: true, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
-    { id: 'u3', nome: 'Lucas Atendente', cpf: '444.444.444-44', email: 'lucas@dayvet.com', role: 'funcionario', password_demo: '3', mustChange: true, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' }
+    // CONTAS TESTE 1/2/3: bypass troca p/ prototipação — REMOVER EM PRODUÇÃO
+    // TODO [SECURITY]: remover bypass demo antes da produção
+    { id: 'u2', nome: 'Dr. Carlos Silva', cpf: '333.333.333-33', email: 'carlos@dayvet.com', role: 'veterinario', password_demo: '2', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
+    { id: 'u3', nome: 'Lucas Atendente', cpf: '444.444.444-44', email: 'lucas@dayvet.com', role: 'funcionario', password_demo: '3', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' }
 ];
 
 let currentUser = { id: "1", nome: "Dr. Douglas Ferreira", role: "admin", profissao: "admin" };
@@ -122,6 +124,7 @@ function temPermissao(acao) {
 // TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
 //   Não será necessário no backend — o login real busca por CPF/email
 //   na tabela `users` e valida bcrypt. Este mapa é exclusivo do protótipo.
+// TODO [SECURITY]: remover bypass demo antes da produção
 const perfisTestes = {
     "1":   { id: "u1", nome: "Dr. Douglas Ferreira", role: "admin", profissao: "admin", password_demo: "1" },
     "111": { id: "u1", nome: "Dr. Douglas Ferreira", role: "admin", profissao: "admin", password_demo: "1" },
