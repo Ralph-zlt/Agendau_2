@@ -16,13 +16,17 @@
 
 ## 1. Próximas (fazer agora na `teste`, nesta ordem)
 
-- [ ] **1. Login autocomplete temporário (substitui bypass 1/2/3 visível):** ao digitar no campo usuário (CPF ou e-mail), exibir abaixo `Administrador`, `Veterinário`, `Funcionário` (estilo login salvo); clicar preenche usuário+senha mock e acessa. Botão `info` com tooltip: "Quando implantado, CPF ou e-mail identifica se é admin/vet/fun; por enquanto use o acesso temporário". Onde: `dayvet/index.html` `#login-screen`, `dayvet/script.js` SEÇÃO 3. Aceite: digitar mostra 3 opções, clique entra no perfil certo, hint 1/2/3 some da UI.
-- [ ] **2. Clínico usa tutor por CPF (chave primária):** além do pet, selecionar o tutor pelo CPF. Mock: `tutor.cpf` vira PK; `pet.tutorId` → `pet.tutorCpf`; `agendamento`/`historicoClinico` ganham `tutorCpf`. Form clínico ganha `select#clinica-tutor-select` que filtra o select de pets. Onde: `dayvet/script.js` SEÇÕES 1/6/7/8, `dayvet/index.html` form clínico. Aceite: escolher tutor por CPF lista só os pets dele; salvar/imprimir exibe tutor+pet.
-- [ ] **3. Área de upload de documentos:** anexos no módulo clínico junto ao criar (Receita/Guia): `<input type="file" multiple accept=".pdf,.jpg,.png">` + lista `#lista-anexos` (excluir). Mock em memória, some no reload. Gate RBAC `clinica_criar`. `TODO [INTEGRAÇÃO SUPABASE]`: storage. Aceite: anexar lista, exclui, vinculado ao pet/tutor.
-- [ ] **4. Vacinação informa o tipo (select):** `select#vacina-tipo` (`Antirrábica, V8, V10, V12, Tríplice/Quádrupla Felina, Giárdia, Tosse dos Canis, Leishmaniose, Outra`) visível só quando vacina (agendamento + clínico + relatórios). Novos campos `vacinaTipo`; impressão/timeline exibem `Vacinação — {tipo}`. Aceite: vacina sem tipo não salva; tipo aparece na timeline e impressão.
-- [ ] **5. Layout de impressão/PDF + RF-08 ilustrativo:** layout dedicado de impressão dos documentos (base do PDF futuro) e, no mesmo modal, tela HTML mostrando **como vai ficar** a receita com nome+CRMV do vet e bloco de assinatura (selo `DEMONSTRAÇÃO`, dados mock via `TODO [INTEGRAÇÃO SUPABASE]` — sem validação, sem assinatura real). Onde: `dayvet/index.html` `#modal-impressao-documento`, `dayvet/script.js` `imprimirDocumentoGenerico()`. Aceite: receita imprime com layout dedicado + vet/CRMV mock + selo demo. A lógica real do RF-08 (CRMV do logado, assinatura) fica na §2/§3 (pós-banco).
+- [x] **1. Login autocomplete temporário** — entregue na `main` (merge `3c1f67e`).
+- [x] **2. Clínico usa tutor por CPF (chave primária)** — entregue na `main` (merge `3c1f67e`).
+- [x] **3. Área de upload de documentos** — entregue na `main` (merge `3c1f67e`).
+- [x] **4. Vacinação informa o tipo (select)** — entregue na `main` (merge `3c1f67e`).
+- [x] **5. Layout de impressão/PDF + RF-08 ilustrativo** — entregue na `main` (merge `3c1f67e`).
+- [ ] **6. Tooltip instantâneo no login:** trocar o `title=` nativo do botão info (`#btn-info-login`) por tooltip customizado com exibição imediata no hover, no padrão visual dos 2 temas. Aceite: sem delay de ~1–2s do tooltip nativo.
+- [ ] **7. "Módulo clínico" do funcionário (CRUD de tipos de vacina):** reaproveitar nome/estética do "Módulo clínico" em visão restrita ao funcionário: só criar/editar/excluir tipos de vacina (mock `tiposVacina[]` agora, tabela no banco depois). Vet/admin não editam — apenas puxam a lista nos selects (fim do `TIPOS_VACINA` fixo + `TODO SUPABASE`). RBAC: `vacina_tipos_*`. Aceite: funcionário gerencia tipos; vet/admin veem a lista atualizada ao solicitar vacina.
+- [ ] **8. Card de anexos nos 2 temas:** converter `#anexos-card`/`#lista-anexos` (classes escuras fixas) para as variáveis CSS de tema (`styles.css` §6/§7), junto da revisão geral de estilização. Aceite: legível no claro e consistente no escuro.
+- [ ] **9. Agendamentos do funcionário só-leitura:** remover `consulta/vacinacao: agendar+editar+cancelar` do funcionário (mantém ver + relatórios, tutor/pet incluir, `clinica_imprimir`). Aceite: nenhum botão Agendar/Editar/Cancelar/Confirmar visível nem acionável nesse perfil.
 
-**Aceite geral:** skill `testar-frontend` passa; teste manual (3 perfis, tutor+pet, upload, vacina, impressão, temas); `docs/CHANGELOG.md` atualizado; merge na `main` só após dono validar.
+**Aceite geral:** skill `testar-frontend` passa; teste manual na `teste` antes de qualquer novo merge; `docs/CHANGELOG.md` atualizado. Fluxo padrão: código na `teste` → validação do dono → merge na `main` (exceção desta vez: merge direto `teste`→`main` validado em teste manual).
 
 ---
 

@@ -9,6 +9,13 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-22 · (docs) — Merge teste→main + ressalvas 6–9 em Próximas
+**O que:** merge fast-forward `teste`→`main` (itens 1–5, validado em teste manual pelo dono — exceção ao fluxo padrão). ROADMAP §1: itens 1–5 marcados entregues + itens 6–9 novos (tooltip instantâneo; "Módulo clínico" do funcionário p/ CRUD de vacinas; anexos nos 2 temas; funcionário só-leitura em agendamentos).
+**Por quê:** publicar itens validados no Pages + registrar ressalvas; fluxo padrão volta a valer (teste → valida → merge).
+**Onde:** `main`, `ROADMAP.md`, `docs/CHANGELOG.md`.
+
+---
+
 ## 2026-09-22 · (teste) — ROADMAP §1 implementado (itens 1–5)
 **O que:** (1) login autocomplete temporário admin/vet/fun (`#login-sugestoes`, `preencherLoginTemporario`, botão info, hint 1/2/3 removida); (2) tutor por CPF como PK (`tutorCpf` em tutores/pets/agendamentos/historicoClinico, `select#clinica-tutor-select` filtra pets, cascata ao editar CPF); (3) upload de anexos no clínico (`#input-upload-anexo`, `#lista-anexos`, mock em memória); (4) tipo de vacina via select (`TIPOS_VACINA`, `#agend-vacina-tipo`/`#clinica-vacina-tipo`, timeline/impressão/relatórios exibem); (5) impressão com selo DEMONSTRAÇÃO + RF-08 ilustrativo (nome+CRMV mock, `TODO SUPABASE`).
 **Por quê:** ROADMAP §1 (branch `teste` = cópia da `main`; `Pages /dayvet/` intacto).
