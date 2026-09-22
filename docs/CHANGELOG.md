@@ -9,6 +9,11 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-22 · (docs) — Metodologia geral em DOCX versionado
+**O que:** novo `docs/METODOLOGIA_GERAL_AGENDAU_2.docx` (método dev HTML/CSS/JS, método GitHub, método IA com OpenCode + modelos gratuitos + Copilot CLI).
+**Por quê:** pedido do dono — só este documento de `local/` vai para o repo; resto de `local/` segue privado.
+**Onde:** `docs/METODOLOGIA_GERAL_AGENDAU_2.docx`, `docs/CHANGELOG.md`.
+
 ## 2026-09-22 · (docs) — Decisão banco: SQL via Supabase (projeto ainda não criado)
 **O que:** ROADMAP Fase 4, DB_LEVANTAMENTO (§4, §3.3, §6), MAPA_DO_SISTEMA e AGENTS passam a declarar decisão tomada: SQL via Supabase (Postgres + Auth + RLS). Projeto ainda NÃO criado; código segue 100% mock com `TODO [INTEGRAÇÃO SUPABASE]`. Bypass 1/2/3 no Pages confirmado como intencional para teste do usuário final (protótipo sem dados reais).
 **Por quê:** alinhar docs com decisão do dono antes de sincronizar GitHub/Pages.
