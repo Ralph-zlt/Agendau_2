@@ -19,31 +19,50 @@
 // Tabela `administradores` — dados do profissional responsável
 // pela clínica (CRMV, validade). Relacionado à tabela `users`
 // via id. Futuramente: GET /api/profissional/:id
+// TODO [INTEGRAÇÃO SUPABASE]:
+// Tabela `tutores` — CHAVE PRIMÁRIA = `cpf` (decisão 2026-09-22: o tutor
+// registrado é identificado pelo CPF em todo o sistema, inclusive no
+// módulo clínico). Futuramente: tabela `tutores` com PK em `cpf`.
+// via id. Futuramente: GET /api/profissional/:id
 let administradores = [
     { id: "admin1", nome: "Dr. Douglas Ferreira", cpf: "111.111.111-11", profissao: "veterinario", crm: "CRM-SP 45678", crmValidade: "2029-10-12", senha: "admin" }
 ];
 
 let tutores = [
-    { id: "1", nome: "Douglas Silva Ferreira", tel: "(11) 98765-4321", cpf: "111.222.333-44", email: "douglas.ferreira@dayvetgestao.com", endereco: "Rua do Pet, 120 - Pilar do Sul", senha: "123" },
-    { id: "2", nome: "Laís Vieira de Oliveira", tel: "(11) 97777-8888", cpf: "222.333.444-55", email: "lais.oliveira@dayvetgestao.com", endereco: "Av. Veterinária, 350 - Pilar do Sul", senha: "123" }
+    { nome: "Douglas Silva Ferreira", tel: "(11) 98765-4321", cpf: "111.222.333-44", email: "douglas.ferreira@dayvetgestao.com", endereco: "Rua do Pet, 120 - Pilar do Sul", senha: "123" },
+    { nome: "Laís Vieira de Oliveira", tel: "(11) 97777-8888", cpf: "222.333.444-55", email: "lais.oliveira@dayvetgestao.com", endereco: "Av. Veterinária, 350 - Pilar do Sul", senha: "123" }
 ];
 
 let pets = [
-    { id: "101", tutorId: "1", nome: "Rex", especie: "Cachorro", raca: "Golden Retriever", comportamento: "Dócil e sociável.", alergias: "Nenhuma registrada." },
-    { id: "102", tutorId: "2", nome: "Mingau", especie: "Gato", raca: "Persa", comportamento: "Muito dócil e preguiçoso.", alergias: "Sensibilidade a certos medicamentos." }
+    { id: "101", tutorCpf: "111.222.333-44", nome: "Rex", especie: "Cachorro", raca: "Golden Retriever", comportamento: "Dócil e sociável.", alergias: "Nenhuma registrada." },
+    { id: "102", tutorCpf: "222.333.444-55", nome: "Mingau", especie: "Gato", raca: "Persa", comportamento: "Muito dócil e preguiçoso.", alergias: "Sensibilidade a certos medicamentos." }
 ];
 
 let agendamentos = [
-    { id: "201", petId: "101", tutorId: "1", servico: "Consulta Veterinária", data: "2026-05-18", hora: "09:30", valor: 150.00, status: "confirmado" },
-    { id: "202", petId: "102", tutorId: "2", servico: "Exame Clínico", data: "2026-05-18", hora: "14:00", valor: 90.00, status: "confirmado" },
-    { id: "203", petId: "101", tutorId: "1", servico: "Vacinação", data: "2026-05-17", hora: "10:00", valor: 110.00, status: "confirmado" },
-    { id: "204", petId: "102", tutorId: "2", servico: "Consulta Veterinária", data: "2026-05-19", hora: "11:00", valor: 150.00, status: "pendente" }
+    { id: "201", petId: "101", tutorCpf: "111.222.333-44", servico: "Consulta Veterinária", data: "2026-05-18", hora: "09:30", valor: 150.00, status: "confirmado" },
+    { id: "202", petId: "102", tutorCpf: "222.333.444-55", servico: "Exame Clínico", data: "2026-05-18", hora: "14:00", valor: 90.00, status: "confirmado" },
+    { id: "203", petId: "101", tutorCpf: "111.222.333-44", servico: "Vacinação", vacinaTipo: "Antirrábica", data: "2026-05-17", hora: "10:00", valor: 110.00, status: "confirmado" },
+    { id: "204", petId: "102", tutorCpf: "222.333.444-55", servico: "Consulta Veterinária", data: "2026-05-19", hora: "11:00", valor: 150.00, status: "pendente" }
 ];
 
+// O QUE: Catálogo de tipos de vacina (select) — protótipo.
+// PORQUÊ: Vacinação deve informar o tipo (agendamento + clínico + relatórios).
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `vacinas` + coluna
+//   `vacinaTipo` em `agendamentos` e `historico_clinico`.
+const TIPOS_VACINA = ["Antirrábica", "V8", "V10", "V12", "Tríplice Felina", "Quádrupla Felina", "Giárdia", "Tosse dos Canis", "Leishmaniose", "Outra"];
+
 let historicoClinico = [
-    { id: "402", petId: "102", tipo: "receita", data: "2026-05-12", detalhe: "PRESCRIÇÃO: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." },
-    { id: "403", petId: "101", tipo: "guia", data: "2026-05-10", detalhe: "GUIA DE ENCAMINHAMENTO: Solicitação de Ecocardiograma Veterinário de rotina." }
+    { id: "402", petId: "102", tutorCpf: "222.333.444-55", tipo: "receita", data: "2026-05-12", detalhe: "PRESCRIÇÃO: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." },
+    { id: "403", petId: "101", tutorCpf: "111.222.333-44", tipo: "guia", data: "2026-05-10", detalhe: "GUIA DE ENCAMINHAMENTO: Solicitação de Ecocardiograma Veterinário de rotina." }
 ];
+
+// O QUE: Anexos do módulo clínico (exames, documentos) — protótipo em memória.
+// PORQUÊ: Área de upload junto ao criar (Receita/Guia); some ao recarregar.
+// DEMO (mock): Guarda só metadados (nome/tipo/tamanho/data/vínculos).
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (storage + tabela documentos):
+//   POST /api/documentos (multipart) → Supabase Storage; metadados em
+//   `documentos {id, petId, tutorCpf, clinicoId, nome, tipo, tamanho, url}`.
+let anexosClinicos = [];
 
 // O QUE: Estoque mock de usuários com campos estendidos para auth empresarial.
 // PORQUÊ: Simula tabela `users` com autenticação por CPF/e-mail + senha,
@@ -201,6 +220,62 @@ function formatarCargo(role) {
         funcionario: 'Funcionário'
     };
     return mapa[role] || role;
+}
+
+// O QUE: Acessos temporários do protótipo (estilo "login salvo").
+// PORQUÊ: Facilita o teste pelo usuário final sem decorar CPFs 1/2/3:
+//   digitar qualquer coisa no campo usuário exibe Administrador,
+//   Veterinário e Funcionário; clicar preenche usuário+senha e acessa.
+// DEMO (mock): Atalhos por apelido (admin/vet/fun) + CPFs curtos 1/2/3.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: remover todo este bloco —
+//   o login real identifica o perfil pelo CPF/e-mail na tabela `users`.
+// TODO [SECURITY]: remover acessos temporários antes da produção
+const ACESSOS_TEMPORARIOS = [
+    { role: 'admin', rotulo: 'Administrador', icone: 'shield-check', apelidos: ['admin', 'administrador', '1', '111'] },
+    { role: 'veterinario', rotulo: 'Veterinário', icone: 'stethoscope', apelidos: ['vet', 'veterinario', 'veterinário', '2', '222'] },
+    { role: 'funcionario', rotulo: 'Funcionário', icone: 'clipboard-list', apelidos: ['fun', 'func', 'funcionario', 'funcionário', '3', '333'] }
+];
+
+const CPF_DEMO_POR_ROLE = { admin: '1', veterinario: '2', funcionario: '3' };
+
+// O QUE: Filtra e exibe as sugestões de acesso temporário conforme o digitado.
+// PORQUÊ: Experiência próxima ao login salvo do navegador.
+// DEMO (mock): Filtro por substring nos apelidos/rótulos; sem backend.
+function filtrarSugestoesLogin() {
+    const box = document.getElementById('login-sugestoes');
+    if (!box) return;
+    const termo = document.getElementById('login-cpf').value.trim().toLowerCase();
+    const visiveis = ACESSOS_TEMPORARIOS.filter(a =>
+        !termo || a.rotulo.toLowerCase().includes(termo) ||
+        a.apelidos.some(ap => ap.includes(termo))
+    );
+    if (!visiveis.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+    box.innerHTML = visiveis.map(a =>
+        `<button type="button" onclick="preencherLoginTemporario('${a.role}')" ` +
+        `class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 ` +
+        `hover:border-brand-lime text-left transition-all group">` +
+        `<i data-lucide="${a.icone}" class="w-4 h-4 text-slate-500 group-hover:text-brand-lime"></i>` +
+        `<span><span class="block text-xs font-bold text-slate-200">${a.rotulo}</span>` +
+        `<span class="block text-[10px] text-slate-500">acesso temporário — toque para entrar</span></span>` +
+        `</button>`
+    ).join('');
+    box.classList.remove('hidden');
+    if (window.lucide) lucide.createIcons();
+}
+
+// O QUE: Preenche usuário+senha do acesso temporário e acessa automaticamente.
+// PORQUÊ: Um toque equivale ao "login salvo" do navegador no protótipo.
+// DEMO (mock): Usa os CPFs curtos 1/2/3 via perfisTestes; sem backend.
+function preencherLoginTemporario(role) {
+    const cpf = CPF_DEMO_POR_ROLE[role];
+    if (!cpf) return;
+    const demoUser = perfisTestes[cpf];
+    if (!demoUser) return;
+    document.getElementById('login-cpf').value = cpf;
+    document.getElementById('login-password').value = demoUser.password_demo || '';
+    const box = document.getElementById('login-sugestoes');
+    if (box) { box.classList.add('hidden'); box.innerHTML = ''; }
+    handleAuthSubmit(null);
 }
 
 // O QUE: Valida CPF brasileiro (dígito verificador x10 e x11).
@@ -426,7 +501,7 @@ function renderizarAgendamentos() {
 
     filtrados.forEach(a => {
         const pet = pets.find(p => p.id === a.petId);
-        const tutor = tutores.find(t => t.id === a.tutorId);
+        const tutor = tutores.find(t => t.cpf === a.tutorCpf);
 
         let badge = "";
         if (a.status === 'confirmado') {
@@ -459,7 +534,7 @@ function renderizarAgendamentos() {
                     <div class='font-bold text-slate-200'>${pet ? pet.nome : 'N/A'}</div>
                     <div class='text-xs text-slate-500'>${tutor ? tutor.nome : 'N/A'}</div>
                 </td>
-                <td class='py-4 px-6 text-slate-300 font-semibold'>${a.servico}</td>
+                <td class='py-4 px-6 text-slate-300 font-semibold'>${a.servico}${/vacin/i.test(a.servico) && a.vacinaTipo ? ' — ' + a.vacinaTipo : ''}</td>
                 <td class='py-4 px-6 text-slate-300'>
                     <div>${a.data}</div>
                     <div class='text-xs text-brand-pink font-bold'>${a.hora}</div>
@@ -482,6 +557,26 @@ function renderizarAgendamentos() {
 function abrirModalSolicitarAgendamento(tipoServico) {
     abrirModalAgendamento();
     document.getElementById('agend-tipo').value = tipoServico;
+    atualizarVisibilidadeVacinaAg();
+}
+
+// O QUE: Preenche o select de tipos de vacina do agendamento.
+// PORQUÊ: Vacinação exige informar o tipo (protótipo com catálogo fixo).
+function popularVacinaTiposAg(selecionado) {
+    const select = document.getElementById('agend-vacina-tipo');
+    if (!select) return;
+    select.innerHTML = '<option value="">Selecione o tipo...</option>';
+    TIPOS_VACINA.forEach(t => {
+        select.innerHTML += `<option value="${t}"${t === selecionado ? ' selected' : ''}>${t}</option>`;
+    });
+}
+
+// O QUE: Exibe o campo de tipo de vacina só quando o serviço é vacinação.
+function atualizarVisibilidadeVacinaAg() {
+    const servico = document.getElementById('agend-tipo').value || '';
+    const bloco = document.getElementById('agend-vacina-bloco');
+    if (!bloco) return;
+    bloco.classList.toggle('hidden', !/vacin/i.test(servico));
 }
 
 function editarAgendamentoPrompt(id) {
@@ -490,10 +585,12 @@ function editarAgendamentoPrompt(id) {
     abrirModalAgendamento();
     document.getElementById('edit-agend-id').value = ag.id;
     document.getElementById('modal-agendamento-titulo').innerText = "Editar Agendamento";
-    document.getElementById('agend-tutor-select').value = ag.tutorId;
+    document.getElementById('agend-tutor-select').value = ag.tutorCpf;
     popularPetsDoTutor();
     document.getElementById('agend-pet-select').value = ag.petId;
     document.getElementById('agend-tipo').value = ag.servico;
+    popularVacinaTiposAg(ag.vacinaTipo || '');
+    atualizarVisibilidadeVacinaAg();
     document.getElementById('agend-valor').value = ag.valor;
     document.getElementById('agend-data').value = ag.data;
     document.getElementById('agend-hora').value = ag.hora;
@@ -536,13 +633,15 @@ function filtrarAgendamentos(status) {
 function abrirModalAgendamento() {
     const selectT = document.getElementById('agend-tutor-select');
     selectT.innerHTML = '';
-    tutores.forEach(t => selectT.innerHTML += `<option value="${t.id}">${t.nome}</option>`);
+    tutores.forEach(t => selectT.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`);
     popularPetsDoTutor();
 
     // Reseta o formulário para modo "novo agendamento"
     document.getElementById('edit-agend-id').value = '';
     document.getElementById('modal-agendamento-titulo').innerText = 'Agendar Consulta';
     document.getElementById('agend-tipo').value = '';
+    popularVacinaTiposAg('');
+    atualizarVisibilidadeVacinaAg();
     document.getElementById('agend-valor').value = '';
     document.getElementById('agend-data').value = '';
     document.getElementById('agend-hora').value = '';
@@ -552,10 +651,10 @@ function abrirModalAgendamento() {
 function fecharModalAgendamento() { document.getElementById('modal-agendamento').classList.add('hidden'); }
 
 function popularPetsDoTutor() {
-    const tutorId = document.getElementById('agend-tutor-select').value;
+    const tutorCpf = document.getElementById('agend-tutor-select').value;
     const selectP = document.getElementById('agend-pet-select');
     selectP.innerHTML = '';
-    pets.filter(p => p.tutorId === tutorId).forEach(p => {
+    pets.filter(p => p.tutorCpf === tutorCpf).forEach(p => {
         selectP.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
     });
 }
@@ -563,26 +662,33 @@ function popularPetsDoTutor() {
 function salvarAgendamento(e) {
     e.preventDefault();
     const editId = document.getElementById('edit-agend-id').value;
-    const tutorId = document.getElementById('agend-tutor-select').value;
+    const tutorCpf = document.getElementById('agend-tutor-select').value;
     const petId = document.getElementById('agend-pet-select').value;
     const servico = document.getElementById('agend-tipo').value;
     const valor = parseFloat(document.getElementById('agend-valor').value);
     const data = document.getElementById('agend-data').value;
     const hora = document.getElementById('agend-hora').value;
+    const ehVacinacao = /vacin/i.test(servico);
+    const vacinaTipo = document.getElementById('agend-vacina-tipo').value || '';
+    if (ehVacinacao && !vacinaTipo) {
+        showToast("Informe o tipo de vacinação.", "error");
+        return;
+    }
 
     if (editId) {
         const ag = agendamentos.find(a => a.id === editId);
         if (ag) {
-            ag.tutorId = tutorId;
+            ag.tutorCpf = tutorCpf;
             ag.petId = petId;
             ag.servico = servico;
+            ag.vacinaTipo = ehVacinacao ? vacinaTipo : '';
             ag.valor = valor;
             ag.data = data;
             ag.hora = hora;
         }
         showToast("Agendamento atualizado com sucesso!");
     } else {
-        agendamentos.unshift({ id: Date.now().toString(), tutorId, petId, servico, valor, data, hora, status: "confirmado" });
+        agendamentos.unshift({ id: Date.now().toString(), tutorCpf, petId, servico, vacinaTipo: ehVacinacao ? vacinaTipo : '', valor, data, hora, status: "confirmado" });
         showToast("Agendamento criado!");
     }
     fecharModalAgendamento();
@@ -599,10 +705,10 @@ function renderizarTutores() {
     grid.innerHTML = '';
 
     tutores.forEach(t => {
-        const petsDoTutor = pets.filter(p => p.tutorId === t.id);
+        const petsDoTutor = pets.filter(p => p.tutorCpf === t.cpf);
         let petsHTML = '';
         const btnEditarTutor = temPermissao('tutor_editar')
-            ? `<button onclick="abrirModalEditarTutor('${t.id}')" class='text-[10px] text-brand-blue font-bold hover:underline flex items-center gap-1'>
+            ? `<button onclick="abrirModalEditarTutor('${t.cpf}')" class='text-[10px] text-brand-blue font-bold hover:underline flex items-center gap-1'>
                         <i data-lucide='edit-3' class='w-3 h-3'></i> Editar Tutor
                     </button>` : '';
 
@@ -659,16 +765,21 @@ function salvarTutor(e) {
     const email = document.getElementById('tutor-email').value;
     const endereco = document.getElementById('tutor-endereco').value;
 
-    tutores.push({ id: Date.now().toString(), nome, cpf, tel, email, endereco });
+    if (tutores.some(t => t.cpf === cpf)) {
+        showToast("CPF já cadastrado para outro tutor.", "error");
+        return;
+    }
+
+    tutores.push({ nome, cpf, tel, email, endereco });
     fecharModalTutor();
     renderizarTutores();
     showToast("Tutor cadastrado!");
 }
 
-function abrirModalEditarTutor(tutorId) {
-    const tutor = tutores.find(t => t.id === tutorId);
+function abrirModalEditarTutor(tutorCpf) {
+    const tutor = tutores.find(t => t.cpf === tutorCpf);
     if (!tutor) return;
-    document.getElementById('edit-tutor-id').value = tutor.id;
+    document.getElementById('edit-tutor-id').value = tutor.cpf;
     document.getElementById('edit-tutor-nome').value = tutor.nome;
     document.getElementById('edit-tutor-cpf').value = tutor.cpf;
     document.getElementById('edit-tutor-tel').value = tutor.tel;
@@ -680,11 +791,22 @@ function fecharModalEditarTutor() { document.getElementById('modal-editar-tutor'
 
 function salvarEdicaoTutor(e) {
     e.preventDefault();
-    const tutorId = document.getElementById('edit-tutor-id').value;
-    const tutor = tutores.find(t => t.id === tutorId);
+    const cpfAntigo = document.getElementById('edit-tutor-id').value;
+    const tutor = tutores.find(t => t.cpf === cpfAntigo);
     if (tutor) {
+        const cpfNovo = document.getElementById('edit-tutor-cpf').value;
+        // CPF é a chave primária: se alterado, propaga para pets, agendamentos e histórico clínico
+        if (cpfNovo !== cpfAntigo) {
+            if (tutores.some(t => t.cpf === cpfNovo)) {
+                showToast("CPF já cadastrado para outro tutor.", "error");
+                return;
+            }
+            pets.forEach(p => { if (p.tutorCpf === cpfAntigo) p.tutorCpf = cpfNovo; });
+            agendamentos.forEach(a => { if (a.tutorCpf === cpfAntigo) a.tutorCpf = cpfNovo; });
+            historicoClinico.forEach(h => { if (h.tutorCpf === cpfAntigo) h.tutorCpf = cpfNovo; });
+        }
         tutor.nome = document.getElementById('edit-tutor-nome').value;
-        tutor.cpf = document.getElementById('edit-tutor-cpf').value;
+        tutor.cpf = cpfNovo;
         tutor.tel = document.getElementById('edit-tutor-tel').value;
         tutor.email = document.getElementById('edit-tutor-email').value;
         tutor.endereco = document.getElementById('edit-tutor-endereco').value;
@@ -697,21 +819,21 @@ function salvarEdicaoTutor(e) {
 function abrirModalPet() {
     const select = document.getElementById('pet-tutor-select');
     select.innerHTML = '';
-    tutores.forEach(t => select.innerHTML += `<option value="${t.id}">${t.nome}</option>`);
+    tutores.forEach(t => select.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`);
     document.getElementById('modal-pet').classList.remove('hidden');
 }
 function fecharModalPet() { document.getElementById('modal-pet').classList.add('hidden'); }
 
 function salvarPet(e) {
     e.preventDefault();
-    const tutorId = document.getElementById('pet-tutor-select').value;
+    const tutorCpf = document.getElementById('pet-tutor-select').value;
     const nome = document.getElementById('pet-nome').value;
     const especie = document.getElementById('pet-especie').value;
     const raca = document.getElementById('pet-raca').value;
     const comportamento = document.getElementById('pet-comportamento').value;
     const alergias = document.getElementById('pet-alergias').value;
 
-    pets.push({ id: Date.now().toString(), tutorId, nome, especie, raca, comportamento, alergias });
+    pets.push({ id: Date.now().toString(), tutorCpf, nome, especie, raca, comportamento, alergias });
     fecharModalPet();
     renderizarTutores();
     showToast("Pet cadastrado com sucesso!");
@@ -759,9 +881,11 @@ function renderizarHistoricoClinico() {
 
     historicoClinico.forEach(h => {
         const pet = pets.find(p => p.id === h.petId);
+        const tutor = tutores.find(t => t.cpf === (h.tutorCpf || (pet ? pet.tutorCpf : null)));
         let tipoTagColor = "text-brand-lime";
         let docLabel = "RECEITA";
         if (h.tipo === 'guia') { tipoTagColor = "text-brand-pink"; docLabel = "GUIA DE ENCAMINHAMENTO"; }
+        if (h.tipo === 'vacina') { tipoTagColor = "text-brand-blue"; docLabel = "VACINA" + (h.vacinaTipo ? " — " + h.vacinaTipo.toUpperCase() : ""); }
 
         const btnImprimir = temPermissao('clinica_imprimir')
             ? `<button onclick="imprimirDocumentoGenerico('${h.id}')" class='text-[11px] text-brand-blue font-bold flex items-center gap-1 hover:underline'>
@@ -775,7 +899,7 @@ function renderizarHistoricoClinico() {
         container.innerHTML += `
             <div class='bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2'>
                 <div class='flex items-center justify-between'>
-                    <span class='text-xs font-bold ${tipoTagColor} uppercase'>${docLabel} - ${pet ? pet.nome : 'N/A'}</span>
+                    <span class='text-xs font-bold ${tipoTagColor} uppercase'>${docLabel} - ${pet ? pet.nome : 'N/A'}${tutor ? ' · ' + tutor.nome : ''}</span>
                     <span class='text-xs text-slate-400'>${h.data}</span>
                 </div>
                 <p class='text-xs text-slate-200 leading-relaxed whitespace-pre-line'>${h.detalhe}</p>
@@ -804,14 +928,35 @@ function atualizarLabelDocumento() {
     if (tipo === 'guia') label.innerText = "Instruções e Encaminhamento da Guia";
     else if (tipo === 'receita') label.innerText = "Prescrição e Posologia de Medicamentos";
     else label.innerText = "Detalhamento / Vacina";
+    // Tipo de vacina só aparece no Registro de Imunização
+    const bloco = document.getElementById('clinica-vacina-bloco');
+    if (bloco) {
+        bloco.classList.toggle('hidden', tipo !== 'vacina');
+        if (tipo === 'vacina') popularVacinaTiposClinica(document.getElementById('clinica-vacina-tipo').value || '');
+    }
+}
+
+// O QUE: Preenche o select de tipos de vacina do form clínico.
+function popularVacinaTiposClinica(selecionado) {
+    const select = document.getElementById('clinica-vacina-tipo');
+    if (!select) return;
+    select.innerHTML = '<option value="">Selecione o tipo...</option>';
+    TIPOS_VACINA.forEach(t => {
+        select.innerHTML += `<option value="${t}"${t === selecionado ? ' selected' : ''}>${t}</option>`;
+    });
 }
 
 function editarDocumentoClinico(id) {
     const doc = historicoClinico.find(h => h.id === id);
     if (!doc) return;
     document.getElementById('clinica-edit-id').value = doc.id;
+    const pet = pets.find(p => p.id === doc.petId);
+    const tutorCpf = doc.tutorCpf || (pet ? pet.tutorCpf : '');
+    document.getElementById('clinica-tutor-select').value = tutorCpf;
+    filtrarPetsClinicaPorTutor();
     document.getElementById('clinica-pet-select').value = doc.petId;
     document.getElementById('clinica-tipo').value = doc.tipo;
+    popularVacinaTiposClinica(doc.vacinaTipo || '');
     document.getElementById('clinica-data').value = doc.data;
     document.getElementById('clinica-detalhe').value = doc.detalhe;
     document.getElementById('clinica-form-title').innerText = "Editar Documento";
@@ -825,8 +970,72 @@ function excluirDocumentoClinico(id) {
     showToast("Documento excluído!");
 }
 
+// O QUE: Recebe arquivos do <input type="file"> e registra metadados.
+// PORQUÊ: Upload de exames/documentos vinculados ao tutor+pet do form.
+// DEMO (mock): Não envia nem persiste — some ao recarregar (sem banco).
+function lidarUploadAnexos(e) {
+    if (!temPermissao('clinica_criar')) {
+        showToast("Acesso restrito: perfil sem permissão para anexar.", "error");
+        e.target.value = '';
+        return;
+    }
+    const arquivos = Array.from(e.target.files || []);
+    if (!arquivos.length) return;
+    const tutorCpf = document.getElementById('clinica-tutor-select').value || '';
+    const petId = document.getElementById('clinica-pet-select').value || '';
+    arquivos.forEach(f => {
+        anexosClinicos.unshift({
+            id: Date.now().toString() + Math.floor(Math.random() * 1000),
+            tutorCpf, petId,
+            nome: f.name,
+            tipo: f.type || 'arquivo',
+            tamanhoKb: Math.max(1, Math.round(f.size / 1024)),
+            data: new Date().toISOString().slice(0, 10)
+        });
+    });
+    e.target.value = '';
+    renderizarAnexos();
+    showToast(arquivos.length + " documento(s) anexado(s)!");
+}
+
+function renderizarAnexos() {
+    const lista = document.getElementById('lista-anexos');
+    if (!lista) return;
+    document.getElementById('anexos-count').innerText = anexosClinicos.length + (anexosClinicos.length === 1 ? " arquivo" : " arquivos");
+    if (!anexosClinicos.length) {
+        lista.innerHTML = '<p class="text-xs text-slate-500 italic">Nenhum documento anexado.</p>';
+        return;
+    }
+    lista.innerHTML = '';
+    anexosClinicos.forEach(a => {
+        const pet = pets.find(p => p.id === a.petId);
+        const tutor = tutores.find(t => t.cpf === a.tutorCpf);
+        lista.innerHTML += `
+            <div class='flex items-center justify-between gap-2 bg-slate-900/80 px-3.5 py-2.5 rounded-xl border border-slate-800'>
+                <div class='flex items-center gap-2.5 min-w-0'>
+                    <i data-lucide='paperclip' class='w-4 h-4 text-brand-blue shrink-0'></i>
+                    <div class='min-w-0'>
+                        <p class='text-xs font-bold text-slate-200 truncate'>${a.nome}</p>
+                        <p class='text-[10px] text-slate-500'>${a.tamanhoKb} KB · ${a.data}${pet ? ' · ' + pet.nome : ''}${tutor ? ' · ' + tutor.nome : ''}</p>
+                    </div>
+                </div>
+                ${temPermissao('clinica_excluir') ? `<button onclick="excluirAnexo('${a.id}')" class='text-[11px] text-rose-400 font-bold hover:underline shrink-0'>Excluir</button>` : ''}
+            </div>
+        `;
+    });
+    lucide.createIcons();
+}
+
+function excluirAnexo(id) {
+    anexosClinicos = anexosClinicos.filter(a => a.id !== id);
+    renderizarAnexos();
+    showToast("Anexo excluído!");
+}
+
 function resetarFormClinico() {
     document.getElementById('clinica-edit-id').value = '';
+    document.getElementById('clinica-tutor-select').value = '';
+    filtrarPetsClinicaPorTutor();
     document.getElementById('clinica-detalhe').value = '';
     document.getElementById('clinica-form-title').innerText = "Novo Documento Clínico";
     document.getElementById('btn-cancelar-edit-clinico').classList.add('hidden');
@@ -835,22 +1044,30 @@ function resetarFormClinico() {
 function salvarRegistroClinico(e) {
     e.preventDefault();
     const editId = document.getElementById('clinica-edit-id').value;
+    const tutorCpf = document.getElementById('clinica-tutor-select').value;
     const petId = document.getElementById('clinica-pet-select').value;
     const tipo = document.getElementById('clinica-tipo').value;
     const data = document.getElementById('clinica-data').value;
     const detalhe = document.getElementById('clinica-detalhe').value;
+    const vacinaTipo = tipo === 'vacina' ? (document.getElementById('clinica-vacina-tipo').value || '') : '';
+    if (tipo === 'vacina' && !vacinaTipo) {
+        showToast("Informe o tipo de vacinação.", "error");
+        return;
+    }
 
     if (editId) {
         const doc = historicoClinico.find(h => h.id === editId);
         if (doc) {
+            doc.tutorCpf = tutorCpf;
             doc.petId = petId;
             doc.tipo = tipo;
+            doc.vacinaTipo = vacinaTipo;
             doc.data = data;
             doc.detalhe = detalhe;
             showToast("Documento atualizado com sucesso!");
         }
     } else {
-        historicoClinico.unshift({ id: Date.now().toString(), petId, tipo, data, detalhe });
+        historicoClinico.unshift({ id: Date.now().toString(), tutorCpf, petId, tipo, vacinaTipo, data, detalhe });
         showToast("Novo documento registrado!");
     }
 
@@ -862,7 +1079,7 @@ function imprimirDocumentoGenerico(id) {
     const doc = historicoClinico.find(h => h.id === id);
     if (!doc) return;
     const pet = pets.find(p => p.id === doc.petId);
-    const tutor = tutores.find(t => t.id === (pet ? pet.tutorId : null));
+    const tutor = tutores.find(t => t.cpf === (doc.tutorCpf || (pet ? pet.tutorCpf : null)));
 
     let titulos = {
         receita: "Prescrição Médica Veterinária (Receituário)",
@@ -871,10 +1088,22 @@ function imprimirDocumentoGenerico(id) {
     };
 
     document.getElementById('doc-titulo-tipo').innerText = titulos[doc.tipo] || "Documento Clínico";
+    if (doc.tipo === 'vacina' && doc.vacinaTipo) {
+        document.getElementById('doc-titulo-tipo').innerText += " — " + doc.vacinaTipo;
+    }
     document.getElementById('doc-nome-pet').innerText = (pet ? pet.nome : 'N/A') + " (" + (pet ? pet.raca : '') + ")";
-    document.getElementById('doc-nome-tutor').innerText = tutor ? tutor.nome : 'N/A';
+    document.getElementById('doc-nome-tutor').innerText = tutor ? (tutor.nome + " (CPF " + tutor.cpf + ")") : 'N/A';
     document.getElementById('doc-data').innerText = doc.data;
     document.getElementById('doc-conteudo').innerText = doc.detalhe;
+    // RF-08 ILUSTRATIVO (protótipo): mostra como ficará nome+CRMV do vet.
+    // TODO [INTEGRAÇÃO SUPABASE - DB SQL]: buscar nome+CRMV do veterinário
+    //   logado (users JOIN profissional) + assinatura digital (pós-banco/LGPD).
+    const vetRef = (administradores && administradores[0]) || { nome: '—', crm: '—' };
+    const vetNome = (currentUser && currentUser.nome) || vetRef.nome;
+    document.getElementById('doc-vet-nome').innerText = vetNome;
+    document.getElementById('doc-vet-crmv').innerText = vetRef.crm;
+    document.getElementById('doc-assinatura-nome').innerText = vetNome;
+    document.getElementById('doc-assinatura-crmv').innerText = vetRef.crm;
 
     document.getElementById('modal-impressao-documento').classList.remove('hidden');
 }
@@ -917,12 +1146,13 @@ function renderizarRelatorioServicos() {
 
     const grupos = {};
     agendamentos.forEach(a => {
-        if (!grupos[a.servico]) {
-            grupos[a.servico] = { qtde: 0, confirmados: 0, receita: 0 };
+        const chave = /vacin/i.test(a.servico) && a.vacinaTipo ? a.servico + ' — ' + a.vacinaTipo : a.servico;
+        if (!grupos[chave]) {
+            grupos[chave] = { qtde: 0, confirmados: 0, receita: 0 };
         }
-        grupos[a.servico].qtde += 1;
-        grupos[a.servico].receita += a.valor;
-        if (a.status === 'confirmado') grupos[a.servico].confirmados += 1;
+        grupos[chave].qtde += 1;
+        grupos[chave].receita += a.valor;
+        if (a.status === 'confirmado') grupos[chave].confirmados += 1;
     });
 
     const servicos = Object.keys(grupos).sort((a, b) => grupos[b].receita - grupos[a].receita);
@@ -965,8 +1195,8 @@ function renderizarRelatorioTutor() {
     let tutoresAtivos = 0;
 
     const linhas = tutores.map(t => {
-        const agendamentosDoTutor = agendamentos.filter(a => a.tutorId === t.id);
-        const petsDoTutor = pets.filter(p => p.tutorId === t.id);
+        const agendamentosDoTutor = agendamentos.filter(a => a.tutorCpf === t.cpf);
+        const petsDoTutor = pets.filter(p => p.tutorCpf === t.cpf);
         const valorTotal = agendamentosDoTutor.reduce((soma, a) => soma + a.valor, 0);
         const ultimaData = agendamentosDoTutor.length > 0
             ? agendamentosDoTutor.map(a => a.data).sort().reverse()[0]
@@ -1022,7 +1252,7 @@ function renderizarRelatorioPeriodo() {
 
     filtrados.forEach(a => {
         const pet = pets.find(p => p.id === a.petId);
-        const tutor = tutores.find(t => t.id === a.tutorId);
+        const tutor = tutores.find(t => t.cpf === a.tutorCpf);
         receitaTotal += a.valor;
 
         let badge = "";
@@ -1405,14 +1635,37 @@ function salvarHorarioFuncionamento(e) {
     showToast("Horário de funcionamento atualizado para (" + ab + " às " + fech + ")!");
 }
 
+// Popular dropdowns de tutores (por CPF) e pets filtrados para a aba clínica
+function popularTutoresClinicos() {
+    const selectT = document.getElementById('clinica-tutor-select');
+    if (!selectT) return;
+    const atual = selectT.value;
+    selectT.innerHTML = '<option value="">Selecione o tutor (CPF)...</option>';
+    tutores.forEach(t => {
+        selectT.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`;
+    });
+    if (atual) selectT.value = atual;
+    filtrarPetsClinicaPorTutor();
+}
+
+// O QUE: Filtra os pets do tutor selecionado (por CPF) no form clínico.
+// PORQUÊ: O atendimento parte do tutor registrado (chave primária CPF).
+function filtrarPetsClinicaPorTutor() {
+    const selectT = document.getElementById('clinica-tutor-select');
+    const selectP = document.getElementById('clinica-pet-select');
+    if (!selectT || !selectP) return;
+    const tutorCpf = selectT.value;
+    selectP.innerHTML = tutorCpf
+        ? '<option value="">Selecione o paciente...</option>'
+        : '<option value="">Selecione o tutor primeiro...</option>';
+    pets.filter(p => p.tutorCpf === tutorCpf).forEach(p => {
+        selectP.innerHTML += `<option value="${p.id}">${p.nome} (${p.especie} - ${p.raca})</option>`;
+    });
+}
+
 // Popular dropdowns de pets para a aba clínica
 function popularPetsDropdowns() {
-    const select = document.getElementById('clinica-pet-select');
-    if (!select) return;
-    select.innerHTML = '<option value="">Selecione um Paciente...</option>';
-    pets.forEach(p => {
-        select.innerHTML += `<option value="${p.id}">${p.nome} (${p.especie} - ${p.raca})</option>`;
-    });
+    popularTutoresClinicos();
 }
 
 // ==========================================================
@@ -1520,6 +1773,7 @@ window.onload = function() {
     renderizarAgendamentos();
     renderizarTutores();
     renderizarHistoricoClinico();
+    renderizarAnexos();
     renderizarUsuarios();
     inicializarGraficos();
 };
