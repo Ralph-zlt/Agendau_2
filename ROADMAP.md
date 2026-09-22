@@ -34,7 +34,7 @@
 
 | RNF | Descrição | Status | Gap |
 |---|---|---|---|
-| RNF-01 | Dados devem persistir (banco de dados) | **Ausente** | 100% mock, TODOs marcados para integração futura |
+| RNF-01 | Dados devem persistir (banco de dados) | **Ausente** | 100% mock; decisão tomada: SQL via Supabase (projeto ainda não criado); TODOs marcados como `TODO [INTEGRAÇÃO SUPABASE]` |
 | RNF-02 | LGPD — dados pessoais protegidos | **Ausente** | Sem criptografia, sem consentimento, sem política de retenção |
 | RNF-03 | Modo claro/escuro acessível | **Parcial** | Funcional mas cores do modo claro precisam de refinamento de contraste |
 | RNF-04 | Responsividade (mobile-first) | **Parcial** | Tailwind helper classes presentes; testes mobile não documentados |
@@ -103,16 +103,20 @@
 
 ---
 
-### Fase 4 — Levantamento para banco de dados (futuro)
-**Objetivo:** Documentar opções e definir estratégia de persistência (RNF-01).
+### Fase 4 — Banco de dados: decisão Supabase SQL (projeto ainda não criado)
+**Objetivo:** Persistência definida (RNF-01): SQL via Supabase (Postgres + Auth + RLS). Projeto ainda NÃO criado — mocks mantidos.
+**Decisão (2026-09-22):** será usado SQL através do Supabase. Bypass 1/2/3 no Pages é intencional para teste do usuário final (protótipo sem dados reais).
 
-- [ ] Criar `docs/DB_LEVANTAMENTO.md` (este documento)
-- [ ] Mapear todas as entidades e TODOs existentes
-- [ ] Avaliar opções (localStorage, SQLite, Supabase/Firebase, API própria)
-- [ ] Definir decisão pendente (requer aprovação do usuário)
-- [ ] **NÃO implementar código de banco nesta fase**
+- [x] Criar `docs/DB_LEVANTAMENTO.md` (este documento)
+- [x] Mapear todas as entidades e TODOs existentes
+- [x] Avaliar opções (localStorage, SQLite, Supabase/Firebase, API própria)
+- [x] Decisão tomada: SQL via Supabase (aprovado pelo dono em 2026-09-22, projeto ainda a criar)
+- [ ] Criar projeto Supabase + schema inicial (`supabase.sql`: users, tutores, pets, agendamentos, historico_clinico)
+- [ ] Definir Auth + RLS + política LGPD no Supabase
+- [ ] Migrar mocks (`users`, `agendamentos`, `tutores`, `pets`, `historicoClinico`) para `supabase-js` — trocar `TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]` por `TODO [INTEGRAÇÃO SUPABASE]`
+- [ ] **NÃO implementar código de banco nesta fase de docs** — só comentários
 
-**Critérios de aceite:** `docs/DB_LEVANTAMENTO.md` existe e contém: entidades, endpoints mapeados, opções com prós/contras, decisão pendente, considerações LGPD. Nenhuma linha de código de banco é escrita.
+**Critérios de aceite:** `docs/DB_LEVANTAMENTO.md` contém: entidades, endpoints mapeados, opções com prós/contras, decisão tomada (Supabase SQL, projeto pendente), considerações LGPD. Código segue 100% mock com TODOs Supabase comentados.
 
 ---
 
@@ -174,7 +178,7 @@
 
 ### Convenções
 - Código em pt-BR, seções numeradas e comentadas.
-- Comentários `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` para pontos de integração.
+- Comentários `// TODO [INTEGRAÇÃO SUPABASE]:` (antes `TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]`) para pontos de integração SQL via Supabase.
 - Sem `as any`, `@ts-ignore` ou `@ts-expect-error`.
 - Mudanças mínimas: só alterar o que a tarefa pede.
 

@@ -1,8 +1,8 @@
 # LEVANTAMENTO — Banco de Dados (DayVet-Gestão)
 
 > Documento de levantamento **sem código**. Define entidades, mapeia TODOs existentes e lista opções de persistência.
-> Última atualização: 2026-09-17.
-> Status: **Decisão pendente** — requer aprovação antes de implementar.
+> Última atualização: 2026-09-22.
+> Status: **Decisão tomada: SQL via Supabase** — projeto ainda NÃO criado; código segue 100% mock.
 > **Nota (2026-09-17):** Laudos foram removidos do escopo por decisão da clínica. Não criar tabela nem endpoint para laudo.
 
 ---
@@ -108,7 +108,7 @@
 
 ## 2. Mapeamento dos TODOs existentes em `dayvet/script.js`
 
-Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:`:
+Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` (novo padrão: `TODO [INTEGRAÇÃO SUPABASE]` — SQL via Supabase, projeto ainda não criado):
 
 | Linha | Trecho | Endpoint futuro | Entidade afetada |
 |---|---|---|---|
@@ -148,12 +148,12 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:`:
 | **Contras** | Precisa de backend (Node/Python/etc.), concorrência limitada, deploy mais complexo |
 | **Adequação** | Boa para MVP interno ou deploy em rede local |
 
-### 3.3 Supabase / Firebase
+### 3.3 Supabase (Postgres SQL) — DECISÃO ADOTADA
 | Aspecto | Detalhe |
 |---|---|
-| **Prós** | Auth built-in, real-time, hospedado, escala, LGPD (Supabase tem EUA/PARLEI compliance) |
-| **Contras** | Lock-in de fornecedor,学习曲线, limites de plano gratuito, dados nos EUA (Firebase) |
-| **Adequação** | **Recomendado para produção** se o time aceitar a plataforma |
+| **Prós** | Auth built-in, Postgres SQL, real-time, hospedado, escala, RLS para RBAC |
+| **Contras** | Lock-in de fornecedor, limites de plano gratuito, projeto ainda a criar |
+| **Adequação** | **DECISÃO ADOTADA em 2026-09-22: SQL via Supabase.** Projeto ainda não criado; mocks mantidos até migração |
 
 ### 3.4 API própria (Node/Express + PostgreSQL/MySQL)
 | Aspecto | Detalhe |
@@ -175,13 +175,13 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:`:
 
 ---
 
-## 4. Decisão pendente
+## 4. Decisão adotada: SQL via Supabase
 
-> **NÃO foi tomada nenhuma decisão.** O usuário deve escolher a opção de persistência antes de qualquer implementação.
+> **Decisão tomada em 2026-09-22: SQL via Supabase (Postgres).** Projeto ainda NÃO criado — nenhum código de banco implementado; mocks em memória mantidos.
 >
-> **Recomendação técnica (sem viés):** Para um MVP rápido, **Supabase** oferece auth + banco + real-time com mínimo de código. Para controle total, **API própria com Node + SQLite/PostgreSQL**.
+> **Motivo:** Auth + banco SQL + RLS com mínimo de código para MVP; tabelas §1 viram schema Supabase; bypass 1/2/3 mantido no protótipo para teste do usuário final (sem dados reais).
 >
-> A escolha afeta: estrutura de pastas, dependências, deploy, e esforço estimado.
+> A escolha afeta: criação do projeto Supabase, `supabase.sql`/migrations, uso de `supabase-js`, Auth, RLS e deploy.
 
 ---
 
@@ -206,10 +206,10 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:`:
 
 ## 6. Próximos passos
 
-1. **Usuário decide:** opção de persistência (§3) + infraestrutura de deploy.
-2. **Criar migrations/schema:** mapear entidades (§1) para a opção escolhida.
+1. **Decisão adotada:** SQL via Supabase (projeto ainda a criar) + infra Pages já definida.
+2. **Criar projeto Supabase + migrations/schema:** mapear entidades (§1) para Postgres (`supabase.sql`).
 3. **Implementar auth:** POST /api/login + JWT/session (substituir `perfisTestes`).
-4. **Substituir TODOs:** um a um, trocar mock por chamadas à API/banco.
+4. **Substituir TODOs:** um a um, trocar mock por `supabase-js` (`TODO [INTEGRAÇÃO SUPABASE]`).
 5. **Testes:** cobrir CRUD de cada entidade + RBAC server-side.
 6. **LGPD:** implementar consentimento, criptografia e política de retenção.
 

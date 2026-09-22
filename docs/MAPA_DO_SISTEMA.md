@@ -6,8 +6,8 @@
 
 ## 1. Visão geral
 - SPA (single-page application) de agenda para **pet shop / clínica veterinária**.
-- **Sem backend**: dados mock em memória (arrays), que serão trocados por API/banco nas integrações futuras.
-- **Stack**: HTML + CSS + JS puros com CDNs externas — Tailwind CSS (utilitários), Lucide (ícones), Chart.js (gráficos), Google Fonts (Plus Jakarta Sans).
+- **Backend futuro (decisão 2026-09-22): SQL via Supabase** (Postgres + Auth + RLS) — projeto ainda NÃO criado; hoje dados mock em memória (arrays), a migrar para Supabase.
+- **Stack**: HTML + CSS + JS puros com CDNs externas — Tailwind CSS (utilitários), Lucide (ícones), Chart.js (gráficos), Google Fonts (Plus Jakarta Sans) + Supabase SQL planejado.
 - Estrutura em **3 arquivos na pasta `dayvet/`**.
 
 ## 2. Estrutura de arquivos
@@ -31,7 +31,7 @@
 - **Implantação (método do dono)**: sem rota de setup — admin cadastra CPF+e-mail do responsável; 1º acesso exige troca de senha para todos os perfis (admin/vet/func) via `mustChange`.
 - **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico/consultas), `funcionario` (operacional/agendamentos). O cargo `gestor` foi **removido**.
 - Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
-- **TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]**: tabela `users` com `role` vinculado ao CPF/email, bcrypt, JWT, `POST /api/login`, `GET /api/me`.
+- **TODO [INTEGRAÇÃO SUPABASE]** (SQL via Supabase, projeto ainda não criado): tabela `users` com `role` vinculado ao CPF/email, Auth Supabase + RLS, `POST /api/login`, `GET /api/me` (ou `supabase.auth.signInWithPassword` + `supabase.from('users')`).
 
 ## 4. Mapa de seções (script.js)
 
@@ -85,7 +85,7 @@
 | Scrollbar | `--trilha` · `--polegar` | #D9E6F2 · #8ecae6 |
 
 ## 7. Convenções
-- Comentários `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` marcam os pontos de plugar a API.
+- Comentários `// TODO [INTEGRAÇÃO SUPABASE]:` (antes `TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]`) marcam os pontos de plugar o Supabase SQL.
 - Nomes de funções/variáveis em **pt-BR**; código organizado em **SEÇÕES numeradas**.
 - Relatórios pessoais (metodologia/commit) ficam na pasta `local/` — **não versionar**, assim como `opencode.json`.
 - Validação mínima antes de concluir: `node --check dayvet/script.js` + testar logins 1/2/3 e alternância de tema no navegador.

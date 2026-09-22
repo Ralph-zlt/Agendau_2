@@ -996,7 +996,7 @@
                 <!-- O QUE: Campo de e-mail obrigatório para auth empresarial.
                      PORQUÊ: E-mail serve como alternativa de login ao CPF.
                      DEMO (mock): Input HTML simples; validacao em JS (validarEmail).
-                     TODO [DB] UNIQUE constraint no campo email da tabela users. -->
+                     TODO [INTEGRAÇÃO SUPABASE - DB SQL] UNIQUE constraint no campo email da tabela users. -->
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">E-mail</label>
                     <input type="email" id="user-new-email" placeholder="usuario@dominio.com" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
@@ -1113,7 +1113,7 @@
                     <!-- O QUE: Indicadores visuais das regras de senha forte.
                          PORQUÊ: Feedback em tempo real para o usuario durante reset.
                          DEMO (mock): Regras atualizadas via JS (atualizarIndicadoresRegraSenha).
-                         TODO [DB] Mesma politica validada no backend com bcrypt. -->
+                         TODO [INTEGRAÇÃO SUPABASE - DB SQL] Mesma politica validada no backend com bcrypt. -->
                     <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-1">
                         <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Regras de senha:</p>
                         <p class="text-[10px] text-slate-500" id="regra-tamanho"><span class="inline-block w-3 mr-1">&#9675;</span> Minimo de 8 caracteres</p>
@@ -1141,7 +1141,7 @@
          PORQUÊ: Usuarios novos recebem senha temporaria e devem trocar.
          DEMO (mock): Modal fullscreen sobre login; confirma login automatico.
          BUGFIX 2026-09-15: z-[60] em vez de z-50 — mesmo motivo do modal-recuperar-senha.
-         TODO [DB] Fluxo via email com token JWT + POST /api/users/:id/change-password. -->
+         TODO [INTEGRAÇÃO SUPABASE - DB SQL] Fluxo via email com token JWT + POST /api/users/:id/change-password. -->
     <div id="forcar-senha-etapa" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <div class="flex items-center gap-3 mb-2">

@@ -9,6 +9,11 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-22 · (docs) — Decisão banco: SQL via Supabase (projeto ainda não criado)
+**O que:** ROADMAP Fase 4, DB_LEVANTAMENTO (§4, §3.3, §6), MAPA_DO_SISTEMA e AGENTS passam a declarar decisão tomada: SQL via Supabase (Postgres + Auth + RLS). Projeto ainda NÃO criado; código segue 100% mock com `TODO [INTEGRAÇÃO SUPABASE]`. Bypass 1/2/3 no Pages confirmado como intencional para teste do usuário final (protótipo sem dados reais).
+**Por quê:** alinhar docs com decisão do dono antes de sincronizar GitHub/Pages.
+**Onde:** `ROADMAP.md`, `docs/DB_LEVANTAMENTO.md`, `docs/MAPA_DO_SISTEMA.md`, `AGENTS.md`, `docs/CHANGELOG.md`.
+
 ## 2026-09-17 · (código + docs) — Bypass 1/2/3: mustChange:false + alertas de segurança
 **O que:** contas teste u2/u3 agora têm `mustChange:false` em `usuariosMock` para login direto (CPF 1/2/3) nos 3 roles. Comentários `CONTAS TESTE: bypass troca` e `TODO [SECURITY]` adicionados em `perfisTestes` e `usuariosMock`. Alertas RISCO ALTO inseridos em `AGENTS.md`, `ROADMAP.md` (Fase 2 + checkbox pendente), `MAPA_DO_SISTEMA.md` §3 e `DB_LEVANTAMENTO.md` §1/LGPD.
 **Por quê:** prototipação permite login rápido sem troca de senha; em produção, `mustChange:true` + hash obrigatório para todos os primeiro-acesso.

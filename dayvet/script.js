@@ -1,5 +1,9 @@
 // ==========================================================
 // DAYVET-GESTÃO — script.js
+// Backend futuro (decisão 2026-09-22): SQL via Supabase
+// (Postgres + Auth + RLS) — projeto ainda NÃO criado.
+// Hoje: mocks em memória. Bypass 1/2/3 intencional p/ teste
+// do usuário final (protótipo sem dados reais).
 // Mapa de seções: [1] Mock DB · [2] Permissões RBAC ·
 // [3] Autenticação/Login · [4] Toasts · [5] Navegação/Tabs ·
 // [6] Agendamentos · [7] Tutores & Pets · [8] Clínico ·
@@ -11,7 +15,7 @@
 // SEÇÃO 1: DADOS MOCK (simula banco de dados em memória)
 // ==========================================================
 
-// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:
+// TODO [INTEGRAÇÃO SUPABASE]:
 // Tabela `administradores` — dados do profissional responsável
 // pela clínica (CRMV, validade). Relacionado à tabela `users`
 // via id. Futuramente: GET /api/profissional/:id
@@ -45,7 +49,7 @@ let historicoClinico = [
 // PORQUÊ: Simula tabela `users` com autenticação por CPF/e-mail + senha,
 //   flag mustChange para troca forçada e controle de ativação.
 // DEMO (mock): Senhas salvas em plaintext em password_demo (nunca logadas).
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   CREATE TABLE users (id UUID PK, nome VARCHAR, cpf VARCHAR UNIQUE,
 //   email VARCHAR UNIQUE, role VARCHAR, password_hash VARCHAR,
 //   mustChange BOOLEAN DEFAULT true, active BOOLEAN DEFAULT true,
@@ -56,7 +60,7 @@ let usuariosMock = [
     // mustChange: true — primeiro acesso obrigatório: usuários criados pelo sistema devem
     // definir senha forte (8+ chars, 1 maiúscula, 1 número, 1 especial) antes de entrar.
     // DEMO (mock): flag reseta a cada F5 pois não há banco. Comportamento esperado e documentado.
-    // TODO [DB] (tabela users): mustChange persistido no banco; após troca → false permanente.
+    // TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users): mustChange persistido no banco; após troca → false permanente.
     // CONTAS TESTE 1/2/3: bypass troca p/ prototipação — REMOVER EM PRODUÇÃO
     // TODO [SECURITY]: remover bypass demo antes da produção
     { id: 'u2', nome: 'Dr. Carlos Silva', cpf: '333.333.333-33', email: 'carlos@dayvet.com', role: 'veterinario', password_demo: '2', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
@@ -80,7 +84,7 @@ let financeChartRef = null;
 //
 // Perfis válidos: admin, veterinario, funcionario.
 //
-// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:
+// TODO [INTEGRAÇÃO SUPABASE]:
 // A tabela `users` armazena o campo `role` do usuário.
 // Na autenticação, o backend valida o CPF e retorna o role.
 // O frontend apenas consulta PERMISSOES[currentRole] para
@@ -109,7 +113,7 @@ function temPermissao(acao) {
 // SEÇÃO 3: AUTENTICAÇÃO E LOGIN (identificação por CPF)
 // ==========================================================
 
-// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:
+// TODO [INTEGRAÇÃO SUPABASE]:
 // O mapeamento CPF -> role será feito pelo backend.
 // Fluxo esperado:
 //   1. Usuário informa CPF + senha no formulário.
@@ -121,7 +125,7 @@ function temPermissao(acao) {
 // O QUE: Mapa de atalhos demo (CPF curto → objeto de login).
 // PORQUÊ: Permite login rápido digitando 1, 2 ou 3 (atalho de teste).
 // DEMO (mock): Atalhos bypassam validação de senha para conveniência do demo.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   Não será necessário no backend — o login real busca por CPF/email
 //   na tabela `users` e valida bcrypt. Este mapa é exclusivo do protótipo.
 // TODO [SECURITY]: remover bypass demo antes da produção
@@ -139,7 +143,7 @@ const perfisTestes = {
 //   login real busca em usuariosMock por CPF ou email, valida password_demo.
 //   Erro único "Credenciais inválidas" para não revelar existência de contas.
 // DEMO (mock): Senhas são password_demo em texto plano; no backend seria bcrypt.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   POST /api/login { identifier, senha } → backend busca users WHERE cpf=?
 //   ou email=?, valida com bcrypt.compare(), retorna JWT + mustChange flag.
 //   Rate-limit por IP/CPF para brute-force. LGPD: log de tentativas sem
@@ -202,7 +206,7 @@ function formatarCargo(role) {
 // O QUE: Valida CPF brasileiro (dígito verificador x10 e x11).
 // PORQUÊ: Impede cadastro de CPFs inventados no formulário de criação de usuário.
 // DEMO (mock): Algoritmo padrão da Receita Federal; sem consulta externa.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   Validação pode ocorrer no backend via endpoint dedicado ou biblioteca server-side.
 //   LGPD: CPF é dado sensível — validação sem armazenar em logs.
 function validarCPF(cpf) {
@@ -225,7 +229,7 @@ function validarCPF(cpf) {
 // O QUE: Valida formato de e-mail com regex (nivel mais basico).
 // PORQUÊ: Evita cadastro de emails invalidos no formulario de criacao de usuario.
 // DEMO (mock): Apenas verifica presenca de @ e dominio; sem validacao DNS.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   Validacao server-side com biblioteca (ex: validator.js) + envio de email
 //   de confirmacao para verificar titularidade.
 function validarEmail(email) {
@@ -235,7 +239,7 @@ function validarEmail(email) {
 // O QUE: Valida politica de senha forte (8+ chars, 1 maiuscula, 1 numero, 1 especial).
 // PORQUÊ: Garante seguranca minima para contas empresariais.
 // DEMO (mock): Regex local; no backend usaria mesma regra antes de bcrypt.hash().
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   Aplicar mesma regra no backend antes de armazenar com bcrypt.
 //   Historico de ultimas N senhas para evitar reutilizacao.
 //   LGPD: senha nunca aparece em logs ou mensagens de erro.
@@ -1102,7 +1106,7 @@ function fecharModalUsuario() { document.getElementById('modal-usuario').classLi
 // O QUE: Cria novo usuario com validacao de CPF, email e unicidade.
 // PORQUÊ: Garante dados obrigatorios validos antes de inserir no mock.
 // DEMO (mock): Insercao direta em usuariosMock; senhas geradas por admins.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   POST /api/users { nome, cpf, email, role } — backend valida CPF com
 //   algoritmo RF, unicidade UNIQUE constraints, e retorna senha temporaria
 //   gerada por crypto.randomBytes(). Senha temporaria enviada por email.
@@ -1139,7 +1143,7 @@ function salvarNovoUsuario(e) {
     }
 
     // Senha padrao e mustChange=true: obriga usuario a trocar no primeiro login
-    // TODO [DB] Gerar senha temporaria aleatoria no backend + enviar por email
+    // TODO [INTEGRAÇÃO SUPABASE - DB SQL] Gerar senha temporaria aleatoria no backend + enviar por email
     const senhaTemp = cpf.replace(/\D/g, '').slice(-4) + 'Temp1!';
 
     usuariosMock.push({
@@ -1181,7 +1185,7 @@ function salvarPermissaoUsuario(e) {
 }
 
 function excluirUsuarioLogin(id) {
-    // TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:
+    // TODO [INTEGRAÇÃO SUPABASE]:
     // Enviar DELETE /api/users/:id para remover o registro.
     usuariosMock = usuariosMock.filter(u => u.id !== id);
     renderizarUsuarios();
@@ -1195,7 +1199,7 @@ function excluirUsuarioLogin(id) {
 // O QUE: Abre modal de recuperar senha na etapa 1 (informar CPF/email).
 // PORQUÊ: Permite ao usuario iniciar fluxo de reset quando esqueceu a senha.
 // DEMO (mock): Modal HTML simples; etapa 1 visivel, etapa 2 oculta.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   POST /api/password-reset/request { identifier } → gera token JWT
 //   com expiração de 15 min, envia email com link de reset.
 //   Rate-limit: max 3 requests por hora por identificador.
@@ -1214,7 +1218,7 @@ function abrirModalRecuperarSenha() {
 // O QUE: Fecha modal de recuperar senha e reseta campos.
 // PORQUÊ: Limpa estado do modal para proxima abertura.
 // DEMO (mock): Apenas esconde o modal e limpa inputs.
-// TODO [DB] Invalidar token de reset se modal for fechado.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] Invalidar token de reset se modal for fechado.
 function fecharModalRecuperarSenha() {
     document.getElementById('modal-recuperar-senha').classList.add('hidden');
     document.getElementById('recuperar-cpf').value = '';
@@ -1226,7 +1230,7 @@ function fecharModalRecuperarSenha() {
 // PORQUÊ: Simula envio de email de verificacao; sempre mostra toast "demo".
 //   Se usuario nao existir, mesma mensagem (nao revela existencia).
 // DEMO (mock): Sempre avanca para etapa 2 independente do CPF/email informado.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   Backend verifica se identifier existe na tabela users. Se existir,
 //   gera token de reset e envia email. Resposta sempre 200 OK (mesmo se
 //   identifier nao existe) para prevenir enumerate accounts via timing.
@@ -1251,7 +1255,7 @@ function recuperarSenhaProximo() {
 // O QUE: Valida e aplica nova senha, atualizando usuariosMock.
 // PORQUÊ: Fecha ciclo de recuperacao com politica de senha forte.
 // DEMO (mock): Atualiza password_demo e mustChange=false no array.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   POST /api/password-reset/confirm { token, novaSenha }
 //   → backend valida token JWT, aplica bcrypt.hash(novaSenha, 12),
 //   atualiza password_hash e mustChange=false. Token invalidado apos uso.
@@ -1298,7 +1302,7 @@ function recuperarSenhaConfirmar() {
 // O QUE: Abre modal de troca forçada quando mustChange=true no login.
 // PORQUÊ: Obriga usuario a definir senha forte antes de acessar o sistema.
 // DEMO (mock): Modal simples com campos de nova senha e confirmacao.
-// TODO [DB] (tabela users + endpoint + bcrypt/LGPD):
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
 //   Endpoint POST /api/users/:id/change-password com Bearer token.
 //   Após mustChange=false, emitir novo JWT. LGPD: logs de alteracao
 //   de senha com timestamp e IP (sem expor hash).
@@ -1359,7 +1363,7 @@ function confirmarForcarTrocaSenha() {
 // O QUE: Atualiza indicadores visuais (○/●) das regras de senha no modal de recuperação.
 // PORQUÊ: Feedback em tempo real das regras de validação para o usuário.
 // DEMO (mock): Atualiza classes CSS dos elementos #regra-* conforme input.
-// TODO [DB] Mesma lógica aplicável no frontend do formulário de reset via email.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] Mesma lógica aplicável no frontend do formulário de reset via email.
 function atualizarIndicadoresRegraSenha(senha) {
     const mapa = {
         'regra-tamanho': senha.length >= 8,
@@ -1376,7 +1380,7 @@ function atualizarIndicadoresRegraSenha(senha) {
 // O QUE: Atualiza indicadores visuais das regras no modal de troca forçada.
 // PORQUÊ: Feedback em tempo real durante primeiro login (mustChange).
 // DEMO (mock): Mesma logica dos indicadores de recuperacao.
-// TODO [DB] Componente reutilizavel no frontend.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL] Componente reutilizavel no frontend.
 function atualizarIndicadoresForcarSenha(senha) {
     const mapa = {
         'forcar-regra-tamanho': senha.length >= 8,
