@@ -1,8 +1,15 @@
 # MAPA DO SISTEMA — DayVet-Gestão
 
 > Referência para IAs e colaboradores editarem o código com contexto.
-> Última revisão: 17/09/2026 · Base: decisão clínica — laudos fora de escopo
+> Última revisão: 22/09/2026 · Base: ROADMAP enxuto (próximos passos; RF-08 ilustrativo)
 > Atenção: números de linha são referências — confirme antes de editar.
+
+## 0. Links e deploy (espelho fixo da main)
+
+- **Produção (espelho fixo da `main`): https://ralph-zlt.github.io/Agendau_2/dayvet/**
+- Workflow `.github/workflows/deploy-pages.yml` dispara **somente em `push` na `main`**; publica `site/index.html` → `dist/index.html` + `dayvet/*` → `dist/dayvet/`.
+- **Nunca publicar a branch `teste` neste link.** Teste roda local (`dayvet/index.html`); merge na `main` só após validação do dono.
+- Fila de trabalho: `ROADMAP.md` §1 (login autocomplete, clínico por CPF, upload, tipo de vacina, impressão/PDF + RF-08 ilustrativo — implementar na `teste`).
 
 ## 1. Visão geral
 - SPA (single-page application) de agenda para **pet shop / clínica veterinária**.

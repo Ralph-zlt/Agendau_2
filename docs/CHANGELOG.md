@@ -9,6 +9,13 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-22 · (docs) — ROADMAP reescrito enxuto (próximos passos) + RF-08 ilustrativo
+**O que:** `ROADMAP.md` reescrito (~80 linhas): removidas tabela RF×Status e Fases 0–5 (fonte de requisitos = `.docx`); §1 Próximas com 5 itens (login autocomplete, tutor por CPF, upload, vacina select, impressão/PDF + RF-08 ilustrativo agrupado); §2 baixa prioridade; §3 futuras até 2ª ordem (Supabase/LGPD/bypass). `docs/MAPA_DO_SISTEMA.md` §0 com links + referência. Descarta rascunho Fase 6 verbosa não commitado.
+**Por quê:** pedido do dono — roadmap deixa de ser documento extenso de requisitos e passa a servir aos próximos passos de fato.
+**Onde:** `ROADMAP.md`, `docs/MAPA_DO_SISTEMA.md`, `docs/CHANGELOG.md`.
+
+---
+
 ## 2026-09-22 · (docs) — Metodologia geral em DOCX versionado
 **O que:** novo `docs/METODOLOGIA_GERAL_AGENDAU_2.docx` (método dev HTML/CSS/JS, método GitHub, método IA com OpenCode + modelos gratuitos + Copilot CLI).
 **Por quê:** pedido do dono — só este documento de `local/` vai para o repo; resto de `local/` segue privado.
