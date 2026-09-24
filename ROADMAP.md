@@ -2,7 +2,7 @@
 
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
-> Última atualização: 2026-09-22.
+> Última atualização: 2026-09-24.
 
 ## 0. Links e deploy (espelho fixo da main)
 
@@ -21,7 +21,7 @@
 - [x] **3. Área de upload de documentos** — entregue na `main` (merge `3c1f67e`).
 - [x] **4. Vacinação informa o tipo (select)** — entregue na `main` (merge `3c1f67e`).
 - [x] **5. Layout de impressão/PDF + RF-08 ilustrativo** — entregue na `main` (merge `3c1f67e`).
-- [ ] **6. Tooltip instantâneo no login:** trocar o `title=` nativo do botão info (`#btn-info-login`) por tooltip customizado com exibição imediata no hover, no padrão visual dos 2 temas. Aceite: sem delay de ~1–2s do tooltip nativo.
+- [x] **6. Tooltip instantâneo no login** — entregue na `main` (merge teste→main 2026-09-24): `title=` nativo removido do `#btn-info-login`; tooltip customizado `#tooltip-info-login` imediato no hover/foco/toque com texto do bypass (clicar na barra de CPF/e-mail); botão em roxo claro chamativo (`#C084FC`).
 - [ ] **7. "Módulo clínico" do funcionário (CRUD de tipos de vacina):** reaproveitar nome/estética do "Módulo clínico" em visão restrita ao funcionário: só criar/editar/excluir tipos de vacina (mock `tiposVacina[]` agora, tabela no banco depois). Vet/admin não editam — apenas puxam a lista nos selects (fim do `TIPOS_VACINA` fixo + `TODO SUPABASE`). RBAC: `vacina_tipos_*`. Aceite: funcionário gerencia tipos; vet/admin veem a lista atualizada ao solicitar vacina.
 - [ ] **8. Card de anexos nos 2 temas:** converter `#anexos-card`/`#lista-anexos` (classes escuras fixas) para as variáveis CSS de tema (`styles.css` §6/§7), junto da revisão geral de estilização. Aceite: legível no claro e consistente no escuro.
 - [ ] **9. Agendamentos do funcionário só-leitura:** remover `consulta/vacinacao: agendar+editar+cancelar` do funcionário (mantém ver + relatórios, tutor/pet incluir, `clinica_imprimir`). Aceite: nenhum botão Agendar/Editar/Cancelar/Confirmar visível nem acionável nesse perfil.
@@ -33,6 +33,7 @@
 ## 2. Baixa prioridade (depois, sem data)
 
 - Refinamento modo claro/paleta + contrastes WCAG (variáveis `styles.css` seção 7).
+- **Login no modo claro (observação do dono, 2026-09-24):** o bloco do login aparece mais escuro que o tema claro — revisar para acompanhar o claro; o ícone do DayVet muda de cor entre os temas — fixar cor única padrão nos 2 temas (não deve mudar de cor).
 - RF-02 restante: tel 11 dígitos + máx 10 pets por tutor.
 - RF-05: janela 07h–19h no agendamento.
 - RF-08 real (pós-banco): CRMV do veterinário logado + assinatura.

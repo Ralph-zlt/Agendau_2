@@ -9,6 +9,13 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-24 · (docs) — Merge teste→main (item 6) + follow-ups de estilização do login claro
+**O que:** merge fast-forward `teste`→`main` (item 6, validado pelo dono). ROADMAP §1: item 6 marcado entregue; §2 com 2 follow-ups novos (bloco do login mais escuro no modo claro — revisar p/ acompanhar o claro; ícone do DayVet muda de cor entre temas — fixar cor única padrão).
+**Por quê:** pedido do dono — subir o commit validado + registrar pendências de estilização para continuar o projeto depois.
+**Onde:** `main` (merge da `teste`), `ROADMAP.md`, `docs/CHANGELOG.md`.
+
+---
+
 ## 2026-09-24 · (teste) — ROADMAP §1 item 6: tooltip instantâneo do login + botão info roxo claro
 **O que:** `#btn-info-login` sem `title=` nativo + `span#tooltip-info-login[role=tooltip]` com exibição imediata no hover/foco (CSS `duration-75`, sem delay) e toque/Esc via `inicializarTooltipInfoLogin()`; texto concatenado (identificação por CPF/e-mail + bypass: clicar na barra de CPF/e-mail e escolher acesso temporário); botão em roxo claro (`#C084FC` sobre `purple-500/15`, hover `#E9D5FF`) com anel de foco; estilos em `styles.css` §8 com vars `--login-*` no claro.
 **Por quê:** ROADMAP §1 item 6 (pedido do dono: tooltip instantâneo explicando o bypass + botão chamativo roxo-claro).
