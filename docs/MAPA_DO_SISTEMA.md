@@ -68,6 +68,7 @@
 | `#painel-vet-hoje` | dashboard | Agenda do dia do veterinário (contadores + lista hora/pet/tutor/serviço/status); `#painel-financeiro` fica oculto p/ vet — ver `atualizarDashboardPorPerfil()` |
 | `#filtro-data-ag` | agendamentos | Select de período (todos/hoje/futuros/passados) → `filtrarAgendamentosData()` |
 | `#btn-tema-login` | ~75 | Botão sol/lua no canto sup-dir do header do login (z-[61]) — alterna tema antes do login |
+| `#btn-info-login` / `#tooltip-info-login` | login | Botão info roxo-claro + tooltip customizado instantâneo (sem `title=`); texto explica bypass (clicar na barra de CPF/e-mail); toque/Esc via `inicializarTooltipInfoLogin()` (ROADMAP §1 item 6) |
 | `#btn-esqueci-senha` | ~120 | Fora do `<form>` (evita bloqueio por campos required); hover roxo via `setProperty` |
 | `header` (topbar) | ~130 | Perfil do usuário, `#btn-tema`, logout |
 | `nav` (tabs) | ~180 | Botões `#nav-<tab>` |

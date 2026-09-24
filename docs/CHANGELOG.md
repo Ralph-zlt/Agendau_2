@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-24 · (teste) — ROADMAP §1 item 6: tooltip instantâneo do login + botão info roxo claro
+**O que:** `#btn-info-login` sem `title=` nativo + `span#tooltip-info-login[role=tooltip]` com exibição imediata no hover/foco (CSS `duration-75`, sem delay) e toque/Esc via `inicializarTooltipInfoLogin()`; texto concatenado (identificação por CPF/e-mail + bypass: clicar na barra de CPF/e-mail e escolher acesso temporário); botão em roxo claro (`#C084FC` sobre `purple-500/15`, hover `#E9D5FF`) com anel de foco; estilos em `styles.css` §8 com vars `--login-*` no claro.
+**Por quê:** ROADMAP §1 item 6 (pedido do dono: tooltip instantâneo explicando o bypass + botão chamativo roxo-claro).
+**Onde:** `dayvet/index.html` (`#btn-info-login`, `#tooltip-info-login`), `dayvet/styles.css` (§8), `dayvet/script.js` (`inicializarTooltipInfoLogin`), `docs/MAPA_DO_SISTEMA.md` (§5).
+**Validações:** sem node no ambiente — python: 123 IDs OK, 33 onclick OK, `title=` removido, modais login em `z-[60]` OK; teste de navegador pendente (hover <100ms, Tab/Esc, toque mobile, temas claro/escuro, logins 1/2/3).
+
+---
+
 ## 2026-09-22 · (docs) — Merge teste→main + ressalvas 6–9 em Próximas
 **O que:** merge fast-forward `teste`→`main` (itens 1–5, validado em teste manual pelo dono — exceção ao fluxo padrão). ROADMAP §1: itens 1–5 marcados entregues + itens 6–9 novos (tooltip instantâneo; "Módulo clínico" do funcionário p/ CRUD de vacinas; anexos nos 2 temas; funcionário só-leitura em agendamentos).
 **Por quê:** publicar itens validados no Pages + registrar ressalvas; fluxo padrão volta a valer (teste → valida → merge).

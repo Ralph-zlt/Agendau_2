@@ -1762,12 +1762,38 @@ function atualizarIconeTema() {
     }
 }
 
+// O QUE: Tooltip instantâneo do botão info do login (ROADMAP §1 item 6).
+// PORQUÊ: Substitui o title= nativo (delay 1–2s) por exibição imediata via
+//   CSS (hover/foco) + toque no mobile e teclado (Enter/Espaço alterna, Esc fecha).
+// DEMO (mock): Sem backend; apenas alterna visibilidade do #tooltip-info-login.
+function inicializarTooltipInfoLogin() {
+    const btn = document.getElementById('btn-info-login');
+    const dica = document.getElementById('tooltip-info-login');
+    if (!btn || !dica) return;
+    const visivel = () => btn.getAttribute('aria-expanded') === 'true';
+    const mostrar = (estado) => {
+        btn.setAttribute('aria-expanded', estado ? 'true' : 'false');
+        dica.classList.toggle('tooltip-visivel', estado);
+    };
+    btn.addEventListener('click', () => mostrar(!visivel()));
+    btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') mostrar(false);
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && visivel()) mostrar(false);
+    });
+    document.addEventListener('click', (e) => {
+        if (visivel() && !btn.contains(e.target)) mostrar(false);
+    });
+}
+
 // ==========================================================
 // SEÇÃO 13: INICIALIZAÇÃO
 // ==========================================================
 
 window.onload = function() {
     inicializarTema();
+    inicializarTooltipInfoLogin();
     lucide.createIcons();
     atualizarPermissoesNavegacao();
     renderizarAgendamentos();

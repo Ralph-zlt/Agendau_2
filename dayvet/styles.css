@@ -442,3 +442,29 @@ body {
 
 /* Hover roxo do botão "Esqueci a senha?" — classe Tailwind customizada não gerada pelo CDN */
 #btn-esqueci-senha:hover { color: #8b00ff; }
+
+/* ===== 8. TOOLTIP INFO DO LOGIN (ROADMAP §1 item 6) =====
+   Exibição imediata no hover/foco (sem delay do title= nativo).
+   O login mantém fundo escuro nos 2 temas (§ login acima), por isso
+   o tooltip usa base escura fixa + vars --login-* quando disponíveis. */
+.tooltip-info-login {
+    background-color: #1e1b4b;
+    color: #f1f5f9;
+    box-shadow: 0 8px 24px rgba(3, 0, 30, 0.45), 0 0 12px rgba(168, 85, 247, 0.25);
+    transform: translateY(4px);
+}
+/* Visível via hover/foco do grupo (Tailwind) ou via toque/teclado (JS: .tooltip-visivel / aria-expanded). */
+.group\/info:hover .tooltip-info-login,
+.group\/info:focus-within .tooltip-info-login,
+.tooltip-info-login.tooltip-visivel,
+#btn-info-login[aria-expanded="true"] + .tooltip-info-login {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0);
+}
+/* Modo claro: login segue escuro, então só reforça leitura com vars de login. */
+:root[data-theme='light'] .tooltip-info-login {
+    background-color: var(--login-via);
+    color: var(--login-texto-secundario);
+    border-color: var(--login-borda-roxo);
+}
