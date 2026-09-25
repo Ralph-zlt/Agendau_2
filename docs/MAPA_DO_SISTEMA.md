@@ -50,7 +50,7 @@
 | 4 · TOASTS | ~166 | Notificações `showToast` |
 | 5 · NAVEGAÇÃO E TABS | ~194 | `switchTab`, guards RBAC, `atualizarPermissoesNavegacao` |
 | 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos (filtros por status + período: todos/hoje/futuros/passados, ordenado por data/hora); janela 07h–19h (RF-05, `salvarAgendamento` + `min/max` no `#agend-hora`); funcionário só-leitura (guards em abrir/editar/status/salvar); painel do vet (`renderizarPainelVet`, `atualizarDashboardPorPerfil`) |
-| 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`) |
+| 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`); pet com espécie/raça/sexo em selects (`ESPECIES_PET`, `RACAS_POR_ESPECIE` + `popularRacasPet`, `SEXOS_PET`) + peso kg opcional |
 | 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: guia/receita/vacina + impressão (**laudo FORA DE ESCOPO** — decisão clínica 2026-09-17); CRUD de tipos de vacina do funcionário (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo (CRMV do logado com fallback mock) |
 | 9 · RELATÓRIOS | ~778 | Relatórios de serviços, tutor e período |
 | 10 · USUÁRIOS & PERMISSÕES | ~975 | Gestão de logins mock (CRUD simulado) |

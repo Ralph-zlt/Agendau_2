@@ -34,9 +34,25 @@ let tutores = [
 ];
 
 let pets = [
-    { id: "101", tutorCpf: "111.222.333-44", nome: "Rex", especie: "Cachorro", raca: "Golden Retriever", comportamento: "Dócil e sociável.", alergias: "Nenhuma registrada." },
-    { id: "102", tutorCpf: "222.333.444-55", nome: "Mingau", especie: "Gato", raca: "Persa", comportamento: "Muito dócil e preguiçoso.", alergias: "Sensibilidade a certos medicamentos." }
+    { id: "101", tutorCpf: "111.222.333-44", nome: "Rex", especie: "Canino", raca: "Golden Retriever", sexo: "Macho", peso: 32.5, comportamento: "Dócil e sociável.", alergias: "Nenhuma registrada." },
+    { id: "102", tutorCpf: "222.333.444-55", nome: "Mingau", especie: "Felino", raca: "Persa", sexo: "Fêmea", peso: 4.2, comportamento: "Muito dócil e preguiçoso.", alergias: "Sensibilidade a certos medicamentos." }
 ];
+
+// O QUE: Catálogos do cadastro de pets (ROADMAP §1 item 10).
+// PORQUÊ: Espécie, raça e sexo como listas de seleção; peso em kg (opcional).
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `pets` com `especie` (enum),
+//   `raca` (varchar), `sexo` (enum Macho/Fêmea), `peso` (decimal NULL).
+const ESPECIES_PET = ["Canino", "Felino", "Equino", "Bovino", "Suíno", "Ovino", "Outro"];
+const SEXOS_PET = ["Macho", "Fêmea"];
+const RACAS_POR_ESPECIE = {
+    "Canino": ["Labrador Retriever", "Golden Retriever", "Poodle", "Bulldog", "Pastor Alemão", "SRD", "Outra"],
+    "Felino": ["Persa", "Siamês", "Maine Coon", "SRD", "Outra"],
+    "Equino": ["Quarto de Milha", "Mangalarga", "Árabe", "Puro-Sangue Inglês", "Outra"],
+    "Bovino": ["Nelore", "Gir", "Holandesa", "Angus", "Outra"],
+    "Suíno": ["Large White", "Landrace", "Duroc", "Outra"],
+    "Ovino": ["Santa Inês", "Dorper", "Suffolk", "Outra"],
+    "Outro": ["Outra"]
+};
 
 let agendamentos = [
     { id: "201", petId: "101", tutorCpf: "111.222.333-44", servico: "Consulta Veterinária", data: "2026-05-18", hora: "09:30", valor: 150.00, status: "confirmado" },
@@ -766,7 +782,7 @@ function renderizarTutores() {
                     <h5 class='font-bold text-slate-100 text-sm flex items-center gap-1.5'>
                         <i data-lucide='paw-print' class='w-4 h-4 text-brand-lime'></i> ${p.nome}
                     </h5>
-                    <p class='text-xs text-slate-400 font-semibold'>${p.raca}</p>
+                    <p class='text-xs text-slate-400 font-semibold'>${p.raca}${p.sexo ? ' · ' + p.sexo : ''}${p.peso ? ' · ' + p.peso + ' kg' : ''}</p>
                 </div>
             `;
         });
@@ -876,9 +892,22 @@ function abrirModalPet() {
     const select = document.getElementById('pet-tutor-select');
     select.innerHTML = '';
     tutores.forEach(t => select.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`);
+    popularRacasPet('');
     document.getElementById('modal-pet').classList.remove('hidden');
 }
 function fecharModalPet() { document.getElementById('modal-pet').classList.add('hidden'); }
+
+// O QUE: Preenche raça conforme a espécie (selects do cadastro/edição de pet).
+function popularRacasPet(prefixo, selecionada) {
+    const selEsp = document.getElementById(prefixo + 'pet-especie');
+    const selRaca = document.getElementById(prefixo + 'pet-raca');
+    if (!selEsp || !selRaca) return;
+    const racas = RACAS_POR_ESPECIE[selEsp.value] || ["Outra"];
+    selRaca.innerHTML = '';
+    racas.forEach(r => {
+        selRaca.innerHTML += `<option value="${r}"${r === selecionada ? ' selected' : ''}>${r}</option>`;
+    });
+}
 
 function salvarPet(e) {
     e.preventDefault();
@@ -886,8 +915,17 @@ function salvarPet(e) {
     const nome = document.getElementById('pet-nome').value;
     const especie = document.getElementById('pet-especie').value;
     const raca = document.getElementById('pet-raca').value;
+    const sexo = document.getElementById('pet-sexo').value;
+    const pesoRaw = (document.getElementById('pet-peso').value || '').trim();
     const comportamento = document.getElementById('pet-comportamento').value;
     const alergias = document.getElementById('pet-alergias').value;
+
+    // RF: peso opcional, mas se informado deve ser > 0.
+    let peso = '';
+    if (pesoRaw !== '') {
+        peso = parseFloat(pesoRaw.replace(',', '.'));
+        if (!(peso > 0)) { showToast("Peso deve ser maior que zero.", "error"); return; }
+    }
 
     // RF-02 restante: máximo 10 pets por tutor.
     // TODO [INTEGRAÇÃO SUPABASE]: CHECK (SELECT count(*) FROM pets WHERE tutor_cpf=...) ou regra no backend.
@@ -895,7 +933,7 @@ function salvarPet(e) {
         showToast("Limite de 10 pets por tutor atingido.", "error");
         return;
     }
-    pets.push({ id: Date.now().toString(), tutorCpf, nome, especie, raca, comportamento, alergias });
+    pets.push({ id: Date.now().toString(), tutorCpf, nome, especie, raca, sexo, peso, comportamento, alergias });
     fecharModalPet();
     renderizarTutores();
     showToast("Pet cadastrado com sucesso!");
@@ -907,7 +945,9 @@ function abrirModalEditarPet(petId) {
     document.getElementById('edit-pet-id').value = pet.id;
     document.getElementById('edit-pet-nome').value = pet.nome;
     document.getElementById('edit-pet-especie').value = pet.especie;
-    document.getElementById('edit-pet-raca').value = pet.raca;
+    popularRacasPet('edit-', pet.raca);
+    document.getElementById('edit-pet-sexo').value = pet.sexo || '';
+    document.getElementById('edit-pet-peso').value = (pet.peso === '' || pet.peso == null) ? '' : pet.peso;
     document.getElementById('edit-pet-comportamento').value = pet.comportamento || '';
     document.getElementById('edit-pet-alergias').value = pet.alergias || '';
     document.getElementById('modal-editar-pet').classList.remove('hidden');
@@ -922,6 +962,14 @@ function salvarEdicaoPet(e) {
         pet.nome = document.getElementById('edit-pet-nome').value;
         pet.especie = document.getElementById('edit-pet-especie').value;
         pet.raca = document.getElementById('edit-pet-raca').value;
+        pet.sexo = document.getElementById('edit-pet-sexo').value;
+        const pesoRaw = (document.getElementById('edit-pet-peso').value || '').trim();
+        if (pesoRaw === '') { pet.peso = ''; }
+        else {
+            const peso = parseFloat(pesoRaw.replace(',', '.'));
+            if (!(peso > 0)) { showToast("Peso deve ser maior que zero.", "error"); return; }
+            pet.peso = peso;
+        }
         pet.comportamento = document.getElementById('edit-pet-comportamento').value;
         pet.alergias = document.getElementById('edit-pet-alergias').value;
         renderizarTutores();

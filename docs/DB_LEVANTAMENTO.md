@@ -58,8 +58,10 @@
 - **id** (PK, string/UUID)
 - **tutorId** (FK → tutores.id)
 - **nome** (string)
-- **especie** (string)
-- **raca** (string)
+- **especie** (enum: `Canino`, `Felino`, `Equino`, `Bovino`, `Suíno`, `Ovino`, `Outro`)
+- **raca** (string — catálogo por espécie no frontend: `RACAS_POR_ESPECIE` + "Outra")
+- **sexo** (enum: `Macho`, `Fêmea`)
+- **peso** (decimal, kg, NULL — opcional; se informado, > 0)
 - **comportamento** (text)
 - **alergias** (text)
 - **arquivado** (boolean, default false) — soft delete

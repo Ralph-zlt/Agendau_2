@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — ROADMAP §1 item 10: pet com espécie/raça/sexo/peso
+**O que:** espécie vira select (Canino, Felino, Equino, Bovino, Suíno, Ovino, Outro), raça vira select por espécie (`RACAS_POR_ESPECIE` + "Outra", `popularRacasPet()`), sexo (Macho/Fêmea), peso kg opcional (>0); mocks migrados (Rex Canino/Macho/32.5kg, Mingau Felino/Fêmea/4.2kg — fim de "Cachorro"/"Gato"); cards exibem raça · sexo · peso.
+**Por quê:** próximo passo pedido pelo dono (cadastro de pet completo).
+**Onde:** `dayvet/script.js` (SEÇÃO 1 catálogos+mocks, SEÇÃO 7 CRUD), `dayvet/index.html` (`#modal-pet`, `#modal-editar-pet`), `ROADMAP.md` (item 10), `docs/MAPA_DO_SISTEMA.md`, `docs/DB_LEVANTAMENTO.md` (§1.4).
+**Validações:** python: IDs/handlers OK, blocos balanceados, zero "Cachorro"/"Gato"/"Ave"; manual pendente (criar pet por espécie, peso vazio/negativo, edição, 2 temas).
+
+---
+
 ## 2026-09-25 · (teste) — Preview de impressão acompanha o tema
 **O que:** `#doc-print-card` (só tela, `@media screen`): no modo escuro o documento abre em card escuro (`#0a0029`, textos/botões adaptados) em vez do estouro branco; no papel continua branco (`@media print` §5 intacto).
 **Por quê:** follow-up do dono — ao clicar em imprimir no modo escuro, a tela ficava toda clara.

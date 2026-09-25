@@ -25,6 +25,7 @@
 - [ ] **7. "Módulo clínico" do funcionário (CRUD de tipos de vacina):** reaproveitar nome/estética do "Módulo clínico" em visão restrita ao funcionário: só criar/editar/excluir tipos de vacina (mock `tiposVacina[]` agora, tabela no banco depois). Vet/admin não editam — apenas puxam a lista nos selects (fim do `TIPOS_VACINA` fixo + `TODO SUPABASE`). RBAC: `vacina_tipos_*`. Aceite: funcionário gerencia tipos; vet/admin veem a lista atualizada ao solicitar vacina.
 - [ ] **8. Card de anexos nos 2 temas:** converter `#anexos-card`/`#lista-anexos` (classes escuras fixas) para as variáveis CSS de tema (`styles.css` §6/§7), junto da revisão geral de estilização. Aceite: legível no claro e consistente no escuro.
 - [ ] **9. Agendamentos do funcionário só-leitura:** remover `consulta/vacinacao: agendar+editar+cancelar` do funcionário (mantém ver + relatórios, tutor/pet incluir, `clinica_imprimir`). Aceite: nenhum botão Agendar/Editar/Cancelar/Confirmar visível nem acionável nesse perfil.
+- [x] **10. Cadastro de pet com espécie/raça/sexo/peso:** espécie como select (Canino, Felino, Equino, Bovino, Suíno, Ovino, Outro), raça como select por espécie (`RACAS_POR_ESPECIE` + "Outra"), sexo (Macho/Fêmea), peso em kg opcional (>0). Entregue na `teste` (aguarda validação do dono p/ merge).
 
 **Aceite geral:** skill `testar-frontend` passa; teste manual na `teste` antes de qualquer novo merge; `docs/CHANGELOG.md` atualizado. Fluxo padrão: código na `teste` → validação do dono → merge na `main` (exceção desta vez: merge direto `teste`→`main` validado em teste manual).
 
