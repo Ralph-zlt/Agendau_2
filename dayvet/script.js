@@ -74,7 +74,10 @@ let agendamentos = [
     { id: "203", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Vacinação", vacinaTipo: "Antirrábica", data: isoDeslocado(2), hora: "10:00", valor: 110.00, status: "confirmado" },
     { id: "204", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Consulta Veterinária", data: isoDeslocado(3), hora: "11:00", valor: 150.00, status: "pendente" },
     { id: "205", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Consulta Veterinária", data: isoDeslocado(-2), hora: "09:00", valor: 150.00, status: "cancelado" },
-    { id: "206", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Vacinação", vacinaTipo: "V10", data: isoDeslocado(-1), hora: "15:00", valor: 120.00, status: "concluido" }
+    { id: "206", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Vacinação", vacinaTipo: "V10", data: isoDeslocado(-1), hora: "15:00", valor: 120.00, status: "concluido" },
+    { id: "207", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Exame Clínico", data: isoDeslocado(-20), hora: "10:30", valor: 90.00, status: "concluido" },
+    { id: "208", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Consulta Veterinária", data: "2026-03-10", hora: "09:00", valor: 150.00, status: "concluido" },
+    { id: "209", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Vacinação", vacinaTipo: "V8", data: "2026-03-18", hora: "11:00", valor: 110.00, status: "cancelado" }
 ];
 
 // O QUE: Catálogo de tipos de vacina (select) — gerenciado pelo funcionário (ROADMAP §1 item 7).
@@ -150,7 +153,7 @@ const PERMISSOES = {
     veterinario: [
         'clinica_criar', 'clinica_editar', 'clinica_excluir', 'clinica_imprimir',
         'consulta_agendar', 'consulta_editar', 'consulta_cancelar', 'consulta_confirmar',
-        'vacinacao_agendar',
+        'vacinacao_agendar', 'vacinacao_editar', 'vacinacao_cancelar', 'vacinacao_confirmar',
         'vacina_tipos_listar', 'raca_tipos_listar',
         'relatorios_gerar'
     ],

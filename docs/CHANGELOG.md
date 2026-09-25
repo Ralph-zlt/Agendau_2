@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Follow-up: vet sem ações em vacinação + histórico maior
+**O que:** veterinário ganha `vacinacao_editar/cancelar/confirmar` (linhas de Vacinação mostravam "Sem ações disponíveis"); mocks 207–209 (concluído mês passado, concluído/cancelado em março/2026) p/ popular os grupos por mês.
+**Por quê:** follow-ups do dono (paridade vet em vacinação; exemplo de histórico maior).
+**Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, SEÇÃO 1 mocks), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (login 2 age em vacinações; grupos mensais).
+
+---
+
 ## 2026-09-25 · (teste) — Item 16: dashboard do vet sem financeiro
 **O que:** `vetId` nos agendamentos (mocks → u2; novo registro grava `currentUser.id`); `atualizarDashboardPorPerfil()` — vet não vê Faturamento/Receita, vê Próxima Consulta (`renderizarProximaConsulta`, filtro vetId, empty state) + barras/hora consultas × vacinações de hoje (`inicializarConsultasChart`); admin intacto.
 **Por quê:** pedido do dono — dashboard operacional p/ veterinário.
