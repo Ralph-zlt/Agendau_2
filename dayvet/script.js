@@ -45,11 +45,13 @@ let agendamentos = [
     { id: "204", petId: "102", tutorCpf: "222.333.444-55", servico: "Consulta Veterinária", data: "2026-05-19", hora: "11:00", valor: 150.00, status: "pendente" }
 ];
 
-// O QUE: Catálogo de tipos de vacina (select) — protótipo.
-// PORQUÊ: Vacinação deve informar o tipo (agendamento + clínico + relatórios).
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `vacinas` + coluna
+// O QUE: Catálogo de tipos de vacina (select) — gerenciado pelo funcionário (ROADMAP §1 item 7).
+// PORQUÊ: Vacinação deve informar o tipo (agendamento + clínico + relatórios); funcionário faz CRUD, vet/admin só listam.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `vacina_tipos` (id, nome, ativo) + coluna
 //   `vacinaTipo` em `agendamentos` e `historico_clinico`.
-const TIPOS_VACINA = ["Antirrábica", "V8", "V10", "V12", "Tríplice Felina", "Quádrupla Felina", "Giárdia", "Tosse dos Canis", "Leishmaniose", "Outra"];
+let tiposVacina = ["Antirrábica", "V8", "V10", "V12", "Tríplice Felina", "Quádrupla Felina", "Giárdia", "Tosse dos Canis", "Leishmaniose", "Outra"];
+// Compat: código antigo lia TIPOS_VACINA fixo — agora é mutável via tiposVacina.
+const TIPOS_VACINA = tiposVacina;
 
 let historicoClinico = [
     { id: "402", petId: "102", tutorCpf: "222.333.444-55", tipo: "receita", data: "2026-05-12", detalhe: "PRESCRIÇÃO: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." },
@@ -113,13 +115,14 @@ const PERMISSOES = {
     veterinario: [
         'clinica_criar', 'clinica_editar', 'clinica_excluir', 'clinica_imprimir',
         'consulta_agendar', 'consulta_editar', 'consulta_cancelar', 'consulta_confirmar',
+        'vacina_tipos_listar',
         'relatorios_gerar'
     ],
     funcionario: [
-        'consulta_agendar', 'consulta_editar', 'consulta_cancelar',
-        'vacinacao_agendar', 'vacinacao_editar', 'vacinacao_cancelar',
+        // ROADMAP §1 item 9: agendamentos só-leitura — sem agendar/editar/cancelar/confirmar.
+        // Mantém ver (implícito) + relatórios, tutor/pet incluir, clinica_imprimir e tipos de vacina.
+        'vacina_tipos_criar', 'vacina_tipos_editar', 'vacina_tipos_excluir', 'vacina_tipos_listar',
         'relatorios_gerar', 'tutor_incluir', 'pet_incluir', 'clinica_imprimir'
-        // Sem 'consulta_confirmar' / 'vacinacao_confirmar': Funcionário não pode confirmar agendamentos.
     ]
 };
 
@@ -412,6 +415,10 @@ function atualizarPermissoesNavegacao() {
     document.querySelectorAll('.btn-incluir-doc-clinico').forEach(btn => {
         btn.classList.toggle('hidden', !podeCriarClinico);
     });
+    // ROADMAP §1 item 7: "Módulo clínico" do funcionário — gerenciar tipos de vacina (só funcionário).
+    const podeGerenciarTipos = (currentRole === 'funcionario');
+    toggleEl('btn-gerenciar-tipos-vacina', podeGerenciarTipos);
+    toggleEl('btn-gerenciar-tipos-vacina-ag', podeGerenciarTipos);
     const colunaTimeline = document.getElementById('clinica-timeline-coluna');
     if (colunaTimeline) {
         colunaTimeline.classList.toggle('lg:col-span-2', podeCriarClinico);
@@ -555,18 +562,22 @@ function renderizarAgendamentos() {
 }
 
 function abrirModalSolicitarAgendamento(tipoServico) {
+    if (!temPermissao('consulta_agendar') && !temPermissao('vacinacao_agendar')) {
+        showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
+        return;
+    }
     abrirModalAgendamento();
     document.getElementById('agend-tipo').value = tipoServico;
     atualizarVisibilidadeVacinaAg();
 }
 
 // O QUE: Preenche o select de tipos de vacina do agendamento.
-// PORQUÊ: Vacinação exige informar o tipo (protótipo com catálogo fixo).
+// PORQUÊ: Vacinação exige informar o tipo (lê tiposVacina mutável — CRUD do funcionário).
 function popularVacinaTiposAg(selecionado) {
     const select = document.getElementById('agend-vacina-tipo');
     if (!select) return;
     select.innerHTML = '<option value="">Selecione o tipo...</option>';
-    TIPOS_VACINA.forEach(t => {
+    tiposVacina.forEach(t => {
         select.innerHTML += `<option value="${t}"${t === selecionado ? ' selected' : ''}>${t}</option>`;
     });
 }
@@ -582,6 +593,11 @@ function atualizarVisibilidadeVacinaAg() {
 function editarAgendamentoPrompt(id) {
     const ag = agendamentos.find(a => a.id === id);
     if (!ag) return;
+    const permEditar = /vacin/i.test(ag.servico) ? 'vacinacao_editar' : 'consulta_editar';
+    if (!temPermissao(permEditar)) {
+        showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
+        return;
+    }
     abrirModalAgendamento();
     document.getElementById('edit-agend-id').value = ag.id;
     document.getElementById('modal-agendamento-titulo').innerText = "Editar Agendamento";
@@ -618,6 +634,15 @@ function salvarRegistroValor(e) {
 
 function alterarStatusAgendamento(id, status) {
     const item = agendamentos.find(a => a.id === id);
+    if (!item) return;
+    const ehVacinacao = /vacin/i.test(item.servico || '');
+    const perm = status === 'confirmado'
+        ? (ehVacinacao ? 'vacinacao_confirmar' : 'consulta_confirmar')
+        : (ehVacinacao ? 'vacinacao_cancelar' : 'consulta_cancelar');
+    if (!temPermissao(perm)) {
+        showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
+        return;
+    }
     if (item) {
         item.status = status;
         renderizarAgendamentos();
@@ -631,6 +656,10 @@ function filtrarAgendamentos(status) {
 }
 
 function abrirModalAgendamento() {
+    if (!temPermissao('consulta_agendar') && !temPermissao('vacinacao_agendar')) {
+        showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
+        return;
+    }
     const selectT = document.getElementById('agend-tutor-select');
     selectT.innerHTML = '';
     tutores.forEach(t => selectT.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`);
@@ -665,10 +694,23 @@ function salvarAgendamento(e) {
     const tutorCpf = document.getElementById('agend-tutor-select').value;
     const petId = document.getElementById('agend-pet-select').value;
     const servico = document.getElementById('agend-tipo').value;
+    const ehVacinacao = /vacin/i.test(servico);
+    const permNecessaria = editId
+        ? (ehVacinacao ? 'vacinacao_editar' : 'consulta_editar')
+        : (ehVacinacao ? 'vacinacao_agendar' : 'consulta_agendar');
+    if (!temPermissao(permNecessaria)) {
+        showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
+        return;
+    }
     const valor = parseFloat(document.getElementById('agend-valor').value);
     const data = document.getElementById('agend-data').value;
     const hora = document.getElementById('agend-hora').value;
-    const ehVacinacao = /vacin/i.test(servico);
+    // RF-05: agendamentos somente na janela 07h–19h.
+    // TODO [INTEGRAÇÃO SUPABASE]: CHECK (hora BETWEEN '07:00' AND '19:00') no backend.
+    if (!hora || hora < "07:00" || hora > "19:00") {
+        showToast("Agendamento fora da janela de atendimento (07h–19h).", "error");
+        return;
+    }
     const vacinaTipo = document.getElementById('agend-vacina-tipo').value || '';
     if (ehVacinacao && !vacinaTipo) {
         showToast("Informe o tipo de vacinação.", "error");
@@ -757,6 +799,13 @@ function renderizarTutores() {
 function abrirModalTutor() { document.getElementById('modal-tutor').classList.remove('hidden'); }
 function fecharModalTutor() { document.getElementById('modal-tutor').classList.add('hidden'); }
 
+// O QUE: Valida telefone com 11 dígitos (RF-02: DDD + 9 dígitos do celular).
+// PORQUÊ: RF-02 restante — garante cadastro com celular válido (só dígitos contam).
+// TODO [INTEGRAÇÃO SUPABASE]: mesma regra no backend (CHECK length(regexp_replace(tel,'\D','','g'))=11).
+function telefoneTem11Digitos(tel) {
+    return (String(tel || '').replace(/\D/g, '')).length === 11;
+}
+
 function salvarTutor(e) {
     e.preventDefault();
     const nome = document.getElementById('tutor-nome').value;
@@ -767,6 +816,10 @@ function salvarTutor(e) {
 
     if (tutores.some(t => t.cpf === cpf)) {
         showToast("CPF já cadastrado para outro tutor.", "error");
+        return;
+    }
+    if (!telefoneTem11Digitos(tel)) {
+        showToast("Telefone deve ter 11 dígitos (DDD + número do celular).", "error");
         return;
     }
 
@@ -795,6 +848,11 @@ function salvarEdicaoTutor(e) {
     const tutor = tutores.find(t => t.cpf === cpfAntigo);
     if (tutor) {
         const cpfNovo = document.getElementById('edit-tutor-cpf').value;
+        const telNovo = document.getElementById('edit-tutor-tel').value;
+        if (!telefoneTem11Digitos(telNovo)) {
+            showToast("Telefone deve ter 11 dígitos (DDD + número do celular).", "error");
+            return;
+        }
         // CPF é a chave primária: se alterado, propaga para pets, agendamentos e histórico clínico
         if (cpfNovo !== cpfAntigo) {
             if (tutores.some(t => t.cpf === cpfNovo)) {
@@ -807,7 +865,7 @@ function salvarEdicaoTutor(e) {
         }
         tutor.nome = document.getElementById('edit-tutor-nome').value;
         tutor.cpf = cpfNovo;
-        tutor.tel = document.getElementById('edit-tutor-tel').value;
+        tutor.tel = telNovo;
         tutor.email = document.getElementById('edit-tutor-email').value;
         tutor.endereco = document.getElementById('edit-tutor-endereco').value;
         renderizarTutores();
@@ -833,6 +891,12 @@ function salvarPet(e) {
     const comportamento = document.getElementById('pet-comportamento').value;
     const alergias = document.getElementById('pet-alergias').value;
 
+    // RF-02 restante: máximo 10 pets por tutor.
+    // TODO [INTEGRAÇÃO SUPABASE]: CHECK (SELECT count(*) FROM pets WHERE tutor_cpf=...) ou regra no backend.
+    if (pets.filter(p => p.tutorCpf === tutorCpf).length >= 10) {
+        showToast("Limite de 10 pets por tutor atingido.", "error");
+        return;
+    }
     pets.push({ id: Date.now().toString(), tutorCpf, nome, especie, raca, comportamento, alergias });
     fecharModalPet();
     renderizarTutores();
@@ -936,14 +1000,94 @@ function atualizarLabelDocumento() {
     }
 }
 
-// O QUE: Preenche o select de tipos de vacina do form clínico.
+// O QUE: Preenche o select de tipos de vacina do form clínico (lê tiposVacina mutável).
 function popularVacinaTiposClinica(selecionado) {
     const select = document.getElementById('clinica-vacina-tipo');
     if (!select) return;
     select.innerHTML = '<option value="">Selecione o tipo...</option>';
-    TIPOS_VACINA.forEach(t => {
+    tiposVacina.forEach(t => {
         select.innerHTML += `<option value="${t}"${t === selecionado ? ' selected' : ''}>${t}</option>`;
     });
+}
+
+// O QUE: CRUD de tipos de vacina — visão restrita ao funcionário (ROADMAP §1 item 7).
+// PORQUÊ: Reaproveita nome/estética do "Módulo clínico"; vet/admin só puxam a lista nos selects.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `vacina_tipos` (id, nome, ativo).
+function renderizarTiposVacina() {
+    const lista = document.getElementById('lista-tipos-vacina');
+    if (!lista) return;
+    document.getElementById('tipos-vacina-count').innerText = tiposVacina.length + (tiposVacina.length === 1 ? " tipo" : " tipos");
+    lista.innerHTML = '';
+    tiposVacina.forEach((t, idx) => {
+        lista.innerHTML += `
+            <div class='flex items-center justify-between gap-2 bg-slate-900/80 px-3.5 py-2.5 rounded-xl border border-slate-800'>
+                <span class='text-xs font-bold text-slate-200'>${t}</span>
+                <div class='flex items-center gap-2 shrink-0'>
+                    ${temPermissao('vacina_tipos_editar') ? `<button onclick="editarTipoVacinaPrompt(${idx})" class='text-[11px] text-brand-blue font-bold hover:underline'>Editar</button>` : ''}
+                    ${temPermissao('vacina_tipos_excluir') ? `<button onclick="excluirTipoVacina(${idx})" class='text-[11px] text-rose-400 font-bold hover:underline'>Excluir</button>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    lucide.createIcons();
+}
+
+function abrirModalTiposVacina() {
+    if (!temPermissao('vacina_tipos_listar')) {
+        showToast("Acesso restrito: perfil sem permissão para tipos de vacina.", "error");
+        return;
+    }
+    document.getElementById('edit-tipo-vacina-idx').value = '';
+    document.getElementById('input-tipo-vacina-nome').value = '';
+    document.getElementById('modal-tipos-vacina-titulo').innerText = "Gerenciar Tipos de Vacina";
+    renderizarTiposVacina();
+    document.getElementById('modal-tipos-vacina').classList.remove('hidden');
+}
+function fecharModalTiposVacina() { document.getElementById('modal-tipos-vacina').classList.add('hidden'); }
+
+function salvarTipoVacina(e) {
+    e.preventDefault();
+    if (!temPermissao('vacina_tipos_criar') && !temPermissao('vacina_tipos_editar')) {
+        showToast("Acesso restrito: perfil sem permissão para salvar tipos.", "error");
+        return;
+    }
+    const idxRaw = document.getElementById('edit-tipo-vacina-idx').value;
+    const nome = (document.getElementById('input-tipo-vacina-nome').value || '').trim();
+    if (!nome) { showToast("Informe o nome do tipo de vacina.", "error"); return; }
+    if (idxRaw === '') {
+        if (!temPermissao('vacina_tipos_criar')) { showToast("Acesso restrito: sem permissão para criar.", "error"); return; }
+        if (tiposVacina.some(t => t.toLowerCase() === nome.toLowerCase())) { showToast("Tipo já cadastrado.", "error"); return; }
+        tiposVacina.push(nome);
+        showToast("Tipo de vacina cadastrado!");
+    } else {
+        if (!temPermissao('vacina_tipos_editar')) { showToast("Acesso restrito: sem permissão para editar.", "error"); return; }
+        const idx = parseInt(idxRaw, 10);
+        if (tiposVacina.some((t, i) => i !== idx && t.toLowerCase() === nome.toLowerCase())) { showToast("Tipo já cadastrado.", "error"); return; }
+        tiposVacina[idx] = nome;
+        showToast("Tipo de vacina atualizado!");
+    }
+    document.getElementById('edit-tipo-vacina-idx').value = '';
+    document.getElementById('input-tipo-vacina-nome').value = '';
+    renderizarTiposVacina();
+    popularVacinaTiposAg(document.getElementById('agend-vacina-tipo')?.value || '');
+    popularVacinaTiposClinica(document.getElementById('clinica-vacina-tipo')?.value || '');
+}
+
+function editarTipoVacinaPrompt(idx) {
+    if (!temPermissao('vacina_tipos_editar')) { showToast("Acesso restrito.", "error"); return; }
+    document.getElementById('edit-tipo-vacina-idx').value = String(idx);
+    document.getElementById('input-tipo-vacina-nome').value = tiposVacina[idx] || '';
+    document.getElementById('modal-tipos-vacina-titulo').innerText = "Editar Tipo de Vacina";
+    document.getElementById('input-tipo-vacina-nome').focus();
+}
+
+function excluirTipoVacina(idx) {
+    if (!temPermissao('vacina_tipos_excluir')) { showToast("Acesso restrito.", "error"); return; }
+    tiposVacina.splice(idx, 1);
+    renderizarTiposVacina();
+    popularVacinaTiposAg('');
+    popularVacinaTiposClinica('');
+    showToast("Tipo de vacina excluído!");
 }
 
 function editarDocumentoClinico(id) {
@@ -1096,14 +1240,16 @@ function imprimirDocumentoGenerico(id) {
     document.getElementById('doc-data').innerText = doc.data;
     document.getElementById('doc-conteudo').innerText = doc.detalhe;
     // RF-08 ILUSTRATIVO (protótipo): mostra como ficará nome+CRMV do vet.
+    // PREP pós-banco: prefere CRMV do veterinário logado (currentUser.crm) com fallback no mock.
     // TODO [INTEGRAÇÃO SUPABASE - DB SQL]: buscar nome+CRMV do veterinário
     //   logado (users JOIN profissional) + assinatura digital (pós-banco/LGPD).
     const vetRef = (administradores && administradores[0]) || { nome: '—', crm: '—' };
     const vetNome = (currentUser && currentUser.nome) || vetRef.nome;
+    const vetCrm = (currentUser && currentUser.crm) || vetRef.crm;
     document.getElementById('doc-vet-nome').innerText = vetNome;
-    document.getElementById('doc-vet-crmv').innerText = vetRef.crm;
+    document.getElementById('doc-vet-crmv').innerText = vetCrm;
     document.getElementById('doc-assinatura-nome').innerText = vetNome;
-    document.getElementById('doc-assinatura-crmv').innerText = vetRef.crm;
+    document.getElementById('doc-assinatura-crmv').innerText = vetCrm;
 
     document.getElementById('modal-impressao-documento').classList.remove('hidden');
 }

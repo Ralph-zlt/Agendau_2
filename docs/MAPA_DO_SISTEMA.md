@@ -36,7 +36,7 @@
 - **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
 - **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
 - **Implantação (método do dono)**: sem rota de setup — admin cadastra CPF+e-mail do responsável; 1º acesso exige troca de senha para todos os perfis (admin/vet/func) via `mustChange`.
-- **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico/consultas), `funcionario` (operacional/agendamentos). O cargo `gestor` foi **removido**.
+- **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico/consultas + `vacina_tipos_listar`), `funcionario` (só-leitura em agendamentos + `tutor/pet incluir` + `clinica_imprimir` + CRUD de tipos de vacina `vacina_tipos_*`). O cargo `gestor` foi **removido**.
 - Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
 - **TODO [INTEGRAÇÃO SUPABASE]** (SQL via Supabase, projeto ainda não criado): tabela `users` com `role` vinculado ao CPF/email, Auth Supabase + RLS, `POST /api/login`, `GET /api/me` (ou `supabase.auth.signInWithPassword` + `supabase.from('users')`).
 
@@ -49,9 +49,9 @@
 | 3 · AUTENTICAÇÃO E LOGIN | ~99 | Login por CPF, sessão mock (`currentUser`/`currentRole`), logout |
 | 4 · TOASTS | ~166 | Notificações `showToast` |
 | 5 · NAVEGAÇÃO E TABS | ~194 | `switchTab`, guards RBAC, `atualizarPermissoesNavegacao` |
-| 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos (filtros por status + período: todos/hoje/futuros/passados, ordenado por data/hora); painel do vet (`renderizarPainelVet`, `atualizarDashboardPorPerfil`) |
-| 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns |
-| 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: guia/receita/vacina + impressão (**laudo FORA DE ESCOPO** — decisão clínica 2026-09-17) |
+| 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos (filtros por status + período: todos/hoje/futuros/passados, ordenado por data/hora); janela 07h–19h (RF-05, `salvarAgendamento` + `min/max` no `#agend-hora`); funcionário só-leitura (guards em abrir/editar/status/salvar); painel do vet (`renderizarPainelVet`, `atualizarDashboardPorPerfil`) |
+| 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`) |
+| 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: guia/receita/vacina + impressão (**laudo FORA DE ESCOPO** — decisão clínica 2026-09-17); CRUD de tipos de vacina do funcionário (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo (CRMV do logado com fallback mock) |
 | 9 · RELATÓRIOS | ~778 | Relatórios de serviços, tutor e período |
 | 10 · USUÁRIOS & PERMISSÕES | ~975 | Gestão de logins mock (CRUD simulado) |
 | 11 · GRÁFICOS (Chart.js) | ~1066 | `financeChart` (gráfico de receita) |
@@ -64,7 +64,9 @@
 |---|---|---|
 | Config Tailwind (cores `brand-*`) | `<head>` | brand-dark #03001e · brand-lime #ccff00 · brand-pink #ff007f · brand-blue #0066ff · brand-purple #8b00ff · brand-yellow #ffcc00 |
 | Script inline do tema | ~56-64 | Aplica `data-theme` no `<html>` antes do render (evita flash) |
-| `#login-screen` | ~72 | Tela de login (neon no escuro; clara sem neon no modo claro — Fase 5, branch `teste`); `#login-cabecalho` = faixa azul→roxo no claro p/ contraste do nome |
+| `#login-screen` | ~72 | Tela de login (neon no escuro; clara sem neon no modo claro — Fase 5 + follow-up §2 2026-09-25: card branco, paw-print lima fixo `#ccff00` nos 2 temas); tooltip claro no modo claro |
+| `#modal-tipos-vacina` | clínico | CRUD de tipos de vacina (só funcionário: `#btn-gerenciar-tipos-vacina` + `#btn-gerenciar-tipos-vacina-ag`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (ROADMAP §1 item 7) |
+| `#anexos-card` / `#lista-anexos` | clínico | Upload de documentos; temas via vars (`styles.css` §7 + §9 explícito) — legível no claro (ROADMAP §1 item 8) |
 | `#painel-vet-hoje` | dashboard | Agenda do dia do veterinário (contadores + lista hora/pet/tutor/serviço/status); `#painel-financeiro` fica oculto p/ vet — ver `atualizarDashboardPorPerfil()` |
 | `#filtro-data-ag` | agendamentos | Select de período (todos/hoje/futuros/passados) → `filtrarAgendamentosData()` |
 | `#btn-tema-login` | ~75 | Botão sol/lua no canto sup-dir do header do login (z-[61]) — alterna tema antes do login |
@@ -79,7 +81,8 @@
 - **Mecanismo**: atributo `data-theme` no `<html>`. Padrão = `prefers-color-scheme` do sistema; escolha manual salva em `localStorage` (chave `dayvet-tema`).
 - **Botões de tema**: `#btn-tema` no header (pós-login) e `#btn-tema-login` no canto sup-dir do login (pré-login). Ambos chamam `alternarTema()` e são sincronizados por `atualizarIconeTema()`.
 - **Método padrão com variáveis CSS**: edite **apenas os valores das variáveis** nos blocos `:root[data-theme='dark']` (seção 6) e `:root[data-theme='light']` (seção 7) de `styles.css`.
-- **Tela de login**: segue o tema ativo (Fase 5, branch `teste`) — modo claro = card branco sem neon; modo escuro = neon original. Variáveis `--login-*` removidas.
+- **Tela de login**: segue o tema ativo — modo claro = card branco sem neon (follow-up §2 entregue 2026-09-25, `styles.css` bloco login claro); modo escuro = neon original. Ícone paw-print em lima padrão `#ccff00` fixo nos 2 temas.
+- **`--texto-fraco` refinado** (2026-09-25): `#6b8a9a` → `#5f7887` para contraste AA ≥4.5 sobre branco; demais textos de marca já AA-OK.
 - **Paleta atual do modo claro** (aplicada em 2026-09-15):
 
 | Grupo | Variáveis principais | Cores |

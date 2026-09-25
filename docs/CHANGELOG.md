@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — ROADMAP §1 itens 7–9 + §2 Baixa completa
+**O que:** (7) CRUD de tipos de vacina restrito ao funcionário (`tiposVacina[]` mutável no lugar do `TIPOS_VACINA` fixo, modal `#modal-tipos-vacina`, RBAC `vacina_tipos_*`, vet/admin só listam); (8) card de anexos nos 2 temas (bloco explícito `styles.css` §9 com vars + mapeamentos §7, legível no claro); (9) funcionário só-leitura em agendamentos (removidos `consulta/vacinacao agendar+editar+cancelar`, guards em abrir/editar/status/salvar). Baixa: login claro acompanha o tema (card branco, ícone paw lima fixo `#ccff00` nos 2 temas, tooltip claro), `--texto-fraco` escurecido p/ contraste AA (4.64), RF-02 (tel 11 dígitos + máx 10 pets), RF-05 (janela 07h–19h com `min/max` + validação JS), RF-08 prep (CRMV do logado com fallback mock, selo DEMONSTRAÇÃO mantido).
+**Por quê:** ROADMAP §1 (7, 8, 9) + §2 Baixa (pedido do dono: tudo exceto §3 Futuras — Supabase/LGPD/bypass intocados).
+**Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, SEÇÃO 6 guards+janela, SEÇÃO 7 RF-02, SEÇÃO 8 tiposVacina/anexos/RF-08), `dayvet/index.html` (botões gerenciar tipos, modal tipos, `maxlength`/placeholders tel, `min/max` hora), `dayvet/styles.css` (§7 `--texto-fraco`, §9 anexos, login claro + ícone fixo), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** sem node no ambiente — python: 129 IDs OK, 47 handlers OK, `{}/()/[]` balanceados, modais login em `z-[60]` OK; teste de navegador pendente (perfis 1/2/3, temas, CRUD tipos como funcionário, funcionário sem botões de agendamento, login claro, tel/hora).
+
+---
+
 ## 2026-09-24 · (docs) — Merge teste→main (item 6) + follow-ups de estilização do login claro
 **O que:** merge fast-forward `teste`→`main` (item 6, validado pelo dono). ROADMAP §1: item 6 marcado entregue; §2 com 2 follow-ups novos (bloco do login mais escuro no modo claro — revisar p/ acompanhar o claro; ícone do DayVet muda de cor entre temas — fixar cor única padrão).
 **Por quê:** pedido do dono — subir o commit validado + registrar pendências de estilização para continuar o projeto depois.
