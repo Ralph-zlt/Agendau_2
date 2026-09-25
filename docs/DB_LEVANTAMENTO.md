@@ -72,6 +72,7 @@
 - **id** (PK, string/UUID)
 - **petId** (FK → pets.id)
 - **tutorId** (FK → tutores.id)
+- **vetId** (FK → users.id — veterinário dono do atendimento; dashboard do vet filtra por ele)
 - **servico** (string)
 - **data** (date)
 - **hora** (time)

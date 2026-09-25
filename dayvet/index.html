@@ -240,10 +240,10 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950 p-6 rounded-3xl border border-slate-850 shadow-xl">
                     <div class="space-y-1">
                         <h3 class="text-xl font-black text-white flex items-center gap-2">
-                            <span>Resumo Financeiro e Operacional</span>
+                            <span id="dash-titulo">Resumo Financeiro e Operacional</span>
                             <span class="text-xs font-bold bg-brand-lime/10 text-brand-lime border border-brand-lime/20 px-2.5 py-0.5 rounded-full">Ao Vivo</span>
                         </h3>
-                        <p class="text-xs text-slate-400">Acompanhamento consolidado de vendas, atendimentos e fluxo de clínica.</p>
+                        <p id="dash-subtitulo" class="text-xs text-slate-400">Acompanhamento consolidado de vendas, atendimentos e fluxo de clínica.</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <button id="btn-gerar-relatorios-dashboard" onclick="abrirModalGerarRelatorios()" class="px-4 py-2.5 bg-gradient-to-r from-brand-purple to-brand-blue hover:opacity-90 font-bold text-xs text-white rounded-xl shadow-md flex items-center gap-2">
@@ -296,7 +296,7 @@
                 </div>
 
                 <!-- Gráficos -->
-                <div class="grid grid-cols-1 gap-6">
+                <div id="grafico-receita-card" class="grid grid-cols-1 gap-6">
                     <div class="bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-4">
                         <div class="flex items-center justify-between">
                             <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
@@ -306,6 +306,30 @@
                         </div>
                         <div class="h-64 relative">
                             <canvas id="financeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloco do veterinário (visível só p/ vet): próxima consulta + consultas/vacinas do dia -->
+                <div id="bloco-vet" class="hidden space-y-6">
+                    <div class="bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-3">
+                        <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                            <i data-lucide="stethoscope" class="w-4 h-4 text-brand-lime"></i>
+                            <span>Próxima Consulta</span>
+                        </h4>
+                        <div id="prox-consulta-conteudo" class="space-y-1">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                                <i data-lucide="bar-chart-4" class="w-4 h-4 text-brand-blue"></i>
+                                <span>Consultas × Vacinações de Hoje</span>
+                            </h4>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="consultasChart"></canvas>
                         </div>
                     </div>
                 </div>

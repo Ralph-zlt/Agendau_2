@@ -66,13 +66,15 @@ function isoDeslocado(dias) {
     return d.toISOString().slice(0, 10);
 }
 
+// O QUE: Vínculo do agendamento com o veterinário (dashboard do vet filtra por vetId).
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: coluna `vetId` FK → `users(id)` em `agendamentos`.
 let agendamentos = [
-    { id: "201", petId: "101", tutorCpf: "111.222.333-44", servico: "Consulta Veterinária", data: isoDeslocado(1), hora: "09:30", valor: 150.00, status: "confirmado" },
-    { id: "202", petId: "102", tutorCpf: "222.333.444-55", servico: "Exame Clínico", data: isoDeslocado(0), hora: "14:00", valor: 90.00, status: "confirmado" },
-    { id: "203", petId: "101", tutorCpf: "111.222.333-44", servico: "Vacinação", vacinaTipo: "Antirrábica", data: isoDeslocado(2), hora: "10:00", valor: 110.00, status: "confirmado" },
-    { id: "204", petId: "102", tutorCpf: "222.333.444-55", servico: "Consulta Veterinária", data: isoDeslocado(3), hora: "11:00", valor: 150.00, status: "pendente" },
-    { id: "205", petId: "101", tutorCpf: "111.222.333-44", servico: "Consulta Veterinária", data: isoDeslocado(-2), hora: "09:00", valor: 150.00, status: "cancelado" },
-    { id: "206", petId: "102", tutorCpf: "222.333.444-55", servico: "Vacinação", vacinaTipo: "V10", data: isoDeslocado(-1), hora: "15:00", valor: 120.00, status: "concluido" }
+    { id: "201", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Consulta Veterinária", data: isoDeslocado(1), hora: "09:30", valor: 150.00, status: "confirmado" },
+    { id: "202", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Exame Clínico", data: isoDeslocado(0), hora: "14:00", valor: 90.00, status: "confirmado" },
+    { id: "203", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Vacinação", vacinaTipo: "Antirrábica", data: isoDeslocado(2), hora: "10:00", valor: 110.00, status: "confirmado" },
+    { id: "204", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Consulta Veterinária", data: isoDeslocado(3), hora: "11:00", valor: 150.00, status: "pendente" },
+    { id: "205", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Consulta Veterinária", data: isoDeslocado(-2), hora: "09:00", valor: 150.00, status: "cancelado" },
+    { id: "206", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Vacinação", vacinaTipo: "V10", data: isoDeslocado(-1), hora: "15:00", valor: 120.00, status: "concluido" }
 ];
 
 // O QUE: Catálogo de tipos de vacina (select) — gerenciado pelo funcionário (ROADMAP §1 item 7).
@@ -126,6 +128,7 @@ let filtroAgendamentosStatus = "todos";
 let remarcandoAgendamento = false;
 
 let financeChartRef = null;
+let consultasChartRef = null;
 
 // ==========================================================
 // SEÇÃO 2: MATRIZ DE PERMISSÕES POR PERFIL (RBAC)
@@ -504,7 +507,7 @@ function switchTab(tabId) {
     }
 
     if (tabId === 'dashboard') {
-        inicializarGraficos();
+        atualizarDashboardPorPerfil();
     } else if (tabId === 'agendamentos') {
         renderizarAgendamentos();
     } else if (tabId === 'clientes') {
@@ -544,9 +547,10 @@ function renderizarAgendamentos() {
     ativos.forEach(a => { bodyA.innerHTML += linhaAgendamento(a, false); });
 
     const limite7d = isoDeslocado(-7);
+    const mesAtual = hojeISO().slice(0, 7);
     let grupoAtual = '';
     expirados.forEach(a => {
-        const grupo = a.data >= limite7d ? 'Últimos 7 dias' : 'Mais antigos';
+        const grupo = grupoExpirado(a.data, limite7d, mesAtual);
         if (grupo !== grupoAtual) {
             grupoAtual = grupo;
             bodyE.innerHTML += `<tr class='bg-slate-900/60'><td colspan='6' class='py-2 px-6 text-[11px] font-black uppercase tracking-wider text-slate-400'>${grupo}</td></tr>`;
@@ -767,6 +771,19 @@ function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function agVencido(a) { return (a.data || '') < hojeISO() && (a.status === 'pendente' || a.status === 'confirmado'); }
 function agExpirado(a) { return agVencido(a) || a.status === 'cancelado' || a.status === 'concluido'; }
 
+// O QUE: Faixa do histórico de Expirados — Últimos 7 dias, Este mês, depois um grupo por mês.
+const MESES_PT = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+function nomeMesAno(dataISO) {
+    const ano = dataISO.slice(0, 4);
+    const mes = parseInt(dataISO.slice(5, 7), 10);
+    return (MESES_PT[mes - 1] || 'Mês') + ' de ' + ano;
+}
+function grupoExpirado(data, limite7d, mesAtual) {
+    if ((data || '') >= limite7d) return 'Últimos 7 dias';
+    if ((data || '').slice(0, 7) === mesAtual) return 'Este mês';
+    return nomeMesAno(data || '');
+}
+
 // O QUE: Reabre o agendamento expirado para nova data (volta como pendente → "sobe").
 function remarcarAgendamento(id) {
     const ag = agendamentos.find(a => a.id === id);
@@ -892,7 +909,7 @@ function salvarAgendamento(e) {
         showToast(remarcandoAgendamento ? "Agendamento remarcado!" : "Agendamento atualizado com sucesso!");
         remarcandoAgendamento = false;
     } else {
-        agendamentos.unshift({ id: Date.now().toString(), tutorCpf, petId, servico, vacinaTipo: ehVacinacao ? vacinaTipo : '', valor, data, hora, status: "confirmado" });
+        agendamentos.unshift({ id: Date.now().toString(), tutorCpf, petId, servico, vacinaTipo: ehVacinacao ? vacinaTipo : '', valor, data, hora, status: "confirmado", vetId: (currentUser && currentUser.id) || '' });
         showToast("Agendamento criado!");
     }
     fecharModalAgendamento();
@@ -2210,6 +2227,98 @@ function atualizarPeriodoFaturamento() {
     }
     atualizarKpiFaturamento(periodo);
     lucide.createIcons();
+}
+
+// ==========================================================
+// DASHBOARD POR PERFIL (ROADMAP item 16)
+// ==========================================================
+// O QUE: Vet não vê receita/faturamento — vê Próxima Consulta + consultas/vacinas do dia.
+// PORQUÊ: Dashboard operacional p/ veterinário; financeiro segue só do admin.
+// TODO [INTEGRAÇÃO SUPABASE]: filtrar por `vetId` + `data` no backend.
+function atualizarDashboardPorPerfil() {
+    const ehVet = currentRole === 'veterinario';
+    document.getElementById('dash-titulo').innerText = ehVet ? 'Minha Agenda do Dia' : 'Resumo Financeiro e Operacional';
+    document.getElementById('dash-subtitulo').innerText = ehVet
+        ? 'Próxima consulta e movimento de hoje.'
+        : 'Acompanhamento consolidado de vendas, atendimentos e fluxo de clínica.';
+    toggleEl('card-faturamento', !ehVet);
+    toggleEl('periodo-faturamento', !ehVet);
+    toggleEl('grafico-receita-card', !ehVet);
+    toggleEl('bloco-vet', ehVet);
+    if (ehVet) {
+        renderizarProximaConsulta();
+        inicializarConsultasChart();
+    } else {
+        if (consultasChartRef) { consultasChartRef.destroy(); consultasChartRef = null; }
+        inicializarGraficos();
+    }
+    lucide.createIcons();
+}
+
+// O QUE: Card da próxima consulta do veterinário logado (data/hora futura, pendente/confirmado).
+function renderizarProximaConsulta() {
+    const box = document.getElementById('prox-consulta-conteudo');
+    if (!box) return;
+    const agora = hojeISO() + 'T' + new Date().toTimeString().slice(0, 5);
+    const proximos = agendamentos
+        .filter(a => (a.vetId || '') === (currentUser && currentUser.id) && (a.status === 'pendente' || a.status === 'confirmado') && String(a.data + 'T' + a.hora) >= agora)
+        .sort((x, y) => String(x.data + x.hora).localeCompare(String(y.data + y.hora)));
+    if (!proximos.length) {
+        box.innerHTML = `<p class='text-xs text-slate-500 italic'>Nenhuma consulta agendada.</p>`;
+        return;
+    }
+    const a = proximos[0];
+    const pet = pets.find(p => p.id === a.petId);
+    const tutor = tutores.find(t => t.cpf === a.tutorCpf);
+    box.innerHTML = `
+        <div class='flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/80 p-4 rounded-xl border border-slate-800'>
+            <div class='space-y-1'>
+                <p class='font-bold text-slate-100 text-sm'>${pet ? pet.nome : 'N/A'} <span class='text-xs text-slate-400 font-semibold'>· ${a.servico}${a.vacinaTipo ? ' — ' + a.vacinaTipo : ''}</span></p>
+                <p class='text-xs text-slate-400'>${tutor ? tutor.nome : 'N/A'} · ${a.data} às ${a.hora}</p>
+            </div>
+            <button onclick="switchTab('agendamentos')" class='px-4 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl shrink-0'>Ver agenda</button>
+        </div>
+    `;
+}
+
+// O QUE: Barras por hora (07–19h) — consultas × vacinações de hoje do veterinário logado.
+function inicializarConsultasChart() {
+    const ctx = document.getElementById('consultasChart')?.getContext('2d');
+    if (!ctx) return;
+    const hoje = hojeISO();
+    const horas = [];
+    for (let h = 7; h <= 19; h++) horas.push(String(h).padStart(2, '0') + 'h');
+    const consultas = horas.map(() => 0);
+    const vacinas = horas.map(() => 0);
+    agendamentos
+        .filter(a => (a.vetId || '') === (currentUser && currentUser.id) && a.data === hoje && a.status !== 'cancelado')
+        .forEach(a => {
+            const h = parseInt(String(a.hora).slice(0, 2), 10);
+            if (h >= 7 && h <= 19) {
+                if (/vacin/i.test(a.servico)) vacinas[h - 7]++;
+                else consultas[h - 7]++;
+            }
+        });
+    if (consultasChartRef) consultasChartRef.destroy();
+    consultasChartRef = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: horas,
+            datasets: [
+                { label: 'Consultas', data: consultas, backgroundColor: '#0066ff' },
+                { label: 'Vacinações', data: vacinas, backgroundColor: '#ccff00' }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
 }
 
 // ==========================================================

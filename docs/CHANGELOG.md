@@ -9,6 +9,22 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Item 16: dashboard do vet sem financeiro
+**O que:** `vetId` nos agendamentos (mocks → u2; novo registro grava `currentUser.id`); `atualizarDashboardPorPerfil()` — vet não vê Faturamento/Receita, vê Próxima Consulta (`renderizarProximaConsulta`, filtro vetId, empty state) + barras/hora consultas × vacinações de hoje (`inicializarConsultasChart`); admin intacto.
+**Por quê:** pedido do dono — dashboard operacional p/ veterinário.
+**Onde:** `dayvet/script.js` (SEÇÃO 1 `vetId`, SEÇÃO 11 dashboard), `dayvet/index.html` (`#bloco-vet`, `#consultasChart`, `#dash-titulo/subtitulo`), `ROADMAP.md` (item 16), `docs/MAPA_DO_SISTEMA.md`, `docs/DB_LEVANTAMENTO.md` (§1.5).
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (login 2 sem financeiro + próxima/chart; login 1 intacto; 2 temas).
+
+---
+
+## 2026-09-25 · (teste) — Item 15: Expirados em 3 faixas
+**O que:** grupos "Últimos 7 dias" / "Este mês" / um por mês (`grupoExpirado` + `nomeMesAno`, `MESES_PT`).
+**Por quê:** refinamento do dono sobre o item 14.
+**Onde:** `dayvet/script.js` (SEÇÃO 6), `ROADMAP.md` (item 15).
+**Validações:** python OK; manual pendente (grupos por data).
+
+---
+
 ## 2026-09-25 · (teste) — Item 14: Ativos × Expirados empilhados
 **O que:** duas tabelas uma abaixo da outra (Ativos crescentes; Expirados decrescentes com grupos "Últimos 7 dias"/"Mais antigos"); ações por status (concluído→Nova consulta, cancelado→Remarcar, pendente vencido→Remarcar/Cancelar/Editar); mocks com datas relativas (`isoDeslocado`: 4 ativos + cancelado/concluído de exemplo).
 **Por quê:** pedido do dono (seções empilhadas, ações por status, histórico dividido por data, exemplos ativos).

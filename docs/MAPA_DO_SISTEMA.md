@@ -49,7 +49,7 @@
 | 3 · AUTENTICAÇÃO E LOGIN | ~99 | Login por CPF, sessão mock (`currentUser`/`currentRole`), logout |
 | 4 · TOASTS | ~166 | Notificações `showToast` |
 | 5 · NAVEGAÇÃO E TABS | ~194 | `switchTab`, guards RBAC, `atualizarPermissoesNavegacao` |
-| 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos; seções empilhadas Ativos (crescente) + Expirados (`#expirados-table-body`, decrescente, grupos "Últimos 7 dias"/"Mais antigos"); mocks com datas relativas (`isoDeslocado`); Concluir (perm do Confirmar), Remarcar (volta pendente), Nova consulta (de concluído), Editar troca data/hora; janela 07h–19h (RF-05); funcionário só-leitura; painel do vet |
+| 6 · AGENDAMENTOS | ~304 | CRUD/status + `vetId` (dono do atendimento); seções empilhadas Ativos (crescente) + Expirados (`#expirados-table-body`, decrescente, grupos "Últimos 7 dias"/"Este mês"/por mês via `grupoExpirado`); mocks com datas relativas (`isoDeslocado`); Concluir, Remarcar (volta pendente), Nova consulta (de concluído), Editar troca data/hora; janela 07h–19h (RF-05); funcionário só-leitura |
 | 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`); pet com espécie/raça/sexo em selects (`ESPECIES_PET`, `RACAS_POR_ESPECIE` + `popularRacasPet`, `SEXOS_PET`) + peso kg opcional |
 | 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: guia/receita/vacina + impressão (**laudo FORA DE ESCOPO** — decisão clínica 2026-09-17); CRUD de tipos de vacina do funcionário (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo (CRMV do logado com fallback mock) |
 | 9 · RELATÓRIOS | ~778 | Relatórios de serviços, tutor e período |
@@ -67,7 +67,8 @@
 | `#login-screen` | ~72 | Tela de login (neon no escuro; clara sem neon no modo claro — Fase 5 + follow-up §2 2026-09-25: card branco, `#login-cabecalho` com gradiente claro explícito e título de alto contraste, paw-print lima fixo `#ccff00` nos 2 temas, contorno `var(--borda)` + sombra); tooltip claro no modo claro |
 | `#modal-tipos-vacina` | clínico | CRUD de tipos de vacina (funcionário e admin via card `#tipos-vacina-card-func` na `tab-clinica`); form com modo Adicionar vs Salvar alterações (`modoFormTipoVacina`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (ROADMAP §1 item 7) |
 | `#racas-card-gerenciar` / `#modal-tipos-raca` | clientes | CRUD de tipos de raça por espécie (funcionário e admin; `#filtro-tipo-raca-especie`, `racasPorEspecie`, RBAC `raca_tipos_*`, modo Adicionar vs Salvar alterações); selects `#pet-raca`/`#edit-pet-raca` dinâmicos (item 11) |
-| `#periodo-faturamento` | dashboard | Filtro mensal/semanal/anual do gráfico + KPI (`atualizarPeriodoFaturamento`, `DADOS_FATURAMENTO`) |
+| `#periodo-faturamento` | dashboard | Filtro mensal/semanal/anual do gráfico + KPI (`atualizarPeriodoFaturamento`, `DADOS_FATURAMENTO`; oculto p/ vet) |
+| `#bloco-vet` | dashboard | Só veterinário: Próxima Consulta (`renderizarProximaConsulta`, filtro `vetId`) + `#consultasChart` (barras/hora hoje); financeiro oculto (`atualizarDashboardPorPerfil`, item 16) |
 | `#anexos-card` / `#lista-anexos` | clínico | Upload de documentos; temas via vars (`styles.css` §7 + §9 explícito) — legível no claro (ROADMAP §1 item 8) |
 | `#painel-vet-hoje` | dashboard | Agenda do dia do veterinário (contadores + lista hora/pet/tutor/serviço/status); `#painel-financeiro` fica oculto p/ vet — ver `atualizarDashboardPorPerfil()` |
 | `#filtro-data-ag` | agendamentos | Select de período (todos/hoje/futuros/passados) → `filtrarAgendamentosData()` |
