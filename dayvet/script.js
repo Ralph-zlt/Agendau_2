@@ -415,10 +415,8 @@ function atualizarPermissoesNavegacao() {
     document.querySelectorAll('.btn-incluir-doc-clinico').forEach(btn => {
         btn.classList.toggle('hidden', !podeCriarClinico);
     });
-    // ROADMAP §1 item 7: "Módulo clínico" do funcionário — gerenciar tipos de vacina (só funcionário).
-    const podeGerenciarTipos = (currentRole === 'funcionario');
-    toggleEl('btn-gerenciar-tipos-vacina', podeGerenciarTipos);
-    toggleEl('btn-gerenciar-tipos-vacina-ag', podeGerenciarTipos);
+    // ROADMAP §1 item 7: visão restrita do "Módulo clínico" p/ funcionário (card próprio na tab-clinica).
+    toggleEl('tipos-vacina-card-func', !podeCriarClinico && temPermissao('vacina_tipos_criar'));
     const colunaTimeline = document.getElementById('clinica-timeline-coluna');
     if (colunaTimeline) {
         colunaTimeline.classList.toggle('lg:col-span-2', podeCriarClinico);
@@ -1016,7 +1014,10 @@ function popularVacinaTiposClinica(selecionado) {
 function renderizarTiposVacina() {
     const lista = document.getElementById('lista-tipos-vacina');
     if (!lista) return;
-    document.getElementById('tipos-vacina-count').innerText = tiposVacina.length + (tiposVacina.length === 1 ? " tipo" : " tipos");
+    const rotulo = tiposVacina.length + (tiposVacina.length === 1 ? " tipo" : " tipos");
+    document.getElementById('tipos-vacina-count').innerText = rotulo;
+    const countCard = document.getElementById('tipos-vacina-count-card');
+    if (countCard) countCard.innerText = rotulo;
     lista.innerHTML = '';
     tiposVacina.forEach((t, idx) => {
         lista.innerHTML += `

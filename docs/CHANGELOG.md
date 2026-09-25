@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Fix item 7 (acesso funcionário) + header login todo claro
+**O que:** (A) novo card `#tipos-vacina-card-func` na `tab-clinica` (estética clínica, visível só p/ funcionário via `!podeCriarClinico && temPermissao('vacina_tipos_criar')`); removidos os 2 botões antigos inalcançáveis (form clínico oculto + modal bloqueado p/ funcionário); count do card sincronizado em `renderizarTiposVacina()`. (B) `#login-cabecalho` com gradiente claro explícito (`#D9E6F2→#FFFFFF→#EDE9FE`, sem roxo forte), título `#0f172a`/`--lime-texto`, subtítulo `--pink-texto`, `#btn-tema-login` visível no claro, contorno do card `var(--borda)` + `var(--sombra-2xl)`; escuro intocado.
+**Por quê:** follow-ups do dono — funcionário não alcançava o CRUD de tipos (bug) e "DayVet-Gestão" se confundia com o fundo no claro + contorno.
+**Onde:** `dayvet/index.html` (card func, `id="login-cabecalho"`, remoção botões), `dayvet/script.js` (toggle + count), `dayvet/styles.css` (§9.1), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** python: 130 IDs OK, 47 handlers OK, blocos balanceados; manual pendente (login 3 vê card e faz CRUD; login claro com hard refresh).
+
+---
+
 ## 2026-09-25 · (teste) — ROADMAP §1 itens 7–9 + §2 Baixa completa
 **O que:** (7) CRUD de tipos de vacina restrito ao funcionário (`tiposVacina[]` mutável no lugar do `TIPOS_VACINA` fixo, modal `#modal-tipos-vacina`, RBAC `vacina_tipos_*`, vet/admin só listam); (8) card de anexos nos 2 temas (bloco explícito `styles.css` §9 com vars + mapeamentos §7, legível no claro); (9) funcionário só-leitura em agendamentos (removidos `consulta/vacinacao agendar+editar+cancelar`, guards em abrir/editar/status/salvar). Baixa: login claro acompanha o tema (card branco, ícone paw lima fixo `#ccff00` nos 2 temas, tooltip claro), `--texto-fraco` escurecido p/ contraste AA (4.64), RF-02 (tel 11 dígitos + máx 10 pets), RF-05 (janela 07h–19h com `min/max` + validação JS), RF-08 prep (CRMV do logado com fallback mock, selo DEMONSTRAÇÃO mantido).
 **Por quê:** ROADMAP §1 (7, 8, 9) + §2 Baixa (pedido do dono: tudo exceto §3 Futuras — Supabase/LGPD/bypass intocados).

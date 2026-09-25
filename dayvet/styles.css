@@ -427,14 +427,32 @@ body {
 :root[data-theme='light'] #login-screen .text-slate-400 { color: var(--texto-suave) !important; }
 :root[data-theme='light'] #login-screen .text-slate-500 { color: var(--texto-fraco) !important; }
 :root[data-theme='light'] #login-screen .border-slate-800 { border-color: var(--borda) !important; }
-:root[data-theme='light'] #login-screen .border-brand-blue\/30 { border-color: var(--azul-borda-30) !important; }
 :root[data-theme='light'] #login-screen .border-brand-purple\/20 { border-color: var(--roxo-borda-20) !important; }
 :root[data-theme='light'] #login-screen .bg-brand-lime { background-color: #ccff00 !important; }
 :root[data-theme='light'] #login-screen .text-slate-950 { color: #0f172a !important; }
-:root[data-theme='light'] #login-screen .neon-border-blue-login { box-shadow: var(--sombra-azul); }
 :root[data-theme='light'] #login-screen .neon-text-lime-login { text-shadow: none; color: var(--lime-texto); }
 :root[data-theme='light'] #login-screen .neon-text-pink-login { text-shadow: none; color: var(--pink-texto); }
 :root[data-theme='light'] #login-screen input { background-color: var(--card) !important; color: var(--texto-900) !important; border-color: var(--borda) !important; }
+/* ===== 9.1 CABEÇALHO DO LOGIN TODO CLARO (follow-up §2 — "DayVet" se confundia com o fundo) =====
+   Gradiente claro explícito sem roxo forte + textos de alto contraste.
+   Escuro intocado (regras abaixo só valem em light). */
+:root[data-theme='light'] #login-cabecalho {
+    background: linear-gradient(135deg, #D9E6F2 0%, #FFFFFF 55%, #EDE9FE 100%) !important;
+    border-bottom: 1px solid var(--borda) !important;
+}
+:root[data-theme='light'] #login-cabecalho h1 { color: #0f172a !important; }
+:root[data-theme='light'] #login-cabecalho .neon-text-lime-login { text-shadow: none; color: var(--lime-texto) !important; }
+:root[data-theme='light'] #login-cabecalho .neon-text-pink-login { text-shadow: none; color: var(--pink-texto) !important; }
+:root[data-theme='light'] #login-cabecalho .bg-brand-lime { background-color: #ccff00 !important; box-shadow: var(--sombra-lime); }
+:root[data-theme='light'] #btn-tema-login {
+    background-color: var(--elemento) !important;
+    border-color: var(--borda) !important;
+    color: var(--texto-suave) !important;
+}
+:root[data-theme='light'] #btn-tema-login:hover { color: var(--texto-primario) !important; }
+/* Contorno do card de login no claro: borda sólida + sombra (sem neon). */
+:root[data-theme='light'] #login-screen .border-brand-blue\/30 { border-color: var(--borda) !important; }
+:root[data-theme='light'] #login-screen .neon-border-blue-login { box-shadow: var(--sombra-2xl); }
 /* Ícone DayVet (paw-print) — cor única padrão #ccff00 nos 2 temas (header + login). */
 :root[data-theme='light'] header i[data-lucide="paw-print"] { color: #ccff00 !important; }
 

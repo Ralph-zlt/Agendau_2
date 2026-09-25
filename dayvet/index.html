@@ -72,7 +72,7 @@
     <div id="login-screen" class="fixed inset-0 bg-brand-dark/90 backdrop-blur-xl z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-brand-blue/30 flex flex-col neon-border-blue-login">
             <!-- Header do Login -->
-            <div class="p-8 bg-gradient-to-br from-brand-dark via-slate-900 to-brand-purple text-white text-center relative border-b border-brand-purple/20">
+            <div id="login-cabecalho" class="p-8 bg-gradient-to-br from-brand-dark via-slate-900 to-brand-purple text-white text-center relative border-b border-brand-purple/20">
                 <!-- Botão tema no login — canto superior direito
                      Usa a mesma função alternarTema() do header principal.
                      z-[61] para ficar acima do login-screen (z-50) sem conflito com modais (z-[60]). -->
@@ -411,6 +411,25 @@
                     </div>
                 </div>
 
+                <!-- Visão restrita do Módulo Clínico p/ funcionário (ROADMAP §1 item 7):
+                     só gerencia tipos de vacina; vet/admin não veem este card (só listam nos selects). -->
+                <div id="tipos-vacina-card-func" class="hidden bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-3">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div>
+                            <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                                <i data-lucide="syringe" class="w-4 h-4 text-brand-blue"></i>
+                                <span>Tipos de Vacina</span>
+                                <span id="tipos-vacina-count-card" class="text-[10px] font-bold text-slate-400">0 tipos</span>
+                            </h4>
+                            <p class="text-xs text-slate-400 mt-1">Cadastre os tipos usados nos agendamentos e registros de imunização.</p>
+                        </div>
+                        <button id="btn-gerenciar-tipos-vacina-func" onclick="abrirModalTiposVacina()" class="px-4 py-2.5 bg-gradient-to-r from-brand-blue to-brand-purple hover:opacity-90 font-bold text-xs text-white rounded-xl shadow-md flex items-center gap-2 shrink-0">
+                            <i data-lucide="settings-2" class="w-4 h-4"></i>
+                            <span>Gerenciar tipos de vacina</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Anexos do módulo clínico (protótipo: memória — some ao recarregar) -->
                 <div id="anexos-card" class="bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-3">
                     <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
@@ -464,9 +483,6 @@
                             <div id="clinica-vacina-bloco" class="hidden">
                                 <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Tipo de vacinação</label>
                                 <select id="clinica-vacina-tipo" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none"></select>
-                                <button type="button" id="btn-gerenciar-tipos-vacina" onclick="abrirModalTiposVacina()" class="mt-2 text-[11px] text-brand-blue font-bold hover:underline flex items-center gap-1">
-                                    <i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Gerenciar tipos de vacina
-                                </button>
                             </div>
 
                             <div>
@@ -885,9 +901,6 @@
                 <div id="agend-vacina-bloco" class="hidden">
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Tipo de vacinação</label>
                     <select id="agend-vacina-tipo" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none"></select>
-                    <button type="button" id="btn-gerenciar-tipos-vacina-ag" onclick="abrirModalTiposVacina()" class="mt-2 text-[11px] text-brand-blue font-bold hover:underline flex items-center gap-1">
-                        <i data-lucide="settings-2" class="w-3.5 h-3.5"></i> Gerenciar tipos de vacina
-                    </button>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
                     <div>
