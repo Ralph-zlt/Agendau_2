@@ -136,6 +136,7 @@ const PERMISSOES = {
     veterinario: [
         'clinica_criar', 'clinica_editar', 'clinica_excluir', 'clinica_imprimir',
         'consulta_agendar', 'consulta_editar', 'consulta_cancelar', 'consulta_confirmar',
+        'vacinacao_agendar',
         'vacina_tipos_listar', 'raca_tipos_listar',
         'relatorios_gerar'
     ],
@@ -604,12 +605,17 @@ function popularVacinaTiposAg(selecionado) {
     });
 }
 
-// O QUE: Exibe o campo de tipo de vacina só quando o serviço é vacinação.
+// O QUE: Exibe o campo de tipo de vacina só quando o serviço é vacinação (+ campo novo-tipo se "Outro").
 function atualizarVisibilidadeVacinaAg() {
     const servico = document.getElementById('agend-tipo').value || '';
     const bloco = document.getElementById('agend-vacina-bloco');
     if (!bloco) return;
     bloco.classList.toggle('hidden', !/vacin/i.test(servico));
+    const novo = document.getElementById('agend-vacina-novo-bloco');
+    if (novo) {
+        const tipo = document.getElementById('agend-vacina-tipo')?.value || '';
+        novo.classList.toggle('hidden', tipo !== 'Outro');
+    }
 }
 
 function editarAgendamentoPrompt(id) {
@@ -628,6 +634,7 @@ function editarAgendamentoPrompt(id) {
     document.getElementById('agend-pet-select').value = ag.petId;
     document.getElementById('agend-tipo').value = ag.servico;
     popularVacinaTiposAg(ag.vacinaTipo || '');
+    document.getElementById('agend-vacina-novo-nome').value = '';
     atualizarVisibilidadeVacinaAg();
     document.getElementById('agend-valor').value = ag.valor;
     document.getElementById('agend-data').value = ag.data;
@@ -692,6 +699,7 @@ function abrirModalAgendamento() {
     document.getElementById('modal-agendamento-titulo').innerText = 'Agendar Consulta';
     document.getElementById('agend-tipo').value = '';
     popularVacinaTiposAg('');
+    document.getElementById('agend-vacina-novo-nome').value = '';
     atualizarVisibilidadeVacinaAg();
     document.getElementById('agend-valor').value = '';
     document.getElementById('agend-data').value = '';
@@ -733,10 +741,25 @@ function salvarAgendamento(e) {
         showToast("Agendamento fora da janela de atendimento (07h–19h).", "error");
         return;
     }
-    const vacinaTipo = document.getElementById('agend-vacina-tipo').value || '';
+    let vacinaTipo = document.getElementById('agend-vacina-tipo').value || '';
     if (ehVacinacao && !vacinaTipo) {
         showToast("Informe o tipo de vacinação.", "error");
         return;
+    }
+    // Quick-add: se tipo "Outro" + novo nome informado, adiciona ao catálogo (vet escolhe; vazio mantém "Outro").
+    // Catálogo segue do funcionário/admin; vet só usa esse atalho opcional no agendamento.
+    // TODO [INTEGRAÇÃO SUPABASE]: INSERT em `vacina_tipos` com auditoria de quem sugeriu.
+    if (ehVacinacao && vacinaTipo === 'Outro') {
+        const novo = (document.getElementById('agend-vacina-novo-nome').value || '').trim();
+        if (novo) {
+            if (temPermissao('vacina_tipos_criar') || currentRole === 'veterinario') {
+                if (!tiposVacina.some(t => t.toLowerCase() === novo.toLowerCase())) {
+                    tiposVacina.push(novo);
+                    showToast(`Tipo "${novo}" adicionado ao catálogo!`);
+                }
+                vacinaTipo = novo;
+            }
+        }
     }
 
     if (editId) {

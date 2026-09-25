@@ -36,7 +36,7 @@
 - **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
 - **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
 - **Implantação (método do dono)**: sem rota de setup — admin cadastra CPF+e-mail do responsável; 1º acesso exige troca de senha para todos os perfis (admin/vet/func) via `mustChange`.
-- **Cargos**: `admin` (acesso total + paridade: alcança tudo que o funcionário pode, ex. tipos de vacina/raça), `veterinario` (módulo clínico/consultas + `vacina_tipos_listar`/`raca_tipos_listar`), `funcionario` (só-leitura em agendamentos + `tutor/pet incluir` + `clinica_imprimir` + CRUD de tipos de vacina `vacina_tipos_*` e de raça `raca_tipos_*`). O cargo `gestor` foi **removido**.
+- **Cargos**: `admin` (acesso total + paridade: alcança tudo que o funcionário pode, ex. tipos de vacina/raça), `veterinario` (módulo clínico/consultas + `vacinacao_agendar` + `vacina_tipos_listar`/`raca_tipos_listar` + quick-add opcional de tipo "Outro" no agendamento), `funcionario` (só-leitura em agendamentos + `tutor/pet incluir` + `clinica_imprimir` + CRUD de tipos de vacina `vacina_tipos_*` e de raça `raca_tipos_*`). O cargo `gestor` foi **removido**.
 - Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
 - **TODO [INTEGRAÇÃO SUPABASE]** (SQL via Supabase, projeto ainda não criado): tabela `users` com `role` vinculado ao CPF/email, Auth Supabase + RLS, `POST /api/login`, `GET /api/me` (ou `supabase.auth.signInWithPassword` + `supabase.from('users')`).
 

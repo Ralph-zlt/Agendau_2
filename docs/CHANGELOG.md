@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Item 12: vet agenda vacinação + quick-add "Outro"
+**O que:** `vacinacao_agendar` p/ veterinário; `#agend-vacina-novo-bloco` no modal (aparece se tipo "Outro") — novo nome informado entra no catálogo na hora, vazio mantém "Outro"; catálogo segue do funcionário/admin.
+**Por quê:** pedido do dono — vet agendava vacinação antes; atalho opcional sem tirar a gerência do funcionário.
+**Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, `atualizarVisibilidadeVacinaAg`, `salvarAgendamento`), `dayvet/index.html` (`#agend-vacina-novo-nome`), `ROADMAP.md` (item 12), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (login 2 agenda Vacinação, testa Outro com/sem novo nome, login 3 segue sem agendar).
+
+---
+
 ## 2026-09-25 · (teste) — Item 11: CRUD raças + paridade admin + fix faturamento
 **O que:** (1) raças mutáveis (`racasPorEspecie[]`, `#modal-tipos-raca` com filtro por espécie, RBAC `raca_tipos_*`, card `#racas-card-gerenciar` na aba Tutores & Pets); (2) paridade admin — toggles por `temPermissao` (admin alcança tipos de vacina e raça; vet segue só-listando); (3) `atualizarPeriodoFaturamento()` implementado (`DADOS_FATURAMENTO` mensal/semanal/anual + KPI `#kpi-faturamento-nota`; antes a função não existia).
 **Por quê:** pedido do dono (funcionário gerencia raças como vacinas; tudo do funcionário o admin também pode) + bug do filtro de faturamento.
