@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Preview de impressão acompanha o tema
+**O que:** `#doc-print-card` (só tela, `@media screen`): no modo escuro o documento abre em card escuro (`#0a0029`, textos/botões adaptados) em vez do estouro branco; no papel continua branco (`@media print` §5 intacto).
+**Por quê:** follow-up do dono — ao clicar em imprimir no modo escuro, a tela ficava toda clara.
+**Onde:** `dayvet/index.html` (`id="doc-print-card"`), `dayvet/styles.css` (§9.2).
+**Validações:** python: 130 IDs OK, 47 handlers OK; manual pendente (imprimir nos 2 temas + conferência do papel).
+
+---
+
 ## 2026-09-25 · (teste) — Fix item 7 (acesso funcionário) + header login todo claro
 **O que:** (A) novo card `#tipos-vacina-card-func` na `tab-clinica` (estética clínica, visível só p/ funcionário via `!podeCriarClinico && temPermissao('vacina_tipos_criar')`); removidos os 2 botões antigos inalcançáveis (form clínico oculto + modal bloqueado p/ funcionário); count do card sincronizado em `renderizarTiposVacina()`. (B) `#login-cabecalho` com gradiente claro explícito (`#D9E6F2→#FFFFFF→#EDE9FE`, sem roxo forte), título `#0f172a`/`--lime-texto`, subtítulo `--pink-texto`, `#btn-tema-login` visível no claro, contorno do card `var(--borda)` + `var(--sombra-2xl)`; escuro intocado.
 **Por quê:** follow-ups do dono — funcionário não alcançava o CRUD de tipos (bug) e "DayVet-Gestão" se confundia com o fundo no claro + contorno.

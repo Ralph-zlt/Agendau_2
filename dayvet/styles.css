@@ -453,6 +453,24 @@ body {
 /* Contorno do card de login no claro: borda sólida + sombra (sem neon). */
 :root[data-theme='light'] #login-screen .border-brand-blue\/30 { border-color: var(--borda) !important; }
 :root[data-theme='light'] #login-screen .neon-border-blue-login { box-shadow: var(--sombra-2xl); }
+/* ===== 9.2 PREVIEW DE IMPRESSÃO ACOMPANHA O TEMA (só tela) =====
+   No modo escuro o documento abre escuro (sem estouro claro); no papel
+   continua branco (regras @media print da §5, que prevalecem na impressão). */
+@media screen {
+    :root[data-theme='dark'] #doc-print-card { background-color: #0a0029 !important; color: #e2e8f0 !important; border: 1px solid #1e293b !important; }
+    :root[data-theme='dark'] #doc-print-card .text-slate-900 { color: #f1f5f9 !important; }
+    :root[data-theme='dark'] #doc-print-card .text-slate-800 { color: #e2e8f0 !important; }
+    :root[data-theme='dark'] #doc-print-card .text-slate-700 { color: #cbd5e1 !important; }
+    :root[data-theme='dark'] #doc-print-card .text-slate-500 { color: #94a3b8 !important; }
+    :root[data-theme='dark'] #doc-print-card .bg-slate-100 { background-color: #0f172a !important; }
+    :root[data-theme='dark'] #doc-print-card .bg-slate-50 { background-color: #0f172a !important; }
+    :root[data-theme='dark'] #doc-print-card .border-slate-200 { border-color: #1e293b !important; }
+    :root[data-theme='dark'] #doc-print-card .bg-slate-900 { background-color: #e2e8f0 !important; color: #0f172a !important; }
+    :root[data-theme='dark'] #doc-print-card .bg-slate-900.text-white { color: #0f172a !important; }
+    :root[data-theme='dark'] #doc-print-card .bg-slate-200 { background-color: #1e293b !important; }
+    :root[data-theme='dark'] #doc-print-card .bg-slate-200.text-slate-700 { color: #e2e8f0 !important; }
+}
+
 /* Ícone DayVet (paw-print) — cor única padrão #ccff00 nos 2 temas (header + login). */
 :root[data-theme='light'] header i[data-lucide="paw-print"] { color: #ccff00 !important; }
 
