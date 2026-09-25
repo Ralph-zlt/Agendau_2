@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Item 13: tipos criar/editar + aba Expirados
+**O que:** (1) modais vacina/raça com modo Adicionar ("Adicionar vacina/raça") vs edição ("Salvar alterações" + Cancelar edição); (2) vistas Ativos/Expirados (`#vista-ag-*`, `agExpirado`: vencidos+cancelados+concluídos), badge Concluído, botão Concluir (perm do Confirmar), Remarcar (volta pendente, exige data futura), Editar permite remarcar, filtro Concluídos.
+**Por quê:** pedido do dono (intuitividade dos gerenciadores; expirados separados com remarcar/concluir).
+**Onde:** `dayvet/script.js` (SEÇÃO 6 vistas/status/remarcar, modos de form), `dayvet/index.html` (segmented, filtro, botões dos modais), `ROADMAP.md` (item 13), `docs/MAPA_DO_SISTEMA.md` (status `concluido` já no `DB_LEVANTAMENTO.md`).
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (vencer, concluir, cancelar→expirados, remarcar→sobe, funcionário sem ações, 2 temas).
+
+---
+
 ## 2026-09-25 · (teste) — Item 12: vet agenda vacinação + quick-add "Outro"
 **O que:** `vacinacao_agendar` p/ veterinário; `#agend-vacina-novo-bloco` no modal (aparece se tipo "Outro") — novo nome informado entra no catálogo na hora, vazio mantém "Outro"; catálogo segue do funcionário/admin.
 **Por quê:** pedido do dono — vet agendava vacinação antes; atalho opcional sem tirar a gerência do funcionário.

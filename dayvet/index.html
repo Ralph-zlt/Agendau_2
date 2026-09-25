@@ -331,11 +331,16 @@
                 </div>
 
                 <!-- Filtros por Status -->
-                <div class="flex items-center justify-between gap-2 overflow-x-auto pb-2">
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-2">
                     <div class="flex items-center gap-2">
+                        <button id="vista-ag-ativos" onclick="alternarVistaAgendamentos('ativos')" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-700">Ativos</button>
+                        <button id="vista-ag-expirados" onclick="alternarVistaAgendamentos('expirados')" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 border border-slate-850 hover:text-white">Expirados</button>
+                    </div>
+                    <div class="flex items-center gap-2 overflow-x-auto">
                         <button id="filter-all" onclick="filtrarAgendamentos('todos')" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-700">Todos</button>
                         <button id="filter-pendente" onclick="filtrarAgendamentos('pendente')" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 border border-slate-850 hover:text-white">Pendentes</button>
                         <button id="filter-confirmado" onclick="filtrarAgendamentos('confirmado')" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 border border-slate-850 hover:text-white">Confirmados</button>
+                        <button id="filter-concluido" onclick="filtrarAgendamentos('concluido')" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 border border-slate-850 hover:text-white">Concluídos</button>
                         <button id="filter-cancelado" onclick="filtrarAgendamentos('cancelado')" class="filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 border border-slate-850 hover:text-white">Cancelados</button>
                     </div>
                     <span id="agendamento-counter" class="text-xs text-slate-400 font-bold">Exibindo 4 compromissos</span>
@@ -1157,8 +1162,9 @@
                     <input type="text" id="input-tipo-vacina-nome" required placeholder="Ex: Antirrábica" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
                 </div>
                 <div class="flex justify-end gap-2">
+                    <button type="button" id="btn-cancelar-edit-tipo-vacina" onclick="cancelarEdicaoTipoVacina()" class="hidden px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Cancelar edição</button>
                     <button type="button" onclick="fecharModalTiposVacina()" class="px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Fechar</button>
-                    <button type="submit" class="px-5 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl">Salvar Tipo</button>
+                    <button type="submit" id="btn-salvar-tipo-vacina" class="px-5 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl">Adicionar vacina</button>
                 </div>
             </form>
         </div>
@@ -1193,8 +1199,9 @@
                     </div>
                 </div>
                 <div class="flex justify-end gap-2">
+                    <button type="button" id="btn-cancelar-edit-tipo-raca" onclick="cancelarEdicaoTipoRaca()" class="hidden px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Cancelar edição</button>
                     <button type="button" onclick="fecharModalTiposRaca()" class="px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Fechar</button>
-                    <button type="submit" class="px-5 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl">Salvar Raça</button>
+                    <button type="submit" id="btn-salvar-tipo-raca" class="px-5 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl">Adicionar raça</button>
                 </div>
             </form>
         </div>

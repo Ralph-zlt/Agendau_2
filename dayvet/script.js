@@ -113,6 +113,10 @@ let currentUser = { id: "1", nome: "Dr. Douglas Ferreira", role: "admin", profis
 let currentRole = 'admin';
 let configRestricao = "comercial";
 let filtroAgendamentosStatus = "todos";
+// O QUE: Vista da aba Agendamentos (Ativos × Expirados) + flag de remarcação.
+// PORQUÊ: Expirados (vencidos/cancelados/concluídos) ficam em aba separada; remarcar volta como pendente.
+let vistaAgendamentos = "ativos";
+let remarcandoAgendamento = false;
 
 let financeChartRef = null;
 
@@ -522,7 +526,8 @@ function renderizarAgendamentos() {
     if (!body) return;
     body.innerHTML = '';
 
-    let filtrados = agendamentos;
+    // Vista Expirados: data passada (ativos) + cancelados + concluídos; Ativos: o resto.
+    let filtrados = agendamentos.filter(a => agExpirado(a) === (vistaAgendamentos === 'expirados'));
     if (filtroAgendamentosStatus !== 'todos') {
         filtrados = filtrados.filter(a => a.status === filtroAgendamentosStatus);
     }
@@ -538,6 +543,8 @@ function renderizarAgendamentos() {
             badge = "<span class='bg-brand-lime/10 text-brand-lime border border-brand-lime/20 text-xs font-bold px-2.5 py-1 rounded-full'>Confirmado</span>";
         } else if (a.status === 'cancelado') {
             badge = "<span class='bg-red-950/40 text-rose-400 border border-rose-800/40 text-xs font-bold px-2.5 py-1 rounded-full'>Cancelado</span>";
+        } else if (a.status === 'concluido') {
+            badge = "<span class='bg-brand-blue/10 text-brand-blue border border-brand-blue/20 text-xs font-bold px-2.5 py-1 rounded-full'>Concluído</span>";
         } else {
             badge = "<span class='bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20 text-xs font-bold px-2.5 py-1 rounded-full'>Pendente</span>";
         }
@@ -550,13 +557,24 @@ function renderizarAgendamentos() {
         const btnRegistrarValor = temPermissao('valores_registrar')
             ? `<button onclick="abrirModalRegistrarValor('${a.id}', ${a.valor})" class='ml-2 text-[10px] text-brand-lime hover:underline'>[Registrar Valor]</button>`
             : '';
-        const btnConfirmar = (a.status !== 'confirmado' && temPermissao(permConfirmar))
-            ? `<button onclick="alterarStatusAgendamento('${a.id}', 'confirmado')" class='text-brand-lime hover:opacity-80 font-bold text-xs bg-brand-lime/10 px-2 py-1 rounded-lg'>Confirmar</button>` : '';
-        const btnEditar = temPermissao(permEditar)
-            ? `<button onclick="editarAgendamentoPrompt('${a.id}')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Editar</button>` : '';
-        const btnCancelar = (a.status !== 'cancelado' && temPermissao(permCancelar))
-            ? `<button onclick="alterarStatusAgendamento('${a.id}', 'cancelado')" class='text-rose-400 hover:opacity-80 font-bold text-xs bg-rose-500/10 px-2 py-1 rounded-lg'>Cancelar</button>` : '';
-        const semAcoes = !btnConfirmar && !btnEditar && !btnCancelar;
+        let acoes = '';
+        if (vistaAgendamentos === 'expirados') {
+            const btnRemarcar = temPermissao(permEditar)
+                ? `<button onclick="remarcarAgendamento('${a.id}')" class='text-brand-lime hover:opacity-80 font-bold text-xs bg-brand-lime/10 px-2 py-1 rounded-lg'>Remarcar</button>` : '';
+            const btnEditar = temPermissao(permEditar)
+                ? `<button onclick="editarAgendamentoPrompt('${a.id}')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Editar</button>` : '';
+            acoes = btnRemarcar + btnEditar;
+        } else {
+            const btnConfirmar = (a.status !== 'confirmado' && a.status !== 'concluido' && temPermissao(permConfirmar))
+                ? `<button onclick="alterarStatusAgendamento('${a.id}', 'confirmado')" class='text-brand-lime hover:opacity-80 font-bold text-xs bg-brand-lime/10 px-2 py-1 rounded-lg'>Confirmar</button>` : '';
+            const btnConcluir = (a.status !== 'concluido' && temPermissao(permConfirmar))
+                ? `<button onclick="alterarStatusAgendamento('${a.id}', 'concluido')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Concluir</button>` : '';
+            const btnEditar = temPermissao(permEditar)
+                ? `<button onclick="editarAgendamentoPrompt('${a.id}')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Editar</button>` : '';
+            const btnCancelar = (a.status !== 'cancelado' && a.status !== 'concluido' && temPermissao(permCancelar))
+                ? `<button onclick="alterarStatusAgendamento('${a.id}', 'cancelado')" class='text-rose-400 hover:opacity-80 font-bold text-xs bg-rose-500/10 px-2 py-1 rounded-lg'>Cancelar</button>` : '';
+            acoes = btnConfirmar + btnConcluir + btnEditar + btnCancelar;
+        }
 
         body.innerHTML += `
             <tr class='hover:bg-slate-900/60 transition-all border-b border-slate-800/50'>
@@ -575,8 +593,8 @@ function renderizarAgendamentos() {
                 </td>
                 <td class='py-4 px-6'>${badge}</td>
                 <td class='py-4 px-6 text-right space-x-1.5'>
-                    ${btnConfirmar}${btnEditar}${btnCancelar}
-                    ${semAcoes ? `<span class='text-slate-600 text-[11px] italic'>Sem ações disponíveis</span>` : ''}
+                    ${acoes}
+                    ${!acoes ? `<span class='text-slate-600 text-[11px] italic'>Sem ações disponíveis</span>` : ''}
                 </td>
             </tr>
         `;
@@ -665,7 +683,7 @@ function alterarStatusAgendamento(id, status) {
     const item = agendamentos.find(a => a.id === id);
     if (!item) return;
     const ehVacinacao = /vacin/i.test(item.servico || '');
-    const perm = status === 'confirmado'
+    const perm = (status === 'confirmado' || status === 'concluido')
         ? (ehVacinacao ? 'vacinacao_confirmar' : 'consulta_confirmar')
         : (ehVacinacao ? 'vacinacao_cancelar' : 'consulta_cancelar');
     if (!temPermissao(perm)) {
@@ -684,6 +702,51 @@ function filtrarAgendamentos(status) {
     renderizarAgendamentos();
 }
 
+// O QUE: Vista Ativos × Expirados da aba Agendamentos.
+// PORQUÊ: Vencidos/cancelados/concluídos ficam em aba separada; remarcar volta como pendente.
+// TODO [INTEGRAÇÃO SUPABASE]: filtrar por `data` + `status` no backend.
+function hojeISO() { return new Date().toISOString().slice(0, 10); }
+function agVencido(a) { return (a.data || '') < hojeISO() && (a.status === 'pendente' || a.status === 'confirmado'); }
+function agExpirado(a) { return agVencido(a) || a.status === 'cancelado' || a.status === 'concluido'; }
+
+function alternarVistaAgendamentos(vista) {
+    vistaAgendamentos = vista;
+    const btnA = document.getElementById('vista-ag-ativos');
+    const btnE = document.getElementById('vista-ag-expirados');
+    if (btnA && btnE) {
+        const ativa = 'filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-700';
+        const inativa = 'filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 border border-slate-850 hover:text-white';
+        btnA.className = vista === 'ativos' ? ativa : inativa;
+        btnE.className = vista === 'expirados' ? ativa : inativa;
+    }
+    renderizarAgendamentos();
+}
+
+// O QUE: Reabre o agendamento expirado para nova data (volta como pendente → "sobe").
+function remarcarAgendamento(id) {
+    const ag = agendamentos.find(a => a.id === id);
+    if (!ag) return;
+    const permEditar = /vacin/i.test(ag.servico) ? 'vacinacao_editar' : 'consulta_editar';
+    if (!temPermissao(permEditar)) {
+        showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
+        return;
+    }
+    abrirModalAgendamento();
+    document.getElementById('edit-agend-id').value = ag.id;
+    document.getElementById('modal-agendamento-titulo').innerText = "Remarcar Agendamento";
+    document.getElementById('agend-tutor-select').value = ag.tutorCpf;
+    popularPetsDoTutor();
+    document.getElementById('agend-pet-select').value = ag.petId;
+    document.getElementById('agend-tipo').value = ag.servico;
+    popularVacinaTiposAg(ag.vacinaTipo || '');
+    document.getElementById('agend-vacina-novo-nome').value = '';
+    atualizarVisibilidadeVacinaAg();
+    document.getElementById('agend-valor').value = ag.valor;
+    document.getElementById('agend-data').value = '';
+    document.getElementById('agend-hora').value = '';
+    remarcandoAgendamento = true;
+}
+
 function abrirModalAgendamento() {
     if (!temPermissao('consulta_agendar') && !temPermissao('vacinacao_agendar')) {
         showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
@@ -696,6 +759,7 @@ function abrirModalAgendamento() {
 
     // Reseta o formulário para modo "novo agendamento"
     document.getElementById('edit-agend-id').value = '';
+    remarcandoAgendamento = false;
     document.getElementById('modal-agendamento-titulo').innerText = 'Agendar Consulta';
     document.getElementById('agend-tipo').value = '';
     popularVacinaTiposAg('');
@@ -772,8 +836,16 @@ function salvarAgendamento(e) {
             ag.valor = valor;
             ag.data = data;
             ag.hora = hora;
+            if (remarcandoAgendamento) {
+                if (data < hojeISO()) {
+                    showToast("Escolha uma data futura para remarcar.", "error");
+                    return;
+                }
+                ag.status = 'pendente';
+            }
         }
-        showToast("Agendamento atualizado com sucesso!");
+        showToast(remarcandoAgendamento ? "Agendamento remarcado!" : "Agendamento atualizado com sucesso!");
+        remarcandoAgendamento = false;
     } else {
         agendamentos.unshift({ id: Date.now().toString(), tutorCpf, petId, servico, vacinaTipo: ehVacinacao ? vacinaTipo : '', valor, data, hora, status: "confirmado" });
         showToast("Agendamento criado!");
@@ -1119,11 +1191,23 @@ function abrirModalTiposVacina() {
     }
     document.getElementById('edit-tipo-vacina-idx').value = '';
     document.getElementById('input-tipo-vacina-nome').value = '';
-    document.getElementById('modal-tipos-vacina-titulo').innerText = "Gerenciar Tipos de Vacina";
+    modoFormTipoVacina(false);
     renderizarTiposVacina();
     document.getElementById('modal-tipos-vacina').classList.remove('hidden');
 }
 function fecharModalTiposVacina() { document.getElementById('modal-tipos-vacina').classList.add('hidden'); }
+
+// O QUE: Alterna o form entre "Adicionar" e "Salvar alterações" (modo edição).
+function modoFormTipoVacina(edicao) {
+    document.getElementById('modal-tipos-vacina-titulo').innerText = edicao ? "Editar Tipo de Vacina" : "Gerenciar Tipos de Vacina";
+    document.getElementById('btn-salvar-tipo-vacina').innerText = edicao ? "Salvar alterações" : "Adicionar vacina";
+    document.getElementById('btn-cancelar-edit-tipo-vacina').classList.toggle('hidden', !edicao);
+}
+function cancelarEdicaoTipoVacina() {
+    document.getElementById('edit-tipo-vacina-idx').value = '';
+    document.getElementById('input-tipo-vacina-nome').value = '';
+    modoFormTipoVacina(false);
+}
 
 function salvarTipoVacina(e) {
     e.preventDefault();
@@ -1148,6 +1232,7 @@ function salvarTipoVacina(e) {
     }
     document.getElementById('edit-tipo-vacina-idx').value = '';
     document.getElementById('input-tipo-vacina-nome').value = '';
+    modoFormTipoVacina(false);
     renderizarTiposVacina();
     popularVacinaTiposAg(document.getElementById('agend-vacina-tipo')?.value || '');
     popularVacinaTiposClinica(document.getElementById('clinica-vacina-tipo')?.value || '');
@@ -1157,7 +1242,7 @@ function editarTipoVacinaPrompt(idx) {
     if (!temPermissao('vacina_tipos_editar')) { showToast("Acesso restrito.", "error"); return; }
     document.getElementById('edit-tipo-vacina-idx').value = String(idx);
     document.getElementById('input-tipo-vacina-nome').value = tiposVacina[idx] || '';
-    document.getElementById('modal-tipos-vacina-titulo').innerText = "Editar Tipo de Vacina";
+    modoFormTipoVacina(true);
     document.getElementById('input-tipo-vacina-nome').focus();
 }
 
@@ -1211,11 +1296,23 @@ function abrirModalTiposRaca() {
     }
     document.getElementById('edit-tipo-raca-idx').value = '';
     document.getElementById('input-tipo-raca-nome').value = '';
-    document.getElementById('modal-tipos-raca-titulo').innerText = "Gerenciar Tipos de Raça";
+    modoFormTipoRaca(false);
     renderizarTiposRaca();
     document.getElementById('modal-tipos-raca').classList.remove('hidden');
 }
 function fecharModalTiposRaca() { document.getElementById('modal-tipos-raca').classList.add('hidden'); }
+
+// O QUE: Alterna o form entre "Adicionar" e "Salvar alterações" (modo edição).
+function modoFormTipoRaca(edicao) {
+    document.getElementById('modal-tipos-raca-titulo').innerText = edicao ? "Editar Tipo de Raça" : "Gerenciar Tipos de Raça";
+    document.getElementById('btn-salvar-tipo-raca').innerText = edicao ? "Salvar alterações" : "Adicionar raça";
+    document.getElementById('btn-cancelar-edit-tipo-raca').classList.toggle('hidden', !edicao);
+}
+function cancelarEdicaoTipoRaca() {
+    document.getElementById('edit-tipo-raca-idx').value = '';
+    document.getElementById('input-tipo-raca-nome').value = '';
+    modoFormTipoRaca(false);
+}
 
 function filtrarTiposRaca() {
     const esp = document.getElementById('filtro-tipo-raca-especie').value;
@@ -1248,6 +1345,7 @@ function salvarTipoRaca(e) {
     }
     document.getElementById('edit-tipo-raca-idx').value = '';
     document.getElementById('input-tipo-raca-nome').value = '';
+    modoFormTipoRaca(false);
     renderizarTiposRaca();
     popularRacasPet('');
     popularRacasPet('edit-');
@@ -1259,7 +1357,7 @@ function editarTipoRacaPrompt(idx) {
     document.getElementById('select-tipo-raca-especie').value = esp;
     document.getElementById('edit-tipo-raca-idx').value = String(idx);
     document.getElementById('input-tipo-raca-nome').value = (racasPorEspecie[esp] || [])[idx] || '';
-    document.getElementById('modal-tipos-raca-titulo').innerText = "Editar Tipo de Raça";
+    modoFormTipoRaca(true);
     document.getElementById('input-tipo-raca-nome').focus();
 }
 

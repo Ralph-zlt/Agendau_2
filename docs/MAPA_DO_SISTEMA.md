@@ -49,7 +49,7 @@
 | 3 · AUTENTICAÇÃO E LOGIN | ~99 | Login por CPF, sessão mock (`currentUser`/`currentRole`), logout |
 | 4 · TOASTS | ~166 | Notificações `showToast` |
 | 5 · NAVEGAÇÃO E TABS | ~194 | `switchTab`, guards RBAC, `atualizarPermissoesNavegacao` |
-| 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos (filtros por status + período: todos/hoje/futuros/passados, ordenado por data/hora); janela 07h–19h (RF-05, `salvarAgendamento` + `min/max` no `#agend-hora`); funcionário só-leitura (guards em abrir/editar/status/salvar); painel do vet (`renderizarPainelVet`, `atualizarDashboardPorPerfil`) |
+| 6 · AGENDAMENTOS | ~304 | CRUD/status de agendamentos (filtros por status + período: todos/hoje/futuros/passados, ordenado por data/hora); vistas Ativos/Expirados (`vistaAgendamentos`, `agExpirado`: vencidos+cancelados+concluídos); Concluir (perm do Confirmar), Remarcar (volta pendente), Editar permite trocar data/hora; janela 07h–19h (RF-05, `salvarAgendamento` + `min/max` no `#agend-hora`); funcionário só-leitura (guards em abrir/editar/status/salvar); painel do vet (`renderizarPainelVet`, `atualizarDashboardPorPerfil`) |
 | 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`); pet com espécie/raça/sexo em selects (`ESPECIES_PET`, `RACAS_POR_ESPECIE` + `popularRacasPet`, `SEXOS_PET`) + peso kg opcional |
 | 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: guia/receita/vacina + impressão (**laudo FORA DE ESCOPO** — decisão clínica 2026-09-17); CRUD de tipos de vacina do funcionário (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo (CRMV do logado com fallback mock) |
 | 9 · RELATÓRIOS | ~778 | Relatórios de serviços, tutor e período |
@@ -65,8 +65,8 @@
 | Config Tailwind (cores `brand-*`) | `<head>` | brand-dark #03001e · brand-lime #ccff00 · brand-pink #ff007f · brand-blue #0066ff · brand-purple #8b00ff · brand-yellow #ffcc00 |
 | Script inline do tema | ~56-64 | Aplica `data-theme` no `<html>` antes do render (evita flash) |
 | `#login-screen` | ~72 | Tela de login (neon no escuro; clara sem neon no modo claro — Fase 5 + follow-up §2 2026-09-25: card branco, `#login-cabecalho` com gradiente claro explícito e título de alto contraste, paw-print lima fixo `#ccff00` nos 2 temas, contorno `var(--borda)` + sombra); tooltip claro no modo claro |
-| `#modal-tipos-vacina` | clínico | CRUD de tipos de vacina (funcionário e admin via card `#tipos-vacina-card-func` na `tab-clinica`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (ROADMAP §1 item 7) |
-| `#racas-card-gerenciar` / `#modal-tipos-raca` | clientes | CRUD de tipos de raça por espécie (funcionário e admin; `#filtro-tipo-raca-especie`, `racasPorEspecie`, RBAC `raca_tipos_*`); selects `#pet-raca`/`#edit-pet-raca` dinâmicos (item 11) |
+| `#modal-tipos-vacina` | clínico | CRUD de tipos de vacina (funcionário e admin via card `#tipos-vacina-card-func` na `tab-clinica`); form com modo Adicionar vs Salvar alterações (`modoFormTipoVacina`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (ROADMAP §1 item 7) |
+| `#racas-card-gerenciar` / `#modal-tipos-raca` | clientes | CRUD de tipos de raça por espécie (funcionário e admin; `#filtro-tipo-raca-especie`, `racasPorEspecie`, RBAC `raca_tipos_*`, modo Adicionar vs Salvar alterações); selects `#pet-raca`/`#edit-pet-raca` dinâmicos (item 11) |
 | `#periodo-faturamento` | dashboard | Filtro mensal/semanal/anual do gráfico + KPI (`atualizarPeriodoFaturamento`, `DADOS_FATURAMENTO`) |
 | `#anexos-card` / `#lista-anexos` | clínico | Upload de documentos; temas via vars (`styles.css` §7 + §9 explícito) — legível no claro (ROADMAP §1 item 8) |
 | `#painel-vet-hoje` | dashboard | Agenda do dia do veterinário (contadores + lista hora/pet/tutor/serviço/status); `#painel-financeiro` fica oculto p/ vet — ver `atualizarDashboardPorPerfil()` |
