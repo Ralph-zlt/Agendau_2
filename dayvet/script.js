@@ -59,11 +59,20 @@ let racasPorEspecie = {
 // Compat: código antigo lia RACAS_POR_ESPECIE fixo — agora é mutável via racasPorEspecie.
 const RACAS_POR_ESPECIE = racasPorEspecie;
 
+// O QUE: Data ISO deslocada N dias a partir de hoje (mocks sempre com exemplos ativos + expirados).
+function isoDeslocado(dias) {
+    const d = new Date();
+    d.setDate(d.getDate() + dias);
+    return d.toISOString().slice(0, 10);
+}
+
 let agendamentos = [
-    { id: "201", petId: "101", tutorCpf: "111.222.333-44", servico: "Consulta Veterinária", data: "2026-05-18", hora: "09:30", valor: 150.00, status: "confirmado" },
-    { id: "202", petId: "102", tutorCpf: "222.333.444-55", servico: "Exame Clínico", data: "2026-05-18", hora: "14:00", valor: 90.00, status: "confirmado" },
-    { id: "203", petId: "101", tutorCpf: "111.222.333-44", servico: "Vacinação", vacinaTipo: "Antirrábica", data: "2026-05-17", hora: "10:00", valor: 110.00, status: "confirmado" },
-    { id: "204", petId: "102", tutorCpf: "222.333.444-55", servico: "Consulta Veterinária", data: "2026-05-19", hora: "11:00", valor: 150.00, status: "pendente" }
+    { id: "201", petId: "101", tutorCpf: "111.222.333-44", servico: "Consulta Veterinária", data: isoDeslocado(1), hora: "09:30", valor: 150.00, status: "confirmado" },
+    { id: "202", petId: "102", tutorCpf: "222.333.444-55", servico: "Exame Clínico", data: isoDeslocado(0), hora: "14:00", valor: 90.00, status: "confirmado" },
+    { id: "203", petId: "101", tutorCpf: "111.222.333-44", servico: "Vacinação", vacinaTipo: "Antirrábica", data: isoDeslocado(2), hora: "10:00", valor: 110.00, status: "confirmado" },
+    { id: "204", petId: "102", tutorCpf: "222.333.444-55", servico: "Consulta Veterinária", data: isoDeslocado(3), hora: "11:00", valor: 150.00, status: "pendente" },
+    { id: "205", petId: "101", tutorCpf: "111.222.333-44", servico: "Consulta Veterinária", data: isoDeslocado(-2), hora: "09:00", valor: 150.00, status: "cancelado" },
+    { id: "206", petId: "102", tutorCpf: "222.333.444-55", servico: "Vacinação", vacinaTipo: "V10", data: isoDeslocado(-1), hora: "15:00", valor: 120.00, status: "concluido" }
 ];
 
 // O QUE: Catálogo de tipos de vacina (select) — gerenciado pelo funcionário (ROADMAP §1 item 7).
@@ -113,9 +122,7 @@ let currentUser = { id: "1", nome: "Dr. Douglas Ferreira", role: "admin", profis
 let currentRole = 'admin';
 let configRestricao = "comercial";
 let filtroAgendamentosStatus = "todos";
-// O QUE: Vista da aba Agendamentos (Ativos × Expirados) + flag de remarcação.
-// PORQUÊ: Expirados (vencidos/cancelados/concluídos) ficam em aba separada; remarcar volta como pendente.
-let vistaAgendamentos = "ativos";
+// O QUE: Flag de remarcação (volta como pendente).
 let remarcandoAgendamento = false;
 
 let financeChartRef = null;
@@ -522,84 +529,135 @@ function alterarRestricaoHoraria() {
 // ==========================================================
 
 function renderizarAgendamentos() {
-    const body = document.getElementById('agendamentos-table-body');
-    if (!body) return;
-    body.innerHTML = '';
+    const bodyA = document.getElementById('agendamentos-table-body');
+    const bodyE = document.getElementById('expirados-table-body');
+    if (!bodyA || !bodyE) return;
+    bodyA.innerHTML = '';
+    bodyE.innerHTML = '';
 
-    // Vista Expirados: data passada (ativos) + cancelados + concluídos; Ativos: o resto.
-    let filtrados = agendamentos.filter(a => agExpirado(a) === (vistaAgendamentos === 'expirados'));
-    if (filtroAgendamentosStatus !== 'todos') {
-        filtrados = filtrados.filter(a => a.status === filtroAgendamentosStatus);
+    // Ativos em cima (ordem crescente), Expirados abaixo (mais recentes primeiro, agrupados).
+    const porStatus = (a) => filtroAgendamentosStatus === 'todos' || a.status === filtroAgendamentosStatus;
+    const ord = (x, y) => String(x.data + x.hora).localeCompare(String(y.data + y.hora));
+    const ativos = agendamentos.filter(a => !agExpirado(a) && porStatus(a)).sort(ord);
+    const expirados = agendamentos.filter(a => agExpirado(a) && porStatus(a)).sort((x, y) => ord(y, x));
+
+    ativos.forEach(a => { bodyA.innerHTML += linhaAgendamento(a, false); });
+
+    const limite7d = isoDeslocado(-7);
+    let grupoAtual = '';
+    expirados.forEach(a => {
+        const grupo = a.data >= limite7d ? 'Últimos 7 dias' : 'Mais antigos';
+        if (grupo !== grupoAtual) {
+            grupoAtual = grupo;
+            bodyE.innerHTML += `<tr class='bg-slate-900/60'><td colspan='6' class='py-2 px-6 text-[11px] font-black uppercase tracking-wider text-slate-400'>${grupo}</td></tr>`;
+        }
+        bodyE.innerHTML += linhaAgendamento(a, true);
+    });
+
+    document.getElementById('agendamento-counter').innerText = "Exibindo " + ativos.length + " compromissos";
+    document.getElementById('expirados-counter').innerText = "Exibindo " + expirados.length + " no histórico";
+    lucide.createIcons();
+}
+
+// O QUE: Linha da tabela de agendamentos (usada nas duas seções: Ativos e Expirados).
+function linhaAgendamento(a, expirado) {
+    const pet = pets.find(p => p.id === a.petId);
+    const tutor = tutores.find(t => t.cpf === a.tutorCpf);
+
+    let badge = "";
+    if (a.status === 'confirmado') {
+        badge = "<span class='bg-brand-lime/10 text-brand-lime border border-brand-lime/20 text-xs font-bold px-2.5 py-1 rounded-full'>Confirmado</span>";
+    } else if (a.status === 'cancelado') {
+        badge = "<span class='bg-red-950/40 text-rose-400 border border-rose-800/40 text-xs font-bold px-2.5 py-1 rounded-full'>Cancelado</span>";
+    } else if (a.status === 'concluido') {
+        badge = "<span class='bg-brand-blue/10 text-brand-blue border border-brand-blue/20 text-xs font-bold px-2.5 py-1 rounded-full'>Concluído</span>";
+    } else {
+        badge = "<span class='bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20 text-xs font-bold px-2.5 py-1 rounded-full'>Pendente</span>";
     }
 
-    document.getElementById('agendamento-counter').innerText = "Exibindo " + filtrados.length + " compromissos";
+    const ehVacinacao = /vacin/i.test(a.servico);
+    const permAgendar = ehVacinacao ? 'vacinacao_agendar' : 'consulta_agendar';
+    const permEditar = ehVacinacao ? 'vacinacao_editar' : 'consulta_editar';
+    const permCancelar = ehVacinacao ? 'vacinacao_cancelar' : 'consulta_cancelar';
+    const permConfirmar = ehVacinacao ? 'vacinacao_confirmar' : 'consulta_confirmar';
 
-    filtrados.forEach(a => {
-        const pet = pets.find(p => p.id === a.petId);
-        const tutor = tutores.find(t => t.cpf === a.tutorCpf);
-
-        let badge = "";
-        if (a.status === 'confirmado') {
-            badge = "<span class='bg-brand-lime/10 text-brand-lime border border-brand-lime/20 text-xs font-bold px-2.5 py-1 rounded-full'>Confirmado</span>";
+    const btnRegistrarValor = temPermissao('valores_registrar')
+        ? `<button onclick="abrirModalRegistrarValor('${a.id}', ${a.valor})" class='ml-2 text-[10px] text-brand-lime hover:underline'>[Registrar Valor]</button>`
+        : '';
+    const btnEditar = temPermissao(permEditar)
+        ? `<button onclick="editarAgendamentoPrompt('${a.id}')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Editar</button>` : '';
+    let acoes = '';
+    if (expirado) {
+        if (a.status === 'concluido') {
+            // Concluído: marcar nova consulta (novo agendamento com mesmos dados).
+            acoes = temPermissao(permAgendar)
+                ? `<button onclick="marcarNovaConsulta('${a.id}')" class='text-brand-lime hover:opacity-80 font-bold text-xs bg-brand-lime/10 px-2 py-1 rounded-lg'>Nova consulta</button>` : '';
         } else if (a.status === 'cancelado') {
-            badge = "<span class='bg-red-950/40 text-rose-400 border border-rose-800/40 text-xs font-bold px-2.5 py-1 rounded-full'>Cancelado</span>";
-        } else if (a.status === 'concluido') {
-            badge = "<span class='bg-brand-blue/10 text-brand-blue border border-brand-blue/20 text-xs font-bold px-2.5 py-1 rounded-full'>Concluído</span>";
+            acoes = temPermissao(permEditar)
+                ? `<button onclick="remarcarAgendamento('${a.id}')" class='text-brand-lime hover:opacity-80 font-bold text-xs bg-brand-lime/10 px-2 py-1 rounded-lg'>Remarcar</button>` : '';
         } else {
-            badge = "<span class='bg-brand-yellow/10 text-brand-yellow border border-brand-yellow/20 text-xs font-bold px-2.5 py-1 rounded-full'>Pendente</span>";
-        }
-
-        const ehVacinacao = /vacin/i.test(a.servico);
-        const permEditar = ehVacinacao ? 'vacinacao_editar' : 'consulta_editar';
-        const permCancelar = ehVacinacao ? 'vacinacao_cancelar' : 'consulta_cancelar';
-        const permConfirmar = ehVacinacao ? 'vacinacao_confirmar' : 'consulta_confirmar';
-
-        const btnRegistrarValor = temPermissao('valores_registrar')
-            ? `<button onclick="abrirModalRegistrarValor('${a.id}', ${a.valor})" class='ml-2 text-[10px] text-brand-lime hover:underline'>[Registrar Valor]</button>`
-            : '';
-        let acoes = '';
-        if (vistaAgendamentos === 'expirados') {
+            // Pendente/confirmado vencido: pode cancelar ou remarcar (Editar também permite).
             const btnRemarcar = temPermissao(permEditar)
                 ? `<button onclick="remarcarAgendamento('${a.id}')" class='text-brand-lime hover:opacity-80 font-bold text-xs bg-brand-lime/10 px-2 py-1 rounded-lg'>Remarcar</button>` : '';
-            const btnEditar = temPermissao(permEditar)
-                ? `<button onclick="editarAgendamentoPrompt('${a.id}')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Editar</button>` : '';
-            acoes = btnRemarcar + btnEditar;
-        } else {
-            const btnConfirmar = (a.status !== 'confirmado' && a.status !== 'concluido' && temPermissao(permConfirmar))
-                ? `<button onclick="alterarStatusAgendamento('${a.id}', 'confirmado')" class='text-brand-lime hover:opacity-80 font-bold text-xs bg-brand-lime/10 px-2 py-1 rounded-lg'>Confirmar</button>` : '';
-            const btnConcluir = (a.status !== 'concluido' && temPermissao(permConfirmar))
-                ? `<button onclick="alterarStatusAgendamento('${a.id}', 'concluido')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Concluir</button>` : '';
-            const btnEditar = temPermissao(permEditar)
-                ? `<button onclick="editarAgendamentoPrompt('${a.id}')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Editar</button>` : '';
-            const btnCancelar = (a.status !== 'cancelado' && a.status !== 'concluido' && temPermissao(permCancelar))
+            const btnCancelar = temPermissao(permCancelar)
                 ? `<button onclick="alterarStatusAgendamento('${a.id}', 'cancelado')" class='text-rose-400 hover:opacity-80 font-bold text-xs bg-rose-500/10 px-2 py-1 rounded-lg'>Cancelar</button>` : '';
-            acoes = btnConfirmar + btnConcluir + btnEditar + btnCancelar;
+            acoes = btnRemarcar + btnEditar + btnCancelar;
         }
+    } else {
+        const btnConfirmar = (a.status !== 'confirmado' && a.status !== 'concluido' && temPermissao(permConfirmar))
+            ? `<button onclick="alterarStatusAgendamento('${a.id}', 'confirmado')" class='text-brand-lime hover:opacity-80 font-bold text-xs bg-brand-lime/10 px-2 py-1 rounded-lg'>Confirmar</button>` : '';
+        const btnConcluir = (a.status !== 'concluido' && temPermissao(permConfirmar))
+            ? `<button onclick="alterarStatusAgendamento('${a.id}', 'concluido')" class='text-brand-blue hover:opacity-80 font-bold text-xs bg-brand-blue/10 px-2 py-1 rounded-lg'>Concluir</button>` : '';
+        const btnCancelar = (a.status !== 'cancelado' && a.status !== 'concluido' && temPermissao(permCancelar))
+            ? `<button onclick="alterarStatusAgendamento('${a.id}', 'cancelado')" class='text-rose-400 hover:opacity-80 font-bold text-xs bg-rose-500/10 px-2 py-1 rounded-lg'>Cancelar</button>` : '';
+        acoes = btnConfirmar + btnConcluir + btnEditar + btnCancelar;
+    }
 
-        body.innerHTML += `
-            <tr class='hover:bg-slate-900/60 transition-all border-b border-slate-800/50'>
-                <td class='py-4 px-6'>
-                    <div class='font-bold text-slate-200'>${pet ? pet.nome : 'N/A'}</div>
-                    <div class='text-xs text-slate-500'>${tutor ? tutor.nome : 'N/A'}</div>
-                </td>
-                <td class='py-4 px-6 text-slate-300 font-semibold'>${a.servico}${/vacin/i.test(a.servico) && a.vacinaTipo ? ' — ' + a.vacinaTipo : ''}</td>
-                <td class='py-4 px-6 text-slate-300'>
-                    <div>${a.data}</div>
-                    <div class='text-xs text-brand-pink font-bold'>${a.hora}</div>
-                </td>
-                <td class='py-4 px-6 font-bold text-slate-200'>
-                    <span>R$ ${a.valor.toFixed(2)}</span>
-                    ${btnRegistrarValor}
-                </td>
-                <td class='py-4 px-6'>${badge}</td>
-                <td class='py-4 px-6 text-right space-x-1.5'>
-                    ${acoes}
-                    ${!acoes ? `<span class='text-slate-600 text-[11px] italic'>Sem ações disponíveis</span>` : ''}
-                </td>
-            </tr>
-        `;
-    });
-    lucide.createIcons();
+    return `
+        <tr class='hover:bg-slate-900/60 transition-all border-b border-slate-800/50'>
+            <td class='py-4 px-6'>
+                <div class='font-bold text-slate-200'>${pet ? pet.nome : 'N/A'}</div>
+                <div class='text-xs text-slate-500'>${tutor ? tutor.nome : 'N/A'}</div>
+            </td>
+            <td class='py-4 px-6 text-slate-300 font-semibold'>${a.servico}${/vacin/i.test(a.servico) && a.vacinaTipo ? ' — ' + a.vacinaTipo : ''}</td>
+            <td class='py-4 px-6 text-slate-300'>
+                <div>${a.data}</div>
+                <div class='text-xs text-brand-pink font-bold'>${a.hora}</div>
+            </td>
+            <td class='py-4 px-6 font-bold text-slate-200'>
+                <span>R$ ${a.valor.toFixed(2)}</span>
+                ${btnRegistrarValor}
+            </td>
+            <td class='py-4 px-6'>${badge}</td>
+            <td class='py-4 px-6 text-right space-x-1.5'>
+                ${acoes}
+                ${!acoes ? `<span class='text-slate-600 text-[11px] italic'>Sem ações disponíveis</span>` : ''}
+            </td>
+        </tr>
+    `;
+}
+
+// O QUE: Novo agendamento a partir de um concluído (mesmos pet/tutor/serviço, data em aberto).
+function marcarNovaConsulta(id) {
+    const ag = agendamentos.find(a => a.id === id);
+    if (!ag) return;
+    const permAgendar = /vacin/i.test(ag.servico) ? 'vacinacao_agendar' : 'consulta_agendar';
+    if (!temPermissao(permAgendar)) {
+        showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
+        return;
+    }
+    abrirModalAgendamento();
+    document.getElementById('modal-agendamento-titulo').innerText = "Agendar Consulta";
+    document.getElementById('agend-tutor-select').value = ag.tutorCpf;
+    popularPetsDoTutor();
+    document.getElementById('agend-pet-select').value = ag.petId;
+    document.getElementById('agend-tipo').value = ag.servico;
+    popularVacinaTiposAg(ag.vacinaTipo || '');
+    document.getElementById('agend-vacina-novo-nome').value = '';
+    atualizarVisibilidadeVacinaAg();
+    document.getElementById('agend-valor').value = ag.valor;
+    document.getElementById('agend-data').value = '';
+    document.getElementById('agend-hora').value = '';
 }
 
 function abrirModalSolicitarAgendamento(tipoServico) {
@@ -702,25 +760,12 @@ function filtrarAgendamentos(status) {
     renderizarAgendamentos();
 }
 
-// O QUE: Vista Ativos × Expirados da aba Agendamentos.
-// PORQUÊ: Vencidos/cancelados/concluídos ficam em aba separada; remarcar volta como pendente.
+// O QUE: Seções Ativos × Expirados da aba Agendamentos (uma abaixo da outra).
+// PORQUÊ: Vencidos/cancelados/concluídos ficam no histórico abaixo; remarcar volta como pendente.
 // TODO [INTEGRAÇÃO SUPABASE]: filtrar por `data` + `status` no backend.
 function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function agVencido(a) { return (a.data || '') < hojeISO() && (a.status === 'pendente' || a.status === 'confirmado'); }
 function agExpirado(a) { return agVencido(a) || a.status === 'cancelado' || a.status === 'concluido'; }
-
-function alternarVistaAgendamentos(vista) {
-    vistaAgendamentos = vista;
-    const btnA = document.getElementById('vista-ag-ativos');
-    const btnE = document.getElementById('vista-ag-expirados');
-    if (btnA && btnE) {
-        const ativa = 'filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white border border-slate-700';
-        const inativa = 'filter-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-950 text-slate-400 border border-slate-850 hover:text-white';
-        btnA.className = vista === 'ativos' ? ativa : inativa;
-        btnE.className = vista === 'expirados' ? ativa : inativa;
-    }
-    renderizarAgendamentos();
-}
 
 // O QUE: Reabre o agendamento expirado para nova data (volta como pendente → "sobe").
 function remarcarAgendamento(id) {

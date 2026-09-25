@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Item 14: Ativos × Expirados empilhados
+**O que:** duas tabelas uma abaixo da outra (Ativos crescentes; Expirados decrescentes com grupos "Últimos 7 dias"/"Mais antigos"); ações por status (concluído→Nova consulta, cancelado→Remarcar, pendente vencido→Remarcar/Cancelar/Editar); mocks com datas relativas (`isoDeslocado`: 4 ativos + cancelado/concluído de exemplo).
+**Por quê:** pedido do dono (seções empilhadas, ações por status, histórico dividido por data, exemplos ativos).
+**Onde:** `dayvet/script.js` (SEÇÃO 1 mocks, SEÇÃO 6 `linhaAgendamento`/`marcarNovaConsulta`), `dayvet/index.html` (2 tabelas, `#expirados-counter`), `ROADMAP.md` (item 14), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (fluxos por status, grupos 7 dias, 2 temas).
+
+---
+
 ## 2026-09-25 · (teste) — Item 13: tipos criar/editar + aba Expirados
 **O que:** (1) modais vacina/raça com modo Adicionar ("Adicionar vacina/raça") vs edição ("Salvar alterações" + Cancelar edição); (2) vistas Ativos/Expirados (`#vista-ag-*`, `agExpirado`: vencidos+cancelados+concluídos), badge Concluído, botão Concluir (perm do Confirmar), Remarcar (volta pendente, exige data futura), Editar permite remarcar, filtro Concluídos.
 **Por quê:** pedido do dono (intuitividade dos gerenciadores; expirados separados com remarcar/concluir).
