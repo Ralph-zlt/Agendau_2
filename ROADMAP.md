@@ -26,6 +26,7 @@
 - [ ] **8. Card de anexos nos 2 temas:** converter `#anexos-card`/`#lista-anexos` (classes escuras fixas) para as variáveis CSS de tema (`styles.css` §6/§7), junto da revisão geral de estilização. Aceite: legível no claro e consistente no escuro.
 - [ ] **9. Agendamentos do funcionário só-leitura:** remover `consulta/vacinacao: agendar+editar+cancelar` do funcionário (mantém ver + relatórios, tutor/pet incluir, `clinica_imprimir`). Aceite: nenhum botão Agendar/Editar/Cancelar/Confirmar visível nem acionável nesse perfil.
 - [x] **10. Cadastro de pet com espécie/raça/sexo/peso:** espécie como select (Canino, Felino, Equino, Bovino, Suíno, Ovino, Outro), raça como select por espécie (`RACAS_POR_ESPECIE` + "Outra"), sexo (Macho/Fêmea), peso em kg opcional (>0). Entregue na `teste` (aguarda validação do dono p/ merge).
+- [x] **11. CRUD de tipos de raça + paridade admin + fix filtro faturamento:** raças gerenciáveis por funcionário e admin (`racasPorEspecie[]`, `#modal-tipos-raca`, RBAC `raca_tipos_*`, card na aba Tutores & Pets); admin passa a alcançar tudo que o funcionário pode (tipos de vacina e raça via `temPermissao`, vet segue só-listando); `atualizarPeriodoFaturamento()` implementado (mensal/semanal/anual + KPI). Entregue na `teste` (aguarda validação do dono p/ merge).
 
 **Aceite geral:** skill `testar-frontend` passa; teste manual na `teste` antes de qualquer novo merge; `docs/CHANGELOG.md` atualizado. Fluxo padrão: código na `teste` → validação do dono → merge na `main` (exceção desta vez: merge direto `teste`→`main` validado em teste manual).
 

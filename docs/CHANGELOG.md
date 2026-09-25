@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Item 11: CRUD raças + paridade admin + fix faturamento
+**O que:** (1) raças mutáveis (`racasPorEspecie[]`, `#modal-tipos-raca` com filtro por espécie, RBAC `raca_tipos_*`, card `#racas-card-gerenciar` na aba Tutores & Pets); (2) paridade admin — toggles por `temPermissao` (admin alcança tipos de vacina e raça; vet segue só-listando); (3) `atualizarPeriodoFaturamento()` implementado (`DADOS_FATURAMENTO` mensal/semanal/anual + KPI `#kpi-faturamento-nota`; antes a função não existia).
+**Por quê:** pedido do dono (funcionário gerencia raças como vacinas; tudo do funcionário o admin também pode) + bug do filtro de faturamento.
+**Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, SEÇÃO 7 raças, SEÇÃO 11 gráficos), `dayvet/index.html` (card, modal, `id="kpi-faturamento-nota"`), `ROADMAP.md` (item 11), `docs/MAPA_DO_SISTEMA.md`, `docs/DB_LEVANTAMENTO.md`, `docs/CHANGELOG.md`.
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (CRUD raças como 1 e 3, vet sem cards, filtro mensal/semanal/anual, 2 temas).
+
+---
+
 ## 2026-09-25 · (teste) — ROADMAP §1 item 10: pet com espécie/raça/sexo/peso
 **O que:** espécie vira select (Canino, Felino, Equino, Bovino, Suíno, Ovino, Outro), raça vira select por espécie (`RACAS_POR_ESPECIE` + "Outra", `popularRacasPet()`), sexo (Macho/Fêmea), peso kg opcional (>0); mocks migrados (Rex Canino/Macho/32.5kg, Mingau Felino/Fêmea/4.2kg — fim de "Cachorro"/"Gato"); cards exibem raça · sexo · peso.
 **Por quê:** próximo passo pedido pelo dono (cadastro de pet completo).

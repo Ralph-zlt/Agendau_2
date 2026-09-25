@@ -59,7 +59,7 @@
 - **tutorId** (FK → tutores.id)
 - **nome** (string)
 - **especie** (enum: `Canino`, `Felino`, `Equino`, `Bovino`, `Suíno`, `Ovino`, `Outro`)
-- **raca** (string — catálogo por espécie no frontend: `RACAS_POR_ESPECIE` + "Outra")
+- **raca** (string — catálogo por espécie gerenciado por funcionário/admin: `racasPorEspecie`, RBAC `raca_tipos_*`; tabela futura `raca_tipos`)
 - **sexo** (enum: `Macho`, `Fêmea`)
 - **peso** (decimal, kg, NULL — opcional; se informado, > 0)
 - **comportamento** (text)

@@ -36,7 +36,7 @@
 - **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
 - **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
 - **Implantação (método do dono)**: sem rota de setup — admin cadastra CPF+e-mail do responsável; 1º acesso exige troca de senha para todos os perfis (admin/vet/func) via `mustChange`.
-- **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico/consultas + `vacina_tipos_listar`), `funcionario` (só-leitura em agendamentos + `tutor/pet incluir` + `clinica_imprimir` + CRUD de tipos de vacina `vacina_tipos_*`). O cargo `gestor` foi **removido**.
+- **Cargos**: `admin` (acesso total + paridade: alcança tudo que o funcionário pode, ex. tipos de vacina/raça), `veterinario` (módulo clínico/consultas + `vacina_tipos_listar`/`raca_tipos_listar`), `funcionario` (só-leitura em agendamentos + `tutor/pet incluir` + `clinica_imprimir` + CRUD de tipos de vacina `vacina_tipos_*` e de raça `raca_tipos_*`). O cargo `gestor` foi **removido**.
 - Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
 - **TODO [INTEGRAÇÃO SUPABASE]** (SQL via Supabase, projeto ainda não criado): tabela `users` com `role` vinculado ao CPF/email, Auth Supabase + RLS, `POST /api/login`, `GET /api/me` (ou `supabase.auth.signInWithPassword` + `supabase.from('users')`).
 
@@ -65,7 +65,9 @@
 | Config Tailwind (cores `brand-*`) | `<head>` | brand-dark #03001e · brand-lime #ccff00 · brand-pink #ff007f · brand-blue #0066ff · brand-purple #8b00ff · brand-yellow #ffcc00 |
 | Script inline do tema | ~56-64 | Aplica `data-theme` no `<html>` antes do render (evita flash) |
 | `#login-screen` | ~72 | Tela de login (neon no escuro; clara sem neon no modo claro — Fase 5 + follow-up §2 2026-09-25: card branco, `#login-cabecalho` com gradiente claro explícito e título de alto contraste, paw-print lima fixo `#ccff00` nos 2 temas, contorno `var(--borda)` + sombra); tooltip claro no modo claro |
-| `#modal-tipos-vacina` | clínico | CRUD de tipos de vacina (só funcionário via card `#tipos-vacina-card-func` na `tab-clinica`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (ROADMAP §1 item 7) |
+| `#modal-tipos-vacina` | clínico | CRUD de tipos de vacina (funcionário e admin via card `#tipos-vacina-card-func` na `tab-clinica`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (ROADMAP §1 item 7) |
+| `#racas-card-gerenciar` / `#modal-tipos-raca` | clientes | CRUD de tipos de raça por espécie (funcionário e admin; `#filtro-tipo-raca-especie`, `racasPorEspecie`, RBAC `raca_tipos_*`); selects `#pet-raca`/`#edit-pet-raca` dinâmicos (item 11) |
+| `#periodo-faturamento` | dashboard | Filtro mensal/semanal/anual do gráfico + KPI (`atualizarPeriodoFaturamento`, `DADOS_FATURAMENTO`) |
 | `#anexos-card` / `#lista-anexos` | clínico | Upload de documentos; temas via vars (`styles.css` §7 + §9 explícito) — legível no claro (ROADMAP §1 item 8) |
 | `#painel-vet-hoje` | dashboard | Agenda do dia do veterinário (contadores + lista hora/pet/tutor/serviço/status); `#painel-financeiro` fica oculto p/ vet — ver `atualizarDashboardPorPerfil()` |
 | `#filtro-data-ag` | agendamentos | Select de período (todos/hoje/futuros/passados) → `filtrarAgendamentosData()` |

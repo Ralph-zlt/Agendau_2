@@ -266,7 +266,7 @@
                             <i data-lucide="dollar-sign" class="w-5 h-5 text-brand-lime"></i>
                         </div>
                         <div id="kpi-faturamento" class="text-2xl font-black text-white">R$ 12.850,00</div>
-                        <span class="text-[11px] text-brand-lime font-bold flex items-center gap-1">
+                        <span id="kpi-faturamento-nota" class="text-[11px] text-brand-lime font-bold flex items-center gap-1">
                             <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +18.4% vs mês anterior
                         </span>
                     </div>
@@ -385,6 +385,24 @@
                 <div id="tutores-grid" class="grid grid-cols-1 gap-6">
                     <!-- Preenchido dinamicamente via JS -->
                 </div>
+
+                <!-- Gerenciar tipos de raça (funcionário e admin; vet só lista nos selects) -->
+                <div id="racas-card-gerenciar" class="hidden bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-3">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div>
+                            <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                                <i data-lucide="tags" class="w-4 h-4 text-brand-lime"></i>
+                                <span>Tipos de Raça por Espécie</span>
+                                <span id="tipos-raca-count-card" class="text-[10px] font-bold text-slate-400">0 raças</span>
+                            </h4>
+                            <p class="text-xs text-slate-400 mt-1">Catálogo usado nas listas de raça do cadastro de pets.</p>
+                        </div>
+                        <button id="btn-gerenciar-tipos-raca" onclick="abrirModalTiposRaca()" class="px-4 py-2.5 bg-gradient-to-r from-brand-lime/20 to-brand-lime/40 border border-brand-lime/50 hover:opacity-90 text-xs font-bold text-brand-lime rounded-xl flex items-center gap-2 shrink-0">
+                            <i data-lucide="settings-2" class="w-4 h-4"></i>
+                            <span>Gerenciar tipos de raça</span>
+                        </button>
+                    </div>
+                </div>
             </section>
 
             <!-- TAB 4: MÓDULO CLÍNICO -->
@@ -411,8 +429,8 @@
                     </div>
                 </div>
 
-                <!-- Visão restrita do Módulo Clínico p/ funcionário (ROADMAP §1 item 7):
-                     só gerencia tipos de vacina; vet/admin não veem este card (só listam nos selects). -->
+                <!-- Visão restrita do Módulo Clínico (funcionário e admin):
+                     só gerencia tipos de vacina; vet não vê este card (só lista nos selects). -->
                 <div id="tipos-vacina-card-func" class="hidden bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-3">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div>
@@ -1122,7 +1140,7 @@
                 <h4 id="modal-tipos-vacina-titulo" class="font-black text-white text-base">Gerenciar Tipos de Vacina</h4>
                 <button onclick="fecharModalTiposVacina()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <p class="text-xs text-slate-400">Visão restrita do Módulo clínico: só o funcionário cria/edita/exclui. Vet/admin puxam a lista nos selects.</p>
+            <p class="text-xs text-slate-400">Visão restrita: funcionário e admin criam/editem/excluem. Vet puxa a lista nos selects.</p>
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-400 uppercase">Tipos cadastrados</span>
                 <span id="tipos-vacina-count" class="text-xs text-slate-400 font-bold">0 tipos</span>
@@ -1137,6 +1155,42 @@
                 <div class="flex justify-end gap-2">
                     <button type="button" onclick="fecharModalTiposVacina()" class="px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Fechar</button>
                     <button type="submit" class="px-5 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl">Salvar Tipo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Gerenciar Tipos de Raça (funcionário e admin; vet só lista) -->
+    <div id="modal-tipos-raca" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="bg-slate-950 border border-slate-850 w-full max-w-md p-6 rounded-3xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h4 id="modal-tipos-raca-titulo" class="font-black text-white text-base">Gerenciar Tipos de Raça</h4>
+                <button onclick="fecharModalTiposRaca()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Espécie</label>
+                <select id="filtro-tipo-raca-especie" onchange="filtrarTiposRaca()" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none"></select>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 uppercase">Raças cadastradas</span>
+                <span id="tipos-raca-count" class="text-xs text-slate-400 font-bold">0 raças</span>
+            </div>
+            <div id="lista-tipos-raca" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1"></div>
+            <form onsubmit="salvarTipoRaca(event)" class="space-y-3">
+                <input type="hidden" id="edit-tipo-raca-idx" value="">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Espécie</label>
+                        <select id="select-tipo-raca-especie" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Nome da raça</label>
+                        <input type="text" id="input-tipo-raca-nome" required placeholder="Ex: Poodle" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="fecharModalTiposRaca()" class="px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Fechar</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl">Salvar Raça</button>
                 </div>
             </form>
         </div>

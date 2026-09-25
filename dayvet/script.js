@@ -44,7 +44,10 @@ let pets = [
 //   `raca` (varchar), `sexo` (enum Macho/Fêmea), `peso` (decimal NULL).
 const ESPECIES_PET = ["Canino", "Felino", "Equino", "Bovino", "Suíno", "Ovino", "Outro"];
 const SEXOS_PET = ["Macho", "Fêmea"];
-const RACAS_POR_ESPECIE = {
+// O QUE: Catálogo de raças por espécie — gerenciado por funcionário/admin (como tipos de vacina).
+// PORQUÊ: Raça como lista de seleção no cadastro/edição de pet.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `raca_tipos` (id, especie, nome, ativo).
+let racasPorEspecie = {
     "Canino": ["Labrador Retriever", "Golden Retriever", "Poodle", "Bulldog", "Pastor Alemão", "SRD", "Outra"],
     "Felino": ["Persa", "Siamês", "Maine Coon", "SRD", "Outra"],
     "Equino": ["Quarto de Milha", "Mangalarga", "Árabe", "Puro-Sangue Inglês", "Outra"],
@@ -53,6 +56,8 @@ const RACAS_POR_ESPECIE = {
     "Ovino": ["Santa Inês", "Dorper", "Suffolk", "Outra"],
     "Outro": ["Outra"]
 };
+// Compat: código antigo lia RACAS_POR_ESPECIE fixo — agora é mutável via racasPorEspecie.
+const RACAS_POR_ESPECIE = racasPorEspecie;
 
 let agendamentos = [
     { id: "201", petId: "101", tutorCpf: "111.222.333-44", servico: "Consulta Veterinária", data: "2026-05-18", hora: "09:30", valor: 150.00, status: "confirmado" },
@@ -131,13 +136,14 @@ const PERMISSOES = {
     veterinario: [
         'clinica_criar', 'clinica_editar', 'clinica_excluir', 'clinica_imprimir',
         'consulta_agendar', 'consulta_editar', 'consulta_cancelar', 'consulta_confirmar',
-        'vacina_tipos_listar',
+        'vacina_tipos_listar', 'raca_tipos_listar',
         'relatorios_gerar'
     ],
     funcionario: [
         // ROADMAP §1 item 9: agendamentos só-leitura — sem agendar/editar/cancelar/confirmar.
-        // Mantém ver (implícito) + relatórios, tutor/pet incluir, clinica_imprimir e tipos de vacina.
+        // Mantém ver (implícito) + relatórios, tutor/pet incluir, clinica_imprimir e tipos de vacina/raça.
         'vacina_tipos_criar', 'vacina_tipos_editar', 'vacina_tipos_excluir', 'vacina_tipos_listar',
+        'raca_tipos_criar', 'raca_tipos_editar', 'raca_tipos_excluir', 'raca_tipos_listar',
         'relatorios_gerar', 'tutor_incluir', 'pet_incluir', 'clinica_imprimir'
     ]
 };
@@ -431,8 +437,10 @@ function atualizarPermissoesNavegacao() {
     document.querySelectorAll('.btn-incluir-doc-clinico').forEach(btn => {
         btn.classList.toggle('hidden', !podeCriarClinico);
     });
-    // ROADMAP §1 item 7: visão restrita do "Módulo clínico" p/ funcionário (card próprio na tab-clinica).
-    toggleEl('tipos-vacina-card-func', !podeCriarClinico && temPermissao('vacina_tipos_criar'));
+    // Visões restritas de catálogos: funcionário e admin gerenciam; vet só lista nos selects.
+    // (Admin cobre via '*' — paridade: tudo que o funcionário pode, o admin também pode.)
+    toggleEl('tipos-vacina-card-func', temPermissao('vacina_tipos_criar'));
+    toggleEl('racas-card-gerenciar', temPermissao('raca_tipos_criar'));
     const colunaTimeline = document.getElementById('clinica-timeline-coluna');
     if (colunaTimeline) {
         colunaTimeline.classList.toggle('lg:col-span-2', podeCriarClinico);
@@ -902,7 +910,7 @@ function popularRacasPet(prefixo, selecionada) {
     const selEsp = document.getElementById(prefixo + 'pet-especie');
     const selRaca = document.getElementById(prefixo + 'pet-raca');
     if (!selEsp || !selRaca) return;
-    const racas = RACAS_POR_ESPECIE[selEsp.value] || ["Outra"];
+    const racas = racasPorEspecie[selEsp.value] || ["Outra"];
     selRaca.innerHTML = '';
     racas.forEach(r => {
         selRaca.innerHTML += `<option value="${r}"${r === selecionada ? ' selected' : ''}>${r}</option>`;
@@ -1056,8 +1064,8 @@ function popularVacinaTiposClinica(selecionado) {
     });
 }
 
-// O QUE: CRUD de tipos de vacina — visão restrita ao funcionário (ROADMAP §1 item 7).
-// PORQUÊ: Reaproveita nome/estética do "Módulo clínico"; vet/admin só puxam a lista nos selects.
+// O QUE: CRUD de tipos de vacina — funcionário e admin (vet só puxa a lista nos selects).
+// PORQUÊ: Reaproveita nome/estética do "Módulo clínico" em visão restrita.
 // TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `vacina_tipos` (id, nome, ativo).
 function renderizarTiposVacina() {
     const lista = document.getElementById('lista-tipos-vacina');
@@ -1137,6 +1145,109 @@ function excluirTipoVacina(idx) {
     popularVacinaTiposAg('');
     popularVacinaTiposClinica('');
     showToast("Tipo de vacina excluído!");
+}
+
+// O QUE: CRUD de tipos de raça por espécie — funcionário e admin (como tipos de vacina).
+// PORQUÊ: Raça como lista de seleção precisa de catálogo gerenciável; vet só lista nos selects.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `raca_tipos` (id, especie, nome, ativo).
+function renderizarTiposRaca() {
+    const esp = document.getElementById('filtro-tipo-raca-especie')?.value || ESPECIES_PET[0];
+    const lista = document.getElementById('lista-tipos-raca');
+    if (!lista) return;
+    const racas = racasPorEspecie[esp] || [];
+    document.getElementById('tipos-raca-count').innerText = racas.length + (racas.length === 1 ? " raça" : " raças");
+    const countCard = document.getElementById('tipos-raca-count-card');
+    if (countCard) countCard.innerText = racas.length + (racas.length === 1 ? " raça" : " raças");
+    lista.innerHTML = '';
+    racas.forEach((r, idx) => {
+        lista.innerHTML += `
+            <div class='flex items-center justify-between gap-2 bg-slate-900/80 px-3.5 py-2.5 rounded-xl border border-slate-800'>
+                <span class='text-xs font-bold text-slate-200'>${r}</span>
+                <div class='flex items-center gap-2 shrink-0'>
+                    ${temPermissao('raca_tipos_editar') ? `<button onclick="editarTipoRacaPrompt(${idx})" class='text-[11px] text-brand-blue font-bold hover:underline'>Editar</button>` : ''}
+                    ${temPermissao('raca_tipos_excluir') ? `<button onclick="excluirTipoRaca(${idx})" class='text-[11px] text-rose-400 font-bold hover:underline'>Excluir</button>` : ''}
+                </div>
+            </div>
+        `;
+    });
+    lucide.createIcons();
+}
+
+function abrirModalTiposRaca() {
+    if (!temPermissao('raca_tipos_listar')) {
+        showToast("Acesso restrito: perfil sem permissão para tipos de raça.", "error");
+        return;
+    }
+    const selFiltro = document.getElementById('filtro-tipo-raca-especie');
+    if (selFiltro && !selFiltro.options.length) {
+        ESPECIES_PET.forEach(e => { selFiltro.innerHTML += `<option value="${e}">${e}</option>`; });
+    }
+    const selForm = document.getElementById('select-tipo-raca-especie');
+    if (selForm && !selForm.options.length) {
+        ESPECIES_PET.forEach(e => { selForm.innerHTML += `<option value="${e}">${e}</option>`; });
+    }
+    document.getElementById('edit-tipo-raca-idx').value = '';
+    document.getElementById('input-tipo-raca-nome').value = '';
+    document.getElementById('modal-tipos-raca-titulo').innerText = "Gerenciar Tipos de Raça";
+    renderizarTiposRaca();
+    document.getElementById('modal-tipos-raca').classList.remove('hidden');
+}
+function fecharModalTiposRaca() { document.getElementById('modal-tipos-raca').classList.add('hidden'); }
+
+function filtrarTiposRaca() {
+    const esp = document.getElementById('filtro-tipo-raca-especie').value;
+    document.getElementById('select-tipo-raca-especie').value = esp;
+    renderizarTiposRaca();
+}
+
+function salvarTipoRaca(e) {
+    e.preventDefault();
+    if (!temPermissao('raca_tipos_criar') && !temPermissao('raca_tipos_editar')) {
+        showToast("Acesso restrito: perfil sem permissão para salvar raças.", "error");
+        return;
+    }
+    const esp = document.getElementById('select-tipo-raca-especie').value;
+    const idxRaw = document.getElementById('edit-tipo-raca-idx').value;
+    const nome = (document.getElementById('input-tipo-raca-nome').value || '').trim();
+    if (!nome) { showToast("Informe o nome da raça.", "error"); return; }
+    if (!racasPorEspecie[esp]) racasPorEspecie[esp] = [];
+    if (idxRaw === '') {
+        if (!temPermissao('raca_tipos_criar')) { showToast("Acesso restrito: sem permissão para criar.", "error"); return; }
+        if (racasPorEspecie[esp].some(r => r.toLowerCase() === nome.toLowerCase())) { showToast("Raça já cadastrada.", "error"); return; }
+        racasPorEspecie[esp].push(nome);
+        showToast("Raça cadastrada!");
+    } else {
+        if (!temPermissao('raca_tipos_editar')) { showToast("Acesso restrito: sem permissão para editar.", "error"); return; }
+        const idx = parseInt(idxRaw, 10);
+        if (racasPorEspecie[esp].some((r, i) => i !== idx && r.toLowerCase() === nome.toLowerCase())) { showToast("Raça já cadastrada.", "error"); return; }
+        racasPorEspecie[esp][idx] = nome;
+        showToast("Raça atualizada!");
+    }
+    document.getElementById('edit-tipo-raca-idx').value = '';
+    document.getElementById('input-tipo-raca-nome').value = '';
+    renderizarTiposRaca();
+    popularRacasPet('');
+    popularRacasPet('edit-');
+}
+
+function editarTipoRacaPrompt(idx) {
+    if (!temPermissao('raca_tipos_editar')) { showToast("Acesso restrito.", "error"); return; }
+    const esp = document.getElementById('filtro-tipo-raca-especie').value;
+    document.getElementById('select-tipo-raca-especie').value = esp;
+    document.getElementById('edit-tipo-raca-idx').value = String(idx);
+    document.getElementById('input-tipo-raca-nome').value = (racasPorEspecie[esp] || [])[idx] || '';
+    document.getElementById('modal-tipos-raca-titulo').innerText = "Editar Tipo de Raça";
+    document.getElementById('input-tipo-raca-nome').focus();
+}
+
+function excluirTipoRaca(idx) {
+    if (!temPermissao('raca_tipos_excluir')) { showToast("Acesso restrito.", "error"); return; }
+    const esp = document.getElementById('filtro-tipo-raca-especie').value;
+    (racasPorEspecie[esp] || []).splice(idx, 1);
+    renderizarTiposRaca();
+    popularRacasPet('');
+    popularRacasPet('edit-');
+    showToast("Raça excluída!");
 }
 
 function editarDocumentoClinico(id) {
@@ -1872,13 +1983,15 @@ function inicializarGraficos() {
 
     if (ctx1) {
         if (financeChartRef) financeChartRef.destroy();
+        const periodo = document.getElementById('periodo-faturamento')?.value || 'mensal';
+        const dados = DADOS_FATURAMENTO[periodo] || DADOS_FATURAMENTO.mensal;
         financeChartRef = new Chart(ctx1, {
             type: 'line',
             data: {
-                labels: ['01/Mai', '05/Mai', '10/Mai', '15/Mai', '18/Mai'],
+                labels: dados.labels,
                 datasets: [{
                     label: 'Receita (R$)',
-                    data: [1800, 3200, 5400, 8900, 12850],
+                    data: dados.valores,
                     borderColor: '#0066ff',
                     backgroundColor: 'rgba(0, 102, 255, 0.1)',
                     fill: true,
@@ -1895,7 +2008,42 @@ function inicializarGraficos() {
                 }
             }
         });
+        atualizarKpiFaturamento(periodo);
     }
+}
+
+// O QUE: Datasets ilustrativos do faturamento por período (dashboard).
+// PORQUÊ: O select #periodo-faturamento chamava atualizarPeriodoFaturamento(), que não existia.
+// DEMO (mock): valores ilustrativos; com banco, agregar `agendamentos` por data.
+// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: SELECT date_trunc + sum(valor) FROM agendamentos WHERE status='confirmado'.
+const DADOS_FATURAMENTO = {
+    mensal: { labels: ['01/Mai', '05/Mai', '10/Mai', '15/Mai', '18/Mai'], valores: [1800, 3200, 5400, 8900, 12850], kpi: 'R$ 12.850,00', nota: '+18.4% vs mês anterior' },
+    semanal: { labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], valores: [450, 700, 520, 980, 1200, 1650, 900], kpi: 'R$ 6.400,00', nota: '+9.2% vs semana anterior' },
+    anual: { labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'], valores: [42000, 48500, 51200, 47800, 55900, 60100], kpi: 'R$ 305.500,00', nota: '+12.6% vs semestre anterior' }
+};
+
+function atualizarKpiFaturamento(periodo) {
+    const dados = DADOS_FATURAMENTO[periodo] || DADOS_FATURAMENTO.mensal;
+    const kpi = document.getElementById('kpi-faturamento');
+    if (kpi) kpi.innerText = dados.kpi;
+    const nota = document.getElementById('kpi-faturamento-nota');
+    if (nota) nota.innerHTML = `<i data-lucide='trending-up' class='w-3.5 h-3.5'></i> ${dados.nota}`;
+}
+
+// O QUE: Troca o período do gráfico + KPI de faturamento do dashboard.
+function atualizarPeriodoFaturamento() {
+    const periodo = document.getElementById('periodo-faturamento')?.value || 'mensal';
+    const dados = DADOS_FATURAMENTO[periodo] || DADOS_FATURAMENTO.mensal;
+    if (financeChartRef) {
+        financeChartRef.data.labels = dados.labels;
+        financeChartRef.data.datasets[0].data = dados.valores;
+        financeChartRef.update();
+    } else {
+        inicializarGraficos();
+        return;
+    }
+    atualizarKpiFaturamento(periodo);
+    lucide.createIcons();
 }
 
 // ==========================================================
