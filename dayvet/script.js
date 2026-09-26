@@ -595,16 +595,39 @@ function alternarExpiradosExpandido() {
     renderizarAgendamentos();
 }
 
-// O QUE: Pesquisa Expirados por mês/ano (só leitura — funcionário também pesquisa).
+// O QUE: Pesquisa Expirados por mês/ano via seleção (só leitura — funcionário também pesquisa).
+// PORQUÊ: <input type=month> não abre seleção em todos os navegadores — selects funcionam sempre.
+function inicializarPesquisaMes() {
+    const selM = document.getElementById('pesquisa-mes-sel');
+    const selA = document.getElementById('pesquisa-ano-sel');
+    if (!selM || !selA || selM.options.length) return;
+    MESES_PT.forEach((m, i) => {
+        selM.innerHTML += `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`;
+    });
+    const anoAtual = new Date().getFullYear();
+    for (let a = anoAtual - 3; a <= anoAtual + 1; a++) {
+        selA.innerHTML += `<option value="${a}">${a}</option>`;
+    }
+    selM.value = String(new Date().getMonth() + 1).padStart(2, '0');
+    selA.value = String(anoAtual);
+}
 function pesquisarMesExpirados() {
-    const raw = (document.getElementById('pesquisa-mes-expirados').value || '').slice(0, 7);
-    pesquisaMesExpirados = /^\d{4}-\d{2}$/.test(raw) ? raw : '';
+    const mes = document.getElementById('pesquisa-mes-sel')?.value || '';
+    const ano = document.getElementById('pesquisa-ano-sel')?.value || '';
+    pesquisaMesExpirados = (/^\d{2}$/.test(mes) && /^\d{4}$/.test(ano)) ? `${ano}-${mes}` : '';
     renderizarAgendamentos();
 }
 function limparPesquisaMesExpirados() {
     pesquisaMesExpirados = '';
-    document.getElementById('pesquisa-mes-expirados').value = '';
+    inicializarPesquisaMesReset();
     renderizarAgendamentos();
+}
+function inicializarPesquisaMesReset() {
+    const selM = document.getElementById('pesquisa-mes-sel');
+    const selA = document.getElementById('pesquisa-ano-sel');
+    if (!selM || !selA) return;
+    selM.value = String(new Date().getMonth() + 1).padStart(2, '0');
+    selA.value = String(new Date().getFullYear());
 }
 
 // O QUE: Linha da tabela de agendamentos (usada nas duas seções: Ativos e Expirados).
@@ -2458,6 +2481,7 @@ window.onload = function() {
     inicializarTooltipInfoLogin();
     lucide.createIcons();
     atualizarPermissoesNavegacao();
+    inicializarPesquisaMes();
     renderizarAgendamentos();
     renderizarTutores();
     renderizarHistoricoClinico();
