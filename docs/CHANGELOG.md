@@ -17,6 +17,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Item 18: vacinas admin/vet, funcionário fora do clínico
+**O que:** `vacina_tipos_criar/editar/excluir` p/ veterinário (total em vacinação); funcionário perde `clinica_*` + `vacina_tipos_*` (aba Módulo Clínico oculta + guard em `switchTab`; mantém só-leitura em agendamentos, tutor/pet e raças); card/modal de vacina agora admin+vet.
+**Por quê:** decisão do dono — toda interação com vacina é do admin/veterinário.
+**Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, `podeClinica`, guard `switchTab`), `dayvet/index.html` (textos), `ROADMAP.md` (item 7 superseded + item 18), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (login 3 sem aba Clínica; login 2 gerencia vacinas).
+
+---
+
 ## 2026-09-25 · (teste) — Fix pesquisa: selects mês/ano (sem digitar)
 **O que:** `<input type=month>` trocado por selects `#pesquisa-mes-sel`/`#pesquisa-ano-sel` (populados via `inicializarPesquisaMes`, padrão = mês atual); Buscar filtra, Limpar restaura.
 **Por quê:** follow-up do dono — o campo nativo não abria seleção; pesquisa é só por escolha, nada digitado.

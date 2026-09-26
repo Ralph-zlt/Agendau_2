@@ -499,8 +499,8 @@
                     </div>
                 </div>
 
-                <!-- Visão restrita do Módulo Clínico (funcionário e admin):
-                     só gerencia tipos de vacina; vet não vê este card (só lista nos selects). -->
+                <!-- Visão restrita do Módulo Clínico (admin e veterinário):
+                     só gerencia tipos de vacina. -->
                 <div id="tipos-vacina-card-func" class="hidden bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-3">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div>
@@ -1214,7 +1214,7 @@
                 <h4 id="modal-tipos-vacina-titulo" class="font-black text-white text-base">Gerenciar Tipos de Vacina</h4>
                 <button onclick="fecharModalTiposVacina()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <p class="text-xs text-slate-400">Visão restrita: funcionário e admin criam/editem/excluem. Vet puxa a lista nos selects.</p>
+            <p class="text-xs text-slate-400">Visão restrita: admin e veterinário criam/editem/excluem.</p>
             <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-400 uppercase">Tipos cadastrados</span>
                 <span id="tipos-vacina-count" class="text-xs text-slate-400 font-bold">0 tipos</span>
