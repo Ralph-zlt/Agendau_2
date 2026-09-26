@@ -9,11 +9,10 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
-## 2026-09-25 · (teste) — Follow-up: vet sem ações em vacinação + histórico maior
-**O que:** veterinário ganha `vacinacao_editar/cancelar/confirmar` (linhas de Vacinação mostravam "Sem ações disponíveis"); mocks 207–209 (concluído mês passado, concluído/cancelado em março/2026) p/ popular os grupos por mês.
-**Por quê:** follow-ups do dono (paridade vet em vacinação; exemplo de histórico maior).
-**Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, SEÇÃO 1 mocks), `docs/MAPA_DO_SISTEMA.md`.
-**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (login 2 age em vacinações; grupos mensais).
+## 2026-09-25 · (teste) — Auditoria de contexto p/ outra IA (só docs)
+**O que:** ROADMAP (data, estado branches, itens 8–17 → main, 18 → teste, textos 11/12/17, Baixa baixada); MAPA (revisão, fila, linhas SEÇÃO 2–13, RBAC item 18, vetId/dashboard, remove linhas mortas `painel-vet-hoje`/`filtro-data-ag`, bypass mustChange); AGENTS (RBAC vigente, fallback skill inexistente, `--login-*`); DB (`vacina_tipos`/`raca_tipos` futuras, regra confirmar); CHANGELOG (item 18 no topo).
+**Por quê:** pedido do dono — deixar contexto completo p/ outra IA sem esta sessão.
+**Onde:** `ROADMAP.md`, `AGENTS.md`, `docs/MAPA_DO_SISTEMA.md`, `docs/DB_LEVANTAMENTO.md`, `docs/CHANGELOG.md` (zero código).
 
 ---
 
@@ -22,6 +21,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 **Por quê:** decisão do dono — toda interação com vacina é do admin/veterinário.
 **Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, `podeClinica`, guard `switchTab`), `dayvet/index.html` (textos), `ROADMAP.md` (item 7 superseded + item 18), `docs/MAPA_DO_SISTEMA.md`.
 **Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (login 3 sem aba Clínica; login 2 gerencia vacinas).
+
+---
+
+## 2026-09-25 · (teste) — Follow-up: vet sem ações em vacinação + histórico maior
+**O que:** veterinário ganha `vacinacao_editar/cancelar/confirmar` (linhas de Vacinação mostravam "Sem ações disponíveis"); mocks 207–209 (concluído mês passado, concluído/cancelado em março/2026) p/ popular os grupos por mês.
+**Por quê:** follow-ups do dono (paridade vet em vacinação; exemplo de histórico maior).
+**Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, SEÇÃO 1 mocks), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (login 2 age em vacinações; grupos mensais).
 
 ---
 

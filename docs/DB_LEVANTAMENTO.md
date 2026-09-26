@@ -79,7 +79,7 @@
 - **valor** (decimal)
 - **status** (enum: `pendente`, `confirmado`, `cancelado`, `concluido`)
 
-**Regra de negócio:** Janela 07h–19h; apenas `admin` confirma (RF-05).
+**Regra de negócio:** Janela 07h–19h; confirma/conclui quem tem `*_confirmar` (admin tudo, vet consulta+vacinação); funcionário só-leitura.
 
 ### 1.6 HistoricoClinico (tabela `historico_clinico`)
 - **id** (PK, string/UUID)
@@ -89,6 +89,10 @@
 - **detalhe** (text)
 
 **Regra de negócio:** Registros são **imutáveis** após criação (auditoria).
+
+### 1.6b Catálogos gerenciáveis (tabelas futuras — hoje mocks em memória)
+- **`vacina_tipos`** (`id` PK, `nome` UNIQUE, `ativo` boolean) — CRUD por admin/veterinário (RBAC `vacina_tipos_*`); coluna `vacinaTipo` em `agendamentos` e `historico_clinico` referencia pelo nome (decisão 2026-09-25, item 18: funcionário sem acesso).
+- **`raca_tipos`** (`id` PK, `especie` enum, `nome`, `ativo` boolean) — CRUD por admin/funcionário (RBAC `raca_tipos_*`).
 
 ### 1.7 Receita (subtipo de `historico_clinico`)
 
