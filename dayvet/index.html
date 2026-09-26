@@ -395,12 +395,16 @@
 
                 <!-- Tabela: Expirados (histórico abaixo, agrupado por data) -->
                 <div class="space-y-3">
-                    <div class="flex items-center justify-between px-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2 px-1">
                         <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
                             <i data-lucide="history" class="w-4 h-4 text-slate-400"></i>
                             <span>Expirados — histórico</span>
                         </h4>
-                        <span id="expirados-counter" class="text-xs text-slate-400 font-bold">Exibindo 0 no histórico</span>
+                        <div class="flex items-center gap-2">
+                            <input type="month" id="pesquisa-mes-expirados" onchange="pesquisarMesExpirados()" title="Pesquisar por mês e ano" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-3 py-2 rounded-xl focus:outline-none">
+                            <button id="btn-limpar-pesquisa-mes" onclick="limparPesquisaMesExpirados()" class="hidden px-3 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Limpar</button>
+                            <span id="expirados-counter" class="text-xs text-slate-400 font-bold">Exibindo 0 no histórico</span>
+                        </div>
                     </div>
                     <div class="bg-slate-950 rounded-3xl border border-slate-850 overflow-hidden">
                         <div class="overflow-x-auto">
@@ -420,6 +424,9 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                    <div class="flex justify-center">
+                        <button id="btn-expandir-expirados" onclick="alternarExpiradosExpandido()" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs font-bold text-slate-200 hover:text-white rounded-xl flex items-center gap-2">Carregar mais antigas</button>
                     </div>
                 </div>
             </section>

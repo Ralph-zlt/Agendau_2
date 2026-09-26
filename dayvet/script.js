@@ -127,8 +127,11 @@ let currentUser = { id: "1", nome: "Dr. Douglas Ferreira", role: "admin", profis
 let currentRole = 'admin';
 let configRestricao = "comercial";
 let filtroAgendamentosStatus = "todos";
-// O QUE: Flag de remarcação (volta como pendente).
+// O QUE: Flag de remarcação (volta como pendente) + estado do histórico de Expirados.
+// PORQUÊ: Expirados abre colapsado (só Últimos 7 dias); pesquisa por mês/ano filtra o histórico.
 let remarcandoAgendamento = false;
+let expiradosExpandido = false;
+let pesquisaMesExpirados = '';
 
 let financeChartRef = null;
 let consultasChartRef = null;
@@ -552,7 +555,15 @@ function renderizarAgendamentos() {
     const limite7d = isoDeslocado(-7);
     const mesAtual = hojeISO().slice(0, 7);
     let grupoAtual = '';
-    expirados.forEach(a => {
+    let listaExpirados = expirados;
+    // Pesquisa por mês/ano mostra resultados direto (colapsado ou não).
+    if (pesquisaMesExpirados) {
+        listaExpirados = expirados.filter(a => (a.data || '').slice(0, 7) === pesquisaMesExpirados);
+    } else if (!expiradosExpandido) {
+        // Colapsado: só Últimos 7 dias.
+        listaExpirados = expirados.filter(a => (a.data || '') >= limite7d);
+    }
+    listaExpirados.forEach(a => {
         const grupo = grupoExpirado(a.data, limite7d, mesAtual);
         if (grupo !== grupoAtual) {
             grupoAtual = grupo;
@@ -562,8 +573,37 @@ function renderizarAgendamentos() {
     });
 
     document.getElementById('agendamento-counter').innerText = "Exibindo " + ativos.length + " compromissos";
-    document.getElementById('expirados-counter').innerText = "Exibindo " + expirados.length + " no histórico";
+    const totalExp = expirados.length;
+    document.getElementById('expirados-counter').innerText = pesquisaMesExpirados
+        ? `Exibindo ${listaExpirados.length} de ${totalExp} (${pesquisaMesExpirados.slice(5, 7)}/${pesquisaMesExpirados.slice(0, 4)})`
+        : (!expiradosExpandido && totalExp > listaExpirados.length
+            ? `Últimos 7 dias (${listaExpirados.length} de ${totalExp}) — carregue mais antigas`
+            : `Exibindo ${listaExpirados.length} no histórico`);
+    const btnExp = document.getElementById('btn-expandir-expirados');
+    if (btnExp) {
+        btnExp.classList.toggle('hidden', !!pesquisaMesExpirados);
+        btnExp.innerHTML = expiradosExpandido ? 'Mostrar menos' : 'Carregar mais antigas';
+    }
+    const btnLimpar = document.getElementById('btn-limpar-pesquisa-mes');
+    if (btnLimpar) btnLimpar.classList.toggle('hidden', !pesquisaMesExpirados);
     lucide.createIcons();
+}
+
+// O QUE: Expande/recolhe o histórico de Expirados.
+function alternarExpiradosExpandido() {
+    expiradosExpandido = !expiradosExpandido;
+    renderizarAgendamentos();
+}
+
+// O QUE: Pesquisa Expirados por mês/ano (só leitura — funcionário também pesquisa).
+function pesquisarMesExpirados() {
+    pesquisaMesExpirados = document.getElementById('pesquisa-mes-expirados').value || '';
+    renderizarAgendamentos();
+}
+function limparPesquisaMesExpirados() {
+    pesquisaMesExpirados = '';
+    document.getElementById('pesquisa-mes-expirados').value = '';
+    renderizarAgendamentos();
 }
 
 // O QUE: Linha da tabela de agendamentos (usada nas duas seções: Ativos e Expirados).

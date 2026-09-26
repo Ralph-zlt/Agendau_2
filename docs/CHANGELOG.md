@@ -17,6 +17,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-09-25 · (teste) — Item 17: Expirados colapsado + pesquisa mês/ano
+**O que:** histórico abre só com Últimos 7 dias + "Carregar mais antigas" (expande este mês/meses, vira "Mostrar menos"); `<input type="month">` filtra por `AAAA-MM` com botão Limpar; counter contextual; funcionário pesquisa sem ações (só leitura).
+**Por quê:** pedido do dono (colapsado progressivo + pesquisa, todos os perfis).
+**Onde:** `dayvet/script.js` (SEÇÃO 6 estado+filtros), `dayvet/index.html` (input, botões), `ROADMAP.md` (item 17), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (colapsado, expandir, pesquisar 2026-08/2026-03, login 3, 2 temas).
+
+---
+
 ## 2026-09-25 · (teste) — Item 16: dashboard do vet sem financeiro
 **O que:** `vetId` nos agendamentos (mocks → u2; novo registro grava `currentUser.id`); `atualizarDashboardPorPerfil()` — vet não vê Faturamento/Receita, vê Próxima Consulta (`renderizarProximaConsulta`, filtro vetId, empty state) + barras/hora consultas × vacinações de hoje (`inicializarConsultasChart`); admin intacto.
 **Por quê:** pedido do dono — dashboard operacional p/ veterinário.
