@@ -597,7 +597,8 @@ function alternarExpiradosExpandido() {
 
 // O QUE: Pesquisa Expirados por mês/ano (só leitura — funcionário também pesquisa).
 function pesquisarMesExpirados() {
-    pesquisaMesExpirados = document.getElementById('pesquisa-mes-expirados').value || '';
+    const raw = (document.getElementById('pesquisa-mes-expirados').value || '').slice(0, 7);
+    pesquisaMesExpirados = /^\d{4}-\d{2}$/.test(raw) ? raw : '';
     renderizarAgendamentos();
 }
 function limparPesquisaMesExpirados() {
