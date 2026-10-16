@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-10-16 · (teste) — Título dinâmico do modal de agendamento
+**O que:** `Solicitar Vacinação` abre o modal como "Agendar Vacinação"; `Agendar Consulta` mantém "Agendar Consulta"; `marcarNovaConsulta` herda o título do serviço de origem; edição/remarcação inalteradas.
+**Por quê:** pedido do dono — ambos os botões abriam com o mesmo título "Agendar Consulta".
+**Onde:** `dayvet/script.js` (`abrirModalSolicitarAgendamento`, `marcarNovaConsulta`).
+**Validações:** node --check OK; IDs/handlers OK; chaves balanceadas; lógica /vacin/i testada (Vacinação→Vacinação, Consulta→Consulta).
+
+---
+
 ## 2026-09-25 · (teste) — Auditoria de contexto p/ outra IA (só docs)
 **O que:** ROADMAP (data, estado branches, itens 8–17 → main, 18 → teste, textos 11/12/17, Baixa baixada); MAPA (revisão, fila, linhas SEÇÃO 2–13, RBAC item 18, vetId/dashboard, remove linhas mortas `painel-vet-hoje`/`filtro-data-ag`, bypass mustChange); AGENTS (RBAC vigente, fallback skill inexistente, `--login-*`); DB (`vacina_tipos`/`raca_tipos` futuras, regra confirmar); CHANGELOG (item 18 no topo).
 **Por quê:** pedido do dono — deixar contexto completo p/ outra IA sem esta sessão.

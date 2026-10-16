@@ -722,7 +722,8 @@ function marcarNovaConsulta(id) {
         return;
     }
     abrirModalAgendamento();
-    document.getElementById('modal-agendamento-titulo').innerText = "Agendar Consulta";
+    // Título acompanha o serviço de origem: vacinação → "Agendar Vacinação".
+    document.getElementById('modal-agendamento-titulo').innerText = /vacin/i.test(ag.servico || '') ? "Agendar Vacinação" : "Agendar Consulta";
     document.getElementById('agend-tutor-select').value = ag.tutorCpf;
     popularPetsDoTutor();
     document.getElementById('agend-pet-select').value = ag.petId;
@@ -741,6 +742,8 @@ function abrirModalSolicitarAgendamento(tipoServico) {
         return;
     }
     abrirModalAgendamento();
+    // Título dinâmico: vacinação abre como "Agendar Vacinação", não "Agendar Consulta".
+    document.getElementById('modal-agendamento-titulo').innerText = "Agendar Vacinação";
     document.getElementById('agend-tipo').value = tipoServico;
     atualizarVisibilidadeVacinaAg();
 }
