@@ -1,7 +1,8 @@
 # MAPA DO SISTEMA — DayVet-Gestão
 
 > Referência para IAs e colaboradores editarem o código com contexto.
-> Última revisão: 22/09/2026 · Base: ROADMAP enxuto (próximos passos; RF-08 ilustrativo)
+> Última revisão: 25/09/2026 · Base: `main`=`fe9ba87` (itens 1–6, 8–17) + `teste`=`44326bc` (item 18, a mergear).
+> Estado: item 18 (vacinas admin/vet) SÓ na `teste` — `main` ainda tem vacina=funcionário. Ver `ROADMAP.md` §1.
 > Atenção: números de linha são referências — confirme antes de editar.
 
 ## 0. Links e deploy (espelho fixo da main)
@@ -9,7 +10,7 @@
 - **Produção (espelho fixo da `main`): https://ralph-zlt.github.io/Agendau_2/dayvet/**
 - Workflow `.github/workflows/deploy-pages.yml` dispara **somente em `push` na `main`**; publica `site/index.html` → `dist/index.html` + `dayvet/*` → `dist/dayvet/`.
 - **Nunca publicar a branch `teste` neste link.** Teste roda local (`dayvet/index.html`); merge na `main` só após validação do dono.
-- Fila de trabalho: `ROADMAP.md` §1 (login autocomplete, clínico por CPF, upload, tipo de vacina, impressão/PDF + RF-08 ilustrativo — implementar na `teste`).
+- Fila de trabalho: `ROADMAP.md` §1 — itens 1–6, 8–17 na `main`; item 18 (vacinas admin/vet, funcionário fora do clínico) na `teste`, a validar/mergear.
 
 ## 1. Visão geral
 - SPA (single-page application) de agenda para **pet shop / clínica veterinária**.
@@ -31,12 +32,12 @@
 > ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
 
 - **Login por CPF ou e-mail + senha** — campo aceita ambos; erro sempre genérico "Credenciais inválidas" (não revela existência de conta).
-- **Usuários de teste**: CPF `1`/senha `1` = Admin · CPF `2`/senha `2` = Veterinário (mustChange=true) · CPF `3`/senha `3` = Funcionário (mustChange=true).
+- **Usuários de teste**: CPF `1`/senha `1` = Admin · CPF `2`/senha `2` = Veterinário · CPF `3`/senha `3` = Funcionário. Bypass ativo (prototipação): `mustChange:false` p/ 1/2/3 — ver alerta em `AGENTS.md`; em produção `mustChange=true`.
 - **Primeiro acesso (mustChange=true)**: usuários 2 e 3 são obrigados a trocar a senha antes de entrar. Política: 8+ chars, 1 maiúscula, 1 número, 1 especial. Indicadores visuais em tempo real. Mock: flag reseta ao recarregar (sem banco).
 - **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
 - **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
 - **Implantação (método do dono)**: sem rota de setup — admin cadastra CPF+e-mail do responsável; 1º acesso exige troca de senha para todos os perfis (admin/vet/func) via `mustChange`.
-- **Cargos**: `admin` (acesso total + paridade: alcança tudo que o funcionário pode, ex. tipos de vacina/raça), `veterinario` (módulo clínico/consultas + vacinação completa `vacinacao_agendar/editar/cancelar/confirmar` + `vacina_tipos_listar`/`raca_tipos_listar` + quick-add opcional de tipo "Outro" no agendamento), `funcionario` (só-leitura em agendamentos + `tutor/pet incluir` + `clinica_imprimir` + CRUD de tipos de vacina `vacina_tipos_*` e de raça `raca_tipos_*`). O cargo `gestor` foi **removido**.
+- **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico + vacinação total `vacinacao_*` + CRUD tipos de vacina `vacina_tipos_*` + quick-add "Outro"), `funcionario` (SEM modo clínico: agendamentos só-leitura + `tutor/pet incluir` + CRUD tipos de raça `raca_tipos_*`). O cargo `gestor` foi **removido**.
 - Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
 - **TODO [INTEGRAÇÃO SUPABASE]** (SQL via Supabase, projeto ainda não criado): tabela `users` com `role` vinculado ao CPF/email, Auth Supabase + RLS, `POST /api/login`, `GET /api/me` (ou `supabase.auth.signInWithPassword` + `supabase.from('users')`).
 
@@ -44,19 +45,19 @@
 
 | Seção | Linha | Conteúdo |
 |---|---|---|
-| 1 · DADOS MOCK | ~11 | Arrays simulando banco (agendamentos, pets, tutores, usuariosMock) |
-| 2 · MATRIZ DE PERMISSÕES (RBAC) | ~64 | `PERMISSOES` por perfil |
-| 3 · AUTENTICAÇÃO E LOGIN | ~99 | Login por CPF, sessão mock (`currentUser`/`currentRole`), logout |
-| 4 · TOASTS | ~166 | Notificações `showToast` |
-| 5 · NAVEGAÇÃO E TABS | ~194 | `switchTab`, guards RBAC, `atualizarPermissoesNavegacao` |
-| 6 · AGENDAMENTOS | ~304 | CRUD/status + `vetId` (dono do atendimento); seções empilhadas Ativos (crescente) + Expirados (`#expirados-table-body`, decrescente, grupos "Últimos 7 dias"/"Este mês"/por mês via `grupoExpirado`); Expirados colapsado (`expiradosExpandido`, `#btn-expandir-expirados`) + pesquisa por selects mês/ano (`#pesquisa-mes-sel`, `#pesquisa-ano-sel`, só leitura p/ todos); mocks com datas relativas (`isoDeslocado`); Concluir, Remarcar (volta pendente), Nova consulta (de concluído), Editar troca data/hora; janela 07h–19h (RF-05); funcionário só-leitura |
-| 7 · TUTORES & PETS | ~485 | CRUD de tutores e pets, dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`); pet com espécie/raça/sexo em selects (`ESPECIES_PET`, `RACAS_POR_ESPECIE` + `popularRacasPet`, `SEXOS_PET`) + peso kg opcional |
-| 8 · MÓDULO CLÍNICO | ~643 | Histórico clínico: guia/receita/vacina + impressão (**laudo FORA DE ESCOPO** — decisão clínica 2026-09-17); CRUD de tipos de vacina do funcionário (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo (CRMV do logado com fallback mock) |
-| 9 · RELATÓRIOS | ~778 | Relatórios de serviços, tutor e período |
-| 10 · USUÁRIOS & PERMISSÕES | ~975 | Gestão de logins mock (CRUD simulado) |
-| 11 · GRÁFICOS (Chart.js) | ~1066 | `financeChart` (gráfico de receita) |
-| 12 · TEMA CLARO/ESCURO | ~1101 | `aplicarTema`, `temaSistema`, `inicializarTema`, `alternarTema`, `atualizarIconeTema` |
-| 13 · INICIALIZAÇÃO | ~1148 | `window.onload` (chama renders + `inicializarTema`) |
+| 1 · DADOS MOCK | ~41 | Arrays simulando banco (agendamentos com `vetId` + datas relativas `isoDeslocado`, pets com espécie/raça/sexo/peso, tutores, `tiposVacina[]`, `racasPorEspecie`, `usuariosMock`) |
+| 2 · MATRIZ DE PERMISSÕES (RBAC) | ~140 | `PERMISSOES` por perfil (ver §3: funcionário SEM clínico; vet com vacinação total) |
+| 3 · AUTENTICAÇÃO E LOGIN | ~178 | Login por CPF/e-mail, sessão mock (`currentUser`/`currentRole`), logout |
+| 4 · TOASTS | ~380 | Notificações `showToast` |
+| 5 · NAVEGAÇÃO E TABS | ~423 | `switchTab` (guards RBAC, incl. clínica↔funcionário), `atualizarPermissoesNavegacao`, `atualizarDashboardPorPerfil` |
+| 6 · AGENDAMENTOS | ~541 | CRUD/status + `vetId` (dono do atendimento); seções empilhadas Ativos (crescente) + Expirados (`#expirados-table-body`, decrescente, grupos "Últimos 7 dias"/"Este mês"/por mês via `grupoExpirado`); Expirados colapsado (`expiradosExpandido`, `#btn-expandir-expirados`) + pesquisa por selects mês/ano (`#pesquisa-mes-sel`, `#pesquisa-ano-sel`, só leitura p/ todos); mocks com datas relativas (`isoDeslocado`); Concluir, Remarcar (volta pendente), Nova consulta (de concluído), Editar troca data/hora; janela 07h–19h (RF-05); funcionário só-leitura |
+| 7 · TUTORES & PETS | ~991 | CRUD de tutores e pets, dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`); pet com espécie/raça/sexo em selects (`ESPECIES_PET`, `RACAS_POR_ESPECIE` + `popularRacasPet`, `SEXOS_PET`) + peso kg opcional; card `#racas-card-gerenciar` + `#modal-tipos-raca` |
+| 8 · MÓDULO CLÍNICO | ~1219 | Histórico clínico: guia/receita/vacina + impressão (**laudo FORA DE ESCOPO** — decisão clínica 2026-09-17); CRUD de tipos de vacina admin/vet (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`, item 18); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo (CRMV do logado com fallback mock) |
+| 9 · RELATÓRIOS | ~1672 | Relatórios de serviços, tutor e período |
+| 10 · USUÁRIOS & PERMISSÕES | ~1870 | Gestão de logins mock (CRUD simulado) |
+| 11 · GRÁFICOS (Chart.js) | ~2232 | `financeChart` (receita, admin) + `consultasChart` (barras/hora hoje do vet) + `DADOS_FATURAMENTO`/`atualizarPeriodoFaturamento` |
+| 12 · TEMA CLARO/ESCURO | ~2396 | `aplicarTema`, `temaSistema`, `inicializarTema`, `alternarTema`, `atualizarIconeTema` |
+| 13 · INICIALIZAÇÃO | ~2480 | `window.onload` (tema, tooltip, permissões, renders, `inicializarPesquisaMes`, gráficos) |
 
 ## 5. Pontos-chave em index.html
 
@@ -65,13 +66,12 @@
 | Config Tailwind (cores `brand-*`) | `<head>` | brand-dark #03001e · brand-lime #ccff00 · brand-pink #ff007f · brand-blue #0066ff · brand-purple #8b00ff · brand-yellow #ffcc00 |
 | Script inline do tema | ~56-64 | Aplica `data-theme` no `<html>` antes do render (evita flash) |
 | `#login-screen` | ~72 | Tela de login (neon no escuro; clara sem neon no modo claro — Fase 5 + follow-up §2 2026-09-25: card branco, `#login-cabecalho` com gradiente claro explícito e título de alto contraste, paw-print lima fixo `#ccff00` nos 2 temas, contorno `var(--borda)` + sombra); tooltip claro no modo claro |
-| `#modal-tipos-vacina` | clínico | CRUD de tipos de vacina (funcionário e admin via card `#tipos-vacina-card-func` na `tab-clinica`); form com modo Adicionar vs Salvar alterações (`modoFormTipoVacina`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (ROADMAP §1 item 7) |
-| `#racas-card-gerenciar` / `#modal-tipos-raca` | clientes | CRUD de tipos de raça por espécie (funcionário e admin; `#filtro-tipo-raca-especie`, `racasPorEspecie`, RBAC `raca_tipos_*`, modo Adicionar vs Salvar alterações); selects `#pet-raca`/`#edit-pet-raca` dinâmicos (item 11) |
+| `#modal-tipos-vacina` | clínico (admin/vet) | CRUD de tipos de vacina via card `#tipos-vacina-card-func` na `tab-clinica`; form com modo Adicionar vs Salvar alterações (`modoFormTipoVacina`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (itens 7/18: funcionário sem acesso) |
+| `#racas-card-gerenciar` / `#modal-tipos-raca` | clientes (admin/func) | CRUD de tipos de raça por espécie (`racasPorEspecie`, RBAC `raca_tipos_*`, modo Adicionar vs Salvar alterações); selects `#pet-raca`/`#edit-pet-raca` dinâmicos (item 11) |
 | `#periodo-faturamento` | dashboard | Filtro mensal/semanal/anual do gráfico + KPI (`atualizarPeriodoFaturamento`, `DADOS_FATURAMENTO`; oculto p/ vet) |
 | `#bloco-vet` | dashboard | Só veterinário: Próxima Consulta (`renderizarProximaConsulta`, filtro `vetId`) + `#consultasChart` (barras/hora hoje); financeiro oculto (`atualizarDashboardPorPerfil`, item 16) |
 | `#anexos-card` / `#lista-anexos` | clínico | Upload de documentos; temas via vars (`styles.css` §7 + §9 explícito) — legível no claro (ROADMAP §1 item 8) |
-| `#painel-vet-hoje` | dashboard | Agenda do dia do veterinário (contadores + lista hora/pet/tutor/serviço/status); `#painel-financeiro` fica oculto p/ vet — ver `atualizarDashboardPorPerfil()` |
-| `#filtro-data-ag` | agendamentos | Select de período (todos/hoje/futuros/passados) → `filtrarAgendamentosData()` |
+| `#doc-print-card` | impressão | Preview acompanha o tema na tela (escuro no modo escuro, §9.2); no papel sai branco (`@media print` §5) |
 | `#btn-tema-login` | ~75 | Botão sol/lua no canto sup-dir do header do login (z-[61]) — alterna tema antes do login |
 | `#btn-info-login` / `#tooltip-info-login` | login | Botão info roxo-claro + tooltip customizado instantâneo (sem `title=`); texto explica bypass (clicar na barra de CPF/e-mail); toque/Esc via `inicializarTooltipInfoLogin()` (ROADMAP §1 item 6) |
 | `#btn-esqueci-senha` | ~120 | Fora do `<form>` (evita bloqueio por campos required); hover roxo via `setProperty` |

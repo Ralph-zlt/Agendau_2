@@ -157,15 +157,15 @@ const PERMISSOES = {
         'clinica_criar', 'clinica_editar', 'clinica_excluir', 'clinica_imprimir',
         'consulta_agendar', 'consulta_editar', 'consulta_cancelar', 'consulta_confirmar',
         'vacinacao_agendar', 'vacinacao_editar', 'vacinacao_cancelar', 'vacinacao_confirmar',
-        'vacina_tipos_listar', 'raca_tipos_listar',
+        'vacina_tipos_criar', 'vacina_tipos_editar', 'vacina_tipos_excluir', 'vacina_tipos_listar',
+        'raca_tipos_listar',
         'relatorios_gerar'
     ],
     funcionario: [
-        // ROADMAP §1 item 9: agendamentos só-leitura — sem agendar/editar/cancelar/confirmar.
-        // Mantém ver (implícito) + relatórios, tutor/pet incluir, clinica_imprimir e tipos de vacina/raça.
-        'vacina_tipos_criar', 'vacina_tipos_editar', 'vacina_tipos_excluir', 'vacina_tipos_listar',
+        // Sem modo clínico (decisão 2026-09-25): sem clinica_* e sem vacina_tipos_*.
+        // Agendamentos só-leitura; mantém ver + relatórios, tutor/pet incluir e tipos de raça.
         'raca_tipos_criar', 'raca_tipos_editar', 'raca_tipos_excluir', 'raca_tipos_listar',
-        'relatorios_gerar', 'tutor_incluir', 'pet_incluir', 'clinica_imprimir'
+        'relatorios_gerar', 'tutor_incluir', 'pet_incluir'
     ]
 };
 
@@ -427,7 +427,7 @@ function atualizarPermissoesNavegacao() {
     // Admin assume todas as funções que eram do gestor (acesso irrestrito via '*')
     const podeUsuarios = (currentRole === 'admin');
     const podeRelatorios = (currentRole === 'admin');
-    const podeClinica = true; // Todos os perfis podem acessar o Módulo Clínico
+    const podeClinica = (currentRole === 'admin' || currentRole === 'veterinario'); // Funcionário sem modo clínico (decisão 2026-09-25)
     const podeClientes = (currentRole === 'admin' || currentRole === 'funcionario');
     const podeDashboard = (currentRole === 'admin' || currentRole === 'veterinario');
 
@@ -444,8 +444,8 @@ function atualizarPermissoesNavegacao() {
     // Dashboard: Gerar Relatórios (Veterinário, Funcionário, Admin)
     toggleEl('btn-gerar-relatorios-dashboard', temPermissao('relatorios_gerar'));
 
-    // Agendamentos: "Solicitar Vacinação" é exclusivo do Administrador; "Agendar" exige consulta_agendar
-    toggleEl('btn-solicitar-vacinacao', currentRole === 'admin');
+    // Agendamentos: "Agendar Vacinação" p/ quem tem vacinacao_agendar (admin via '*', veterinário); "Agendar" exige consulta_agendar
+    toggleEl('btn-solicitar-vacinacao', temPermissao('vacinacao_agendar'));
     toggleEl('btn-agendar-consulta', temPermissao('consulta_agendar'));
 
     // Tutores & Pets: Novo Tutor (Funcionário/Admin) e Novo Pet (só Admin)
@@ -458,8 +458,8 @@ function atualizarPermissoesNavegacao() {
     document.querySelectorAll('.btn-incluir-doc-clinico').forEach(btn => {
         btn.classList.toggle('hidden', !podeCriarClinico);
     });
-    // Visões restritas de catálogos: funcionário e admin gerenciam; vet só lista nos selects.
-    // (Admin cobre via '*' — paridade: tudo que o funcionário pode, o admin também pode.)
+    // Visões restritas de catálogos: tipos de vacina = admin/vet; tipos de raça = admin/funcionário.
+    // (Admin cobre via '*' — paridade: tudo que os demais podem, o admin também pode.)
     toggleEl('tipos-vacina-card-func', temPermissao('vacina_tipos_criar'));
     toggleEl('racas-card-gerenciar', temPermissao('raca_tipos_criar'));
     const colunaTimeline = document.getElementById('clinica-timeline-coluna');
@@ -486,6 +486,10 @@ function switchTab(tabId) {
     }
     if (tabId === 'clientes' && currentRole === 'veterinario') {
         showToast("Acesso restrito: perfil sem permissão para Tutores & Pets.", "error");
+        return;
+    }
+    if (tabId === 'clinica' && currentRole === 'funcionario') {
+        showToast("Acesso restrito: perfil sem permissão para o Módulo Clínico.", "error");
         return;
     }
     if (tabId === 'dashboard' && currentRole === 'funcionario') {
@@ -718,7 +722,8 @@ function marcarNovaConsulta(id) {
         return;
     }
     abrirModalAgendamento();
-    document.getElementById('modal-agendamento-titulo').innerText = "Agendar Consulta";
+    // Título acompanha o serviço de origem: vacinação → "Agendar Vacinação".
+    document.getElementById('modal-agendamento-titulo').innerText = /vacin/i.test(ag.servico || '') ? "Agendar Vacinação" : "Agendar Consulta";
     document.getElementById('agend-tutor-select').value = ag.tutorCpf;
     popularPetsDoTutor();
     document.getElementById('agend-pet-select').value = ag.petId;
@@ -737,6 +742,8 @@ function abrirModalSolicitarAgendamento(tipoServico) {
         return;
     }
     abrirModalAgendamento();
+    // Título dinâmico: vacinação abre como "Agendar Vacinação", não "Agendar Consulta".
+    document.getElementById('modal-agendamento-titulo').innerText = "Agendar Vacinação";
     document.getElementById('agend-tipo').value = tipoServico;
     atualizarVisibilidadeVacinaAg();
 }
@@ -939,8 +946,8 @@ function salvarAgendamento(e) {
         showToast("Informe o tipo de vacinação.", "error");
         return;
     }
-    // Quick-add: se tipo "Outro" + novo nome informado, adiciona ao catálogo (vet escolhe; vazio mantém "Outro").
-    // Catálogo segue do funcionário/admin; vet só usa esse atalho opcional no agendamento.
+    // Quick-add: se tipo "Outro" + novo nome informado, adiciona ao catálogo (atalho opcional — vazio mantém "Outro").
+    // Catálogo de vacinas é do admin/vet; o de raças, do admin/funcionário.
     // TODO [INTEGRAÇÃO SUPABASE]: INSERT em `vacina_tipos` com auditoria de quem sugeriu.
     if (ehVacinacao && vacinaTipo === 'Outro') {
         const novo = (document.getElementById('agend-vacina-novo-nome').value || '').trim();
@@ -1288,8 +1295,8 @@ function popularVacinaTiposClinica(selecionado) {
     });
 }
 
-// O QUE: CRUD de tipos de vacina — funcionário e admin (vet só puxa a lista nos selects).
-// PORQUÊ: Reaproveita nome/estética do "Módulo clínico" em visão restrita.
+// O QUE: CRUD de tipos de vacina — admin e veterinário.
+// PORQUÊ: Reaproveita nome/estética do "Módulo clínico" em visão restrita (funcionário sem acesso).
 // TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `vacina_tipos` (id, nome, ativo).
 function renderizarTiposVacina() {
     const lista = document.getElementById('lista-tipos-vacina');

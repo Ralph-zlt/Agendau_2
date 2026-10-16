@@ -36,10 +36,16 @@ ou da professora têm prioridade sobre convenções genéricas.
 ## Stack
 - HTML/CSS/JS puros + CDNs externas: Tailwind CSS, Lucide (ícones), Chart.js (gráficos), Google Fonts. Sem build e sem servidor; backend futuro: SQL via Supabase (planejado, não criado).
 
+## RBAC vigente (resumo — detalhe em `docs/MAPA_DO_SISTEMA.md` §3 e `script.js` SEÇÃO 2)
+- `admin` = `*` (tudo, incl. tipos de vacina/raça). `veterinario` = clínico + vacinação total + CRUD tipos de vacina + dashboard sem financeiro. `funcionario` = SEM modo clínico (sem `clinica_*`/`vacina_tipos_*`); agendamentos só-leitura + tutor/pet + tipos de raça. Item 18 (só na `teste`, a mergear) consolidou isso — `main` ainda tem vacina=funcionário.
+
 ## Validação de mudanças
 
 **Antes de qualquer commit ou entrega, execute a skill de testes automatizados:**
 → `../.github/skills/testar-frontend/SKILL.md`
+
+> ⚠️ A skill **não existe** neste repo (referência pendente). Fallback vigente (usado nos commits da `teste`): python sem browser —
+> 1. IDs de `getElementById()` existem no HTML; 2. handlers `onclick/onsubmit/onchange` definidos no JS; 3. `{}/()/[]` balanceados; 4. modais sobre login em `z-[60]`; + `node --check` quando houver node. Manual no navegador sempre (logins 1/2/3, temas).
 
 A skill cobre 4 verificações obrigatórias via `node` (sem browser):
 1. `node --check dayvet/script.js` — sintaxe JS sem erros.
@@ -54,7 +60,7 @@ Adicionalmente, teste no navegador abrindo `dayvet/index.html`:
 
 ## Cores / Temas
 - **Método padrão com variáveis CSS**: para mudar a cor de um tema, edite **apenas os valores das variáveis** no bloco `:root[data-theme='light'] { ... }` (seção **"7. TEMA CLARO"**) ou `:root[data-theme='dark'] { ... }` (seção "6. TEMA ESCURO") de `dayvet/styles.css`. Cada variável tem comentário em pt-BR (fundos, textos, bordas, marca, status). Não é preciso mexer nas regras de aplicação — elas apenas espelham as variáveis nas classes Tailwind.
-- **Tela de login**: desde a Fase 5 (branch `teste`) o login **segue o tema ativo** — claro = card branco sem neon; escuro = neon original. As antigas variáveis `--login-*` foram removidas.
+- **Tela de login**: segue o tema ativo — claro = card branco sem neon (`#login-cabecalho` com gradiente claro explícito); escuro = neon original. Ícone paw-print em lima `#ccff00` fixo nos 2 temas. (As vars `--login-*` ainda existem em `styles.css` mas sem uso ativo — candidatas a remoção futura.)
 - **Pendente:** ainda falta refinar a escolha de cores da paleta do modo claro (nomes das variáveis estão em `styles.css` seção 7 e no `docs/MAPA_DO_SISTEMA.md` §6).
 
 ## A cada commit (manutenção do doc)

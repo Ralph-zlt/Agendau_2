@@ -9,6 +9,37 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-10-16 · (teste) — Botão "Agendar Vacinação" p/ admin + veterinário
+**O que:** rótulo `Solicitar Vacinação` → "Agendar Vacinação" (id/onclick mantidos); visibilidade `currentRole === 'admin'` → `temPermissao('vacinacao_agendar')`, liberando o botão ao veterinário; funcionário segue sem ver (só-leitura).
+**Por quê:** pedido do dono — padronizar nome com o título do modal e dar a opção ao veterinário.
+**Onde:** `dayvet/index.html` (`btn-solicitar-vacinacao`), `dayvet/script.js` (regra de visibilidade + comentário).
+**Validações:** node --check OK; IDs/handlers OK; manual pendente (login 1 e 2 veem o botão, login 3 não).
+
+---
+
+## 2026-10-16 · (teste) — Título dinâmico do modal de agendamento
+**O que:** `Solicitar Vacinação` abre o modal como "Agendar Vacinação"; `Agendar Consulta` mantém "Agendar Consulta"; `marcarNovaConsulta` herda o título do serviço de origem; edição/remarcação inalteradas.
+**Por quê:** pedido do dono — ambos os botões abriam com o mesmo título "Agendar Consulta".
+**Onde:** `dayvet/script.js` (`abrirModalSolicitarAgendamento`, `marcarNovaConsulta`).
+**Validações:** node --check OK; IDs/handlers OK; chaves balanceadas; lógica /vacin/i testada (Vacinação→Vacinação, Consulta→Consulta).
+
+---
+
+## 2026-09-25 · (teste) — Auditoria de contexto p/ outra IA (só docs)
+**O que:** ROADMAP (data, estado branches, itens 8–17 → main, 18 → teste, textos 11/12/17, Baixa baixada); MAPA (revisão, fila, linhas SEÇÃO 2–13, RBAC item 18, vetId/dashboard, remove linhas mortas `painel-vet-hoje`/`filtro-data-ag`, bypass mustChange); AGENTS (RBAC vigente, fallback skill inexistente, `--login-*`); DB (`vacina_tipos`/`raca_tipos` futuras, regra confirmar); CHANGELOG (item 18 no topo).
+**Por quê:** pedido do dono — deixar contexto completo p/ outra IA sem esta sessão.
+**Onde:** `ROADMAP.md`, `AGENTS.md`, `docs/MAPA_DO_SISTEMA.md`, `docs/DB_LEVANTAMENTO.md`, `docs/CHANGELOG.md` (zero código).
+
+---
+
+## 2026-09-25 · (teste) — Item 18: vacinas admin/vet, funcionário fora do clínico
+**O que:** `vacina_tipos_criar/editar/excluir` p/ veterinário (total em vacinação); funcionário perde `clinica_*` + `vacina_tipos_*` (aba Módulo Clínico oculta + guard em `switchTab`; mantém só-leitura em agendamentos, tutor/pet e raças); card/modal de vacina agora admin+vet.
+**Por quê:** decisão do dono — toda interação com vacina é do admin/veterinário.
+**Onde:** `dayvet/script.js` (SEÇÃO 2 RBAC, `podeClinica`, guard `switchTab`), `dayvet/index.html` (textos), `ROADMAP.md` (item 7 superseded + item 18), `docs/MAPA_DO_SISTEMA.md`.
+**Validações:** python: IDs/handlers OK, blocos balanceados; manual pendente (login 3 sem aba Clínica; login 2 gerencia vacinas).
+
+---
+
 ## 2026-09-25 · (teste) — Follow-up: vet sem ações em vacinação + histórico maior
 **O que:** veterinário ganha `vacinacao_editar/cancelar/confirmar` (linhas de Vacinação mostravam "Sem ações disponíveis"); mocks 207–209 (concluído mês passado, concluído/cancelado em março/2026) p/ popular os grupos por mês.
 **Por quê:** follow-ups do dono (paridade vet em vacinação; exemplo de histórico maior).
