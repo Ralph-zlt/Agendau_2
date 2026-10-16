@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-10-16 · (teste) — Botão "Agendar Vacinação" p/ admin + veterinário
+**O que:** rótulo `Solicitar Vacinação` → "Agendar Vacinação" (id/onclick mantidos); visibilidade `currentRole === 'admin'` → `temPermissao('vacinacao_agendar')`, liberando o botão ao veterinário; funcionário segue sem ver (só-leitura).
+**Por quê:** pedido do dono — padronizar nome com o título do modal e dar a opção ao veterinário.
+**Onde:** `dayvet/index.html` (`btn-solicitar-vacinacao`), `dayvet/script.js` (regra de visibilidade + comentário).
+**Validações:** node --check OK; IDs/handlers OK; manual pendente (login 1 e 2 veem o botão, login 3 não).
+
+---
+
 ## 2026-10-16 · (teste) — Título dinâmico do modal de agendamento
 **O que:** `Solicitar Vacinação` abre o modal como "Agendar Vacinação"; `Agendar Consulta` mantém "Agendar Consulta"; `marcarNovaConsulta` herda o título do serviço de origem; edição/remarcação inalteradas.
 **Por quê:** pedido do dono — ambos os botões abriam com o mesmo título "Agendar Consulta".
