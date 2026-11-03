@@ -42,6 +42,7 @@
 
 ## 2. Baixa prioridade (depois, sem data)
 
+- [ ] **Escalar para multi-clinic (seguir "receita de bolo" em docs/levantamento-bd.md)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
 - [ ] **Corrigir: Admin não consegue excluir Tutor** — ao acessar o sistema, o admin não está conseguindo excluir o Tutor. Investigar RLS/policies ou lógica de frontend/backend que bloqueia a exclusão (soft delete via `deleted_at` na tabela `tutores`).
 - [ ] **Adicionar barra de pesquisa de Tutores** — implementar campo de busca (por nome/CPF/telefone) na listagem de tutores, com debounce e filtro em tempo real.
 - [x] Refinamento modo claro/paleta + contrastes WCAG — parcial 2026-09-25 (`--texto-fraco` → AA; demais textos AA-OK). Refinamento amplo segue aberto.
