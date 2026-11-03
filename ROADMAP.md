@@ -48,8 +48,9 @@
 - [ ] **Remover "Incluir Guia" do sistema** — funcionalidade deve ser retirada completamente (backend, frontend, rotas, banco).
 - [ ] **Adicionar barra de pesquisa de Tutores** — implementar campo de busca (por nome/CPF/telefone) na listagem de tutores, com debounce e filtro em tempo real.
 
-## 3. Futuras — até segunda ordem (NÃO fazer)
+## 3. Baixa prioridade (para não esquecer — sem data)
 
+- [ ] **Simplificar SQL para single-clinic real** — remover `clinica_id` de todas as tabelas, dropar tabela `clinicas`, ajustar índices, views e RLS. Hoje o schema tem estrutura multi-clinic completa; simplificar quando for migrar para Supabase single-clinic.
 - Banco Supabase (schema, Auth+RLS, migração dos mocks), LGPD, remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`).
 
 ## 4. Histórico (detalhe em `docs/CHANGELOG.md`)
