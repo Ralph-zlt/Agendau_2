@@ -40,18 +40,13 @@
 
 ---
 
-## 2. Baixa prioridade (depois, sem data)
+## 2. Alta prioridade (próximos — lembrar ao mexer no sistema)
 
 - [ ] **Escalar para multi-clinic (seguir "receita de bolo" em docs/levantamento-bd.md)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
 - [ ] **Corrigir: Admin não consegue excluir Tutor** — ao acessar o sistema, o admin não está conseguindo excluir o Tutor. Investigar RLS/policies ou lógica de frontend/backend que bloqueia a exclusão (soft delete via `deleted_at` na tabela `tutores`).
 - [ ] **Excluir Pet** — implementar exclusão de pet (soft delete via `deleted_at` na tabela `pets`), com confirmação e validação de dependências (agendamentos, vacinações, histórico clínico).
-- [ ] **Roteamento "Incluir Guia" em todo o sistema** — mapear e implementar navegação/rotas para a funcionalidade "Incluir Guia" em todas as telas relevantes (dashboard, histórico clínico, perfil do pet, agenda).
+- [ ] **Remover "Incluir Guia" do sistema** — funcionalidade deve ser retirada completamente (backend, frontend, rotas, banco).
 - [ ] **Adicionar barra de pesquisa de Tutores** — implementar campo de busca (por nome/CPF/telefone) na listagem de tutores, com debounce e filtro em tempo real.
-- [x] Refinamento modo claro/paleta + contrastes WCAG — parcial 2026-09-25 (`--texto-fraco` → AA; demais textos AA-OK). Refinamento amplo segue aberto.
-- [x] **Login no modo claro (observação do dono, 2026-09-24):** entregue 2026-09-25 — `#login-cabecalho` com gradiente claro explícito; paw-print lima fixo `#ccff00` nos 2 temas.
-- [x] RF-02 restante: tel 11 dígitos + máx 10 pets por tutor — entregue 2026-09-25.
-- [x] RF-05: janela 07h–19h no agendamento — entregue 2026-09-25.
-- RF-08 real (pós-banco): CRMV do veterinário logado + assinatura. Prep ilustrativo entregue (usa `currentUser.crm` com fallback mock).
 
 ## 3. Futuras — até segunda ordem (NÃO fazer)
 
