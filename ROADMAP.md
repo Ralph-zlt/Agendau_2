@@ -42,6 +42,8 @@
 
 ## 2. Baixa prioridade (depois, sem data)
 
+- [ ] **Corrigir: Admin não consegue excluir Tutor** — ao acessar o sistema, o admin não está conseguindo excluir o Tutor. Investigar RLS/policies ou lógica de frontend/backend que bloqueia a exclusão (soft delete via `deleted_at` na tabela `tutores`).
+- [ ] **Adicionar barra de pesquisa de Tutores** — implementar campo de busca (por nome/CPF/telefone) na listagem de tutores, com debounce e filtro em tempo real.
 - [x] Refinamento modo claro/paleta + contrastes WCAG — parcial 2026-09-25 (`--texto-fraco` → AA; demais textos AA-OK). Refinamento amplo segue aberto.
 - [x] **Login no modo claro (observação do dono, 2026-09-24):** entregue 2026-09-25 — `#login-cabecalho` com gradiente claro explícito; paw-print lima fixo `#ccff00` nos 2 temas.
 - [x] RF-02 restante: tel 11 dígitos + máx 10 pets por tutor — entregue 2026-09-25.
