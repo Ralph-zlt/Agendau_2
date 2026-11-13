@@ -3,7 +3,7 @@
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
 > Última atualização: 2026-11-13.
-> Estado dos branches: `main` = `fe9ba87` (itens 1–6, 8–17); `teste` = `main` + item 18 (vacinas admin/vet) + ciclo de correções de 2026-11-13 (itens 19–22), a validar/mergear.
+> Estado dos branches: `main` = `2186c34` (itens 1–6, 8–17 + LICENSE + SQL em `docs/sql/`); `teste` = `main` + itens 18–22 (vacinas admin/vet, guia removida, exclusão de tutor, harness de testes, docs), pronto para merge.
 
 ## 0. Links e deploy (espelho fixo da main)
 
@@ -45,13 +45,17 @@
 
 ---
 
-## 2. Baixa prioridade (depois, sem data)
+## 2. Alta prioridade (próximos — lembrar ao mexer no sistema)
 
 - [x] Refinamento modo claro/paleta + contrastes WCAG — parcial 2026-09-25 (`--texto-fraco` → AA; demais textos AA-OK). Refinamento amplo segue aberto.
 - [x] **Login no modo claro (observação do dono, 2026-09-24):** entregue 2026-09-25 — `#login-cabecalho` com gradiente claro explícito; paw-print lima fixo `#ccff00` nos 2 temas.
 - [x] RF-02 restante: tel 11 dígitos + máx 10 pets por tutor — entregue 2026-09-25.
 - [x] RF-05: janela 07h–19h no agendamento — entregue 2026-09-25.
-- RF-08 real (pós-banco): CRMV do veterinário logado + assinatura. Prep ilustrativo entregue (usa `currentUser.crm` com fallback mock).
+- [ ] **RF-08 real (pós-banco):** CRMV do veterinário logado + assinatura. Prep ilustrativo entregue (usa `currentUser.crm` com fallback mock).
+- [x] **Corrigir: Admin não consegue excluir Tutor** — entregue no item 20 (13/11/2026): exclusão passou a existir no frontend (arquivar → excluir definitivo, sem depender de RLS porque não há banco ainda).
+- [x] **Remover "Incluir Guia" do sistema** — entregue no item 19 (13/11/2026): removida de frontend, mocks e relatórios; RF-10 marcado FORA DE ESCOPO no docx.
+- [ ] **Excluir Pet** — implementar exclusão de pet (soft delete via `deleted_at` na tabela `pets`), com confirmação e validação de dependências (agendamentos, vacinações, histórico clínico).
+- [ ] **Adicionar barra de pesquisa de Tutores** — implementar campo de busca (por nome/CPF/telefone) na listagem de tutores, com debounce e filtro em tempo real.
 - [ ] **Sanitizar `innerHTML` (XSS de protótipo):** nome/CPF/endereço de tutor, pet e detalhes clínicos entram em `innerHTML` sem escape em vários renders. Com dados mock o risco é local; ao ir para banco (pausado) vira XSS armazenado. Correção mínima: helper `escaparHtml()` aplicado nos renders e `onclick` com CPF via atributo `data-*`.
 
 ### 2.b Pausados por decisão do dono (2026-11-13) — NÃO executar agora
@@ -62,12 +66,14 @@
 
 - [ ] **Integração do banco de dados no Supabase** — schema, Auth + RLS, migração dos mocks atuais; remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`).
 - [ ] **Importação de dados legados** — scripts de migração dos mocks (`localStorage`/`mockData.js`) para tabelas Supabase (tutores, pets, agendamentos, vacinas, anexos, usuários, clínica).
+- [ ] **Escalar para multi-clinic (seguir "receita de bolo" em `docs/levantamento-bd.md`)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
 - [ ] **Hospedagem no Vercel** — configurar projeto, variáveis de ambiente (Supabase URL/anon key, flags de feature), build `npm run build` → `dist/`, preview automático em PRs, domínio customizado.
 - [ ] **Conformidade total com a LGPD (Lei 13.709/2018)** — mapeamento de dados pessoais/sensíveis, base legal por tratamento, consentimento granular (tutor/pet/agendamento), direitos do titular (acesso, retificação, exclusão, portabilidade), DPO/encarregado, registro de operações (ROPA), política de retenção/exclusão automática, DPIA para dados de saúde animal, cláusulas contratuais com Subprocessadores (Supabase, Vercel), incidente de segurança (plano de notificação 48h ANPD).
 
-## 2.c Futuras — até segunda ordem (NÃO fazer)
+### 2.c Baixa prioridade (para não esquecer — sem data)
 
-- *(Itens movidos para §2 como baixa prioridade com detalhamento)*
+- [ ] **Simplificar SQL para single-clinic real** — remover `clinica_id` de todas as tabelas, dropar tabela `clinicas`, ajustar índices, views e RLS. Hoje o schema (em `docs/sql/`, escrito mas **não aplicado**) tem estrutura multi-clinic; simplificar quando o banco voltar ao escopo.
+- [ ] Banco Supabase (schema, Auth+RLS, migração dos mocks), LGPD, remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`) — ver §2.b.
 
 ## 4. Histórico (detalhe em `docs/CHANGELOG.md`)
 
