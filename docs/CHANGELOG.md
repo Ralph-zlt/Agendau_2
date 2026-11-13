@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-13 · (merge de `origin/main` para a `teste`) — SQL documentado + itens da main antiga
+**O que:** merge de `origin/main` (`2186c34`, 11 commits) na `teste`, resolvendo conflito só em `ROADMAP.md`. A main trazia `LICENSE` (MIT), `docs/sql/*` (schema/seeds/RLS gerados em 2026-11-02), `docs/levantamento-bd.md` e itens de roadmap (multi-clinic, excluir pet, pesquisa de tutores, excluir tutor, remover guia). Dois desses itens já estavam entregues por nós e foram marcados: **excluir tutor** (item 20) e **remover guia** (item 19). Banco/Vercel/LGPD continuam pausados; os `.sql` entram como **escritos, não aplicados**.
+**Por quê:** a `teste` havia nascido antes de a `main` avançar; sem isso o merge para a `main` seria conflituoso e o roadmap voltaria a pedir coisas já feitas.
+**Onde:** `ROADMAP.md` (§2 reorganizada: alta prioridade de frontend, §2.b pausados, §2.c baixa prioridade), `docs/DB_LEVANTAMENTO.md` e `docs/MAPA_DO_SISTEMA.md` (registram `docs/sql/` como escrito e não aplicado), `.gitignore` (novo: `.vscode/`, `local/`, `opencode.json`).
+**Validações:** árvore limpa após o merge; `node tests/estatico.mjs`, `tests/unit/regras.mjs` 17/17, `tests/regressao/run.mjs` 2/2 e `tests/e2e.mjs` (4 cenários) verdes no código mergeado.
+
+---
+
 ## 2026-11-13 · (teste) — Item 20: exclusão de tutor (arquivar → restaurar → excluir definitivo)
 **O que:** tutor ganhou `arquivado` (soft delete) com ações "Arquivar", "Restaurar" e "Excluir definitivo" e selo "Arquivado"; botão "Mostrar arquivados" na aba Tutores & Pets; arquivado sai da lista padrão e dos 3 selects (agendamento, novo pet, módulo clínico). Regras puras em `dayvet/regras.js` (`podeArquivarTutor`, `podeExcluirTutor`): arquivar bloqueado com agendamento pendente/confirmado; excluir só depois de arquivado e sem pets/agendamentos/histórico clínico, com confirmação digitando o CPF. RBAC: `tutor_editar`/`tutor_arquivar`/`tutor_excluir` para admin e funcionário (decisão do dono 2026-11-13).
 **Por quê:** pedido do dono — permitir tirar tutores inativos da operação sem perder histórico (LGPD/retenção) e evitar exclusão acidental.

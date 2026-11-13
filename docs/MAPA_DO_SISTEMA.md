@@ -28,7 +28,10 @@
 | `dayvet/script.js` | Lógica (13 seções) | Mock data, RBAC, login, toasts, navegação, agendamentos, tutores & pets, clínico, relatórios, usuários, gráficos, tema, inicialização |
 | `dayvet/regras.js` | Regras puras (sem DOM) | `RegrasTutor`: `podeArquivarTutor`, `podeExcluirTutor`, `tutoresSelecionaveis`; testável em node e usada pelo `script.js` |
 | `tests/` | Testes do projeto | `estatico.mjs`, `unit/regras.mjs`, `e2e.mjs` (Playwright) e `regressao/NN-*.mjs` + `run.mjs` |
-| `docs/requisitos-funcionais-dayvet.docx` | Requisitos (fonte de RFs/RNFRs/RNFS) | RF-01–RF-10 + RNFS; sincronizado com o código na v2; frontend/temas fora (só roadmap) |
+| `docs/requisitos-funcionais-dayvet.docx` | Requisitos (fonte de RFs/RNFRs/RNFS) | RF-01–RF-10 + RNFS; sincronizado com o código na v2; frontend/temas fora (só roadmap). RF-09 e RF-10 marcados FORA DE ESCOPO |
+| `docs/DB_LEVANTAMENTO.md` | Levantamento conceitual do banco | Entidades, vínculos, opções de persistência; decisão Supabase **pausada** |
+| `docs/levantamento-bd.md` | Levantamento detalhado + receita de migração | Extraído do PDF de 2026-11-02; base do schema multi-clinic |
+| `docs/sql/*.sql` | SQL **escrito, não aplicado** | `schema.sql`, `seeds.sql`, `rls-policies.sql`, `dayvet-completo.sql` (2026-11-02). Nenhum projeto Supabase existe; nada rodou |
 
 ## 3. Autenticação e perfis (RBAC)
 
