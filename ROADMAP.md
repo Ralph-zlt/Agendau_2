@@ -3,7 +3,8 @@
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
 > Última atualização: 2026-11-13.
-> Estado dos branches: `main` = `2186c34` (itens 1–6, 8–17 + LICENSE + SQL em `docs/sql/`); `teste` = `main` + itens 18–22 (vacinas admin/vet, guia removida, exclusão de tutor, harness de testes, docs), pronto para merge.
+> Estado dos branches (2026-11-13): `main` = `9b6abd6` — itens 1–6, 8–17 **+ 18–22** (vacinas admin/vet, guia removida, exclusão de tutor, harness de testes, docs) + LICENSE + SQL em `docs/sql/`. **Publicado** em https://ralph-zlt.github.io/Agendau_2/dayvet/ (run 43451618568, sucesso).
+> `teste` = `e7a57b6` (mesmo conteúdo + merge da main), ponto de partida do próximo ciclo.
 
 ## 0. Links e deploy (espelho fixo da main)
 

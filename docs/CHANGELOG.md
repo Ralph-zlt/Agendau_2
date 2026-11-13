@@ -9,6 +9,15 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-13 · (main publicada) — itens 18–22 na produção do GitHub Pages
+**O que:** `teste` (`e7a57b6`) mesclada na `main` (`9b6abd6`, merge `--no-ff`) e publicada. Workflow `deploy-pages` rodou com sucesso (`run 43451618568`) e a demo passou a servir `regras.js` em `dist/dayvet/`.
+**Por quê:** autorização do dono ("pode ir pra main, garanta que esteja na demo").
+**Onde:** `main` e `teste` no `origin` (`Ralph-zlt/Agendau_2`); produção em https://ralph-zlt.github.io/Agendau_2/dayvet/.
+**Validações na URL publicada:** `/` 200, `/dayvet/` 200, `/dayvet/regras.js` 200 (3,7 KB); Playwright em produção — login admin OK, "Incluir Guia" ausente do clínico, `window.RegrasTutor` carregado, "Mostrar arquivados"/"Arquivar" presentes, zero erro de console ou HTTP ≥400.
+**Observação:** push exigiu o escopo `workflow` no token do `gh` (ver `LICOES.md` 2026-11-13).
+
+---
+
 ## 2026-11-13 · (merge de `origin/main` para a `teste`) — SQL documentado + itens da main antiga
 **O que:** merge de `origin/main` (`2186c34`, 11 commits) na `teste`, resolvendo conflito só em `ROADMAP.md`. A main trazia `LICENSE` (MIT), `docs/sql/*` (schema/seeds/RLS gerados em 2026-11-02), `docs/levantamento-bd.md` e itens de roadmap (multi-clinic, excluir pet, pesquisa de tutores, excluir tutor, remover guia). Dois desses itens já estavam entregues por nós e foram marcados: **excluir tutor** (item 20) e **remover guia** (item 19). Banco/Vercel/LGPD continuam pausados; os `.sql` entram como **escritos, não aplicados**.
 **Por quê:** a `teste` havia nascido antes de a `main` avançar; sem isso o merge para a `main` seria conflituoso e o roadmap voltaria a pedir coisas já feitas.
