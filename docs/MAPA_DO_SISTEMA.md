@@ -36,9 +36,10 @@
 ## 3. Autenticação e perfis (RBAC)
 
 > ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
+> **Decisão do dono (2026-11-13):** o bypass **fica durante os testes**. Ele foi tornado explícito: o card `#acessos-teste` na tela de login tem 3 botões (Admin / Veterinário / Funcionário) que **preenchem CPF + senha** e deixam o usuário confirmar em "Acessar o Painel" (`preencherAcessoTeste()` → `ACESSOS_TESTE`). O atalho digitado 1/2/3 continua funcionando.
 
 - **Login por CPF ou e-mail + senha** — campo aceita ambos; erro sempre genérico "Credenciais inválidas" (não revela existência de conta).
-- **Usuários de teste**: CPF `1`/senha `1` = Admin · CPF `2`/senha `2` = Veterinário · CPF `3`/senha `3` = Funcionário. Bypass ativo (prototipação): `mustChange:false` p/ 1/2/3 — ver alerta em `AGENTS.md`; em produção `mustChange=true`.
+- **Usuários de teste**: botões de acesso rápido em `#acessos-teste` preenchem — Admin `111.111.111-11`/`1` · Veterinário `333.333.333-33`/`2` · Funcionário `444.444.444-44`/`3` (constante `ACESSOS_TESTE` em `script.js`). O preenchimento passa pelo login real (`usuariosMock`) e não pelo atalho; digitar `1`/`2`/`3` no campo CPF ainda usa o bypass `perfisTestes`. `mustChange:false` p/ os 3 — ver alerta em `AGENTS.md`; em produção `mustChange=true`.
 - **Primeiro acesso (mustChange=true)**: usuários 2 e 3 são obrigados a trocar a senha antes de entrar. Política: 8+ chars, 1 maiúscula, 1 número, 1 especial. Indicadores visuais em tempo real. Mock: flag reseta ao recarregar (sem banco).
 - **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
 - **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
@@ -80,6 +81,7 @@
 | `#btn-mostrar-arquivados` | Tutores & Pets | Alterna tutores arquivados na lista (`alternarTutoresArquivados`); card arquivado ganha selo e ações Restaurar/Excluir definitivo |
 | `#doc-print-card` | impressão | Preview acompanha o tema na tela (escuro no modo escuro, §9.2); no papel sai branco (`@media print` §5) |
 | `#btn-tema-login` | ~75 | Botão sol/lua no canto sup-dir do header do login (z-[61]) — alterna tema antes do login |
+| `#acessos-teste` + `preencherAcessoTeste(role)` | login | Card "Acesso rápido de teste" com 3 botões (Admin/Veterinário/Funcionário); preenchem `#login-cpf` e `#login-password` a partir de `ACESSOS_TESTE` e escrevem o status em `#acessos-teste-status` (decisão 2026-11-13) |
 | `#btn-info-login` / `#tooltip-info-login` | login | Botão info roxo-claro + tooltip customizado instantâneo (sem `title=`); texto explica bypass (clicar na barra de CPF/e-mail); toque/Esc via `inicializarTooltipInfoLogin()` (ROADMAP §1 item 6) |
 | `#btn-esqueci-senha` | ~120 | Fora do `<form>` (evita bloqueio por campos required); hover roxo via `setProperty` |
 | `header` (topbar) | ~130 | Perfil do usuário, `#btn-tema`, logout |

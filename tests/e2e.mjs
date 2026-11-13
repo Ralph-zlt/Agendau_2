@@ -161,6 +161,41 @@ const cenarios = {
         await page.close();
     },
 
+    // Botões de acesso rápido de teste: preenchem CPF + senha e o login real
+    // (não o atalho 1/2/3) autentica cada perfil.
+    async acessos(browser) {
+        const perfis = [
+            { botao: "Admin", cpf: "111.111.111-11", senha: "1", nav: "#nav-usuarios", deveVer: true },
+            { botao: "Veterinário", cpf: "333.333.333-33", senha: "2", nav: "#nav-clinica", deveVer: true },
+            { botao: "Funcionário", cpf: "444.444.444-44", senha: "3", nav: "#nav-clinica", deveVer: false }
+        ];
+        for (const p of perfis) {
+            const { page, problemas } = await abrirPage(browser);
+            const botao = page.locator("#acessos-teste button").filter({ hasText: p.botao }).first();
+            (await botao.isVisible()) ? ok(`botão "${p.botao}" visível`) : erro(`botão "${p.botao}" não apareceu`);
+            await botao.click();
+
+            const cpfPreenchido = await page.inputValue("#login-cpf");
+            const senhaPreenchida = await page.inputValue("#login-password");
+            cpfPreenchido === p.cpf ? ok(`${p.botao}: CPF preenchido`) : erro(`${p.botao}: CPF "${cpfPreenchido}"`);
+            senhaPreenchida === p.senha ? ok(`${p.botao}: senha preenchida`) : erro(`${p.botao}: senha "${senhaPreenchida}"`);
+
+            await page.click("#auth-form button[type=submit]");
+            await page.waitForFunction(
+                () => document.getElementById("login-screen")?.classList.contains("hidden"),
+                null, { timeout: 8000 }
+            );
+            ok(`${p.botao}: login concluído`);
+
+            const viu = await visivel(page, p.nav);
+            viu === p.deveVer ? ok(`${p.botao}: "${p.nav}" ${p.deveVer ? "visível" : "oculto"} como esperado`)
+                : erro(`${p.botao}: "${p.nav}" inesperado (${viu})`);
+
+            problemas.forEach(x => erro(x));
+            await page.close();
+        }
+    },
+
     // Admin em viewport mobile (390x844).
     async mobile(browser) {
         const { page, problemas } = await abrirPage(browser, { mobile: true });
@@ -179,7 +214,7 @@ const cenarios = {
 const alvo = process.argv[2] || "todos";
 const navegador = alvo === "firefox" ? "firefox" : "chromium";
 const tipo = navegador === "firefox" ? firefox : chromium;
-const lista = alvo === "todos" ? ["admin", "vet", "func", "mobile"]
+const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "mobile"]
     : alvo === "firefox" ? ["admin", "func"]
     : [alvo];
 

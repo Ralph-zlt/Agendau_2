@@ -65,7 +65,7 @@
 > LGPD ficam **parados** até nova ordem. Nada de criar projeto, aplicar SQL ou
 > publicar fora do Pages.
 
-- [ ] **Integração do banco de dados no Supabase** — schema, Auth + RLS, migração dos mocks atuais; remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`).
+- [ ] **Integração do banco de dados no Supabase** — schema, Auth + RLS, migração dos mocks atuais. **Bypass permanece para testes** (decisão do dono 2026-11-13): os botões de acesso rápido (`#acessos-teste`) passam a preencher as contas reais de teste em vez de `perfisTestes`; remoção definitiva só depois da homologação.
 - [ ] **Importação de dados legados** — scripts de migração dos mocks (`localStorage`/`mockData.js`) para tabelas Supabase (tutores, pets, agendamentos, vacinas, anexos, usuários, clínica).
 - [ ] **Escalar para multi-clinic (seguir "receita de bolo" em `docs/levantamento-bd.md`)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
 - [ ] **Hospedagem no Vercel** — configurar projeto, variáveis de ambiente (Supabase URL/anon key, flags de feature), build `npm run build` → `dist/`, preview automático em PRs, domínio customizado.

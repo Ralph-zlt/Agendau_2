@@ -126,6 +126,21 @@
                         <p class="text-[10px] text-slate-400 mt-2 leading-snug italic" id="login-hint">Acesso temporário de protótipo — escolha abaixo ou digite para filtrar</p>
                     </div>
 
+                    <!-- Acesso rápido de TESTE (bypass de protótipo): cada botão preenche
+                         CPF + senha de um perfil. Nunca vai para produção com dados reais. -->
+                    <div id="acessos-teste" class="rounded-xl border border-slate-800 bg-slate-950/60 p-2.5">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 text-center mb-2">Acesso rápido de teste</p>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" onclick="preencherAcessoTeste('admin')"
+                                class="rounded-lg border border-slate-800 bg-slate-900 px-2 py-2 text-[11px] font-bold text-slate-200 transition-colors hover:border-brand-lime hover:text-brand-lime">Admin</button>
+                            <button type="button" onclick="preencherAcessoTeste('veterinario')"
+                                class="rounded-lg border border-slate-800 bg-slate-900 px-2 py-2 text-[11px] font-bold text-slate-200 transition-colors hover:border-brand-lime hover:text-brand-lime">Veterinário</button>
+                            <button type="button" onclick="preencherAcessoTeste('funcionario')"
+                                class="rounded-lg border border-slate-800 bg-slate-900 px-2 py-2 text-[11px] font-bold text-slate-200 transition-colors hover:border-brand-lime hover:text-brand-lime">Funcionário</button>
+                        </div>
+                        <p id="acessos-teste-status" class="mt-2 text-center text-[10px] font-semibold text-slate-500">Toque em um perfil para preencher CPF e senha.</p>
+                    </div>
+
                     <!-- Botão de Login -->
                     <button type="submit" class="w-full bg-brand-blue hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-brand-blue/30 flex items-center justify-center gap-2">
                         <span>Acessar o Painel</span> <i data-lucide="arrow-right" class="w-4 h-4 text-brand-lime"></i>

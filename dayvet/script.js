@@ -285,6 +285,43 @@ const ACESSOS_TEMPORARIOS = [
 
 const CPF_DEMO_POR_ROLE = { admin: '1', veterinario: '2', funcionario: '3' };
 
+// O QUE: Credenciais reais (mock) dos 3 perfis, usadas pelos botões de teste.
+// PORQUÊ: Pedido do dono (2026-11-13): manter o bypass para testes, mas por botão
+//   visível que preenche CPF + senha — em vez de exigir digitar 1/2/3.
+// DEMO (mock): mesmos valores de `usuariosMock` (password_demo). Ao ligar o Supabase,
+//   basta apontar aqui as contas de teste reais — o botão deixa de ser bypass.
+// TODO [SECURITY]: remover o bloco de acesso rápido antes da produção.
+const ACESSOS_TESTE = {
+    admin:       { rotulo: 'Admin',       cpf: '111.111.111-11', senha: '1' },
+    veterinario: { rotulo: 'Veterinário', cpf: '333.333.333-33', senha: '2' },
+    funcionario: { rotulo: 'Funcionário', cpf: '444.444.444-44', senha: '3' }
+};
+
+// O QUE: Preenche CPF + senha do perfil clicado (não envia o formulário).
+// PORQUÊ: Teste rápido e transparente — o usuário vê as credenciais usadas e
+//   confirma em "Acessar o Painel". Diferente do atalho 1/2/3, aqui o login
+//   passa pelo caminho real (`usuariosMock`, depois Auth) em vez do bypass.
+// DEMO (mock): valores de ACESSOS_TESTE; sem rede.
+function preencherAcessoTeste(role) {
+    const acesso = ACESSOS_TESTE[role];
+    if (!acesso) return;
+    const campoCpf = document.getElementById('login-cpf');
+    const campoSenha = document.getElementById('login-password');
+    if (!campoCpf || !campoSenha) return;
+
+    campoCpf.value = acesso.cpf;
+    campoSenha.value = acesso.senha;
+
+    // Fecha a lista de sugestões para não cobrir o botão de acesso.
+    const box = document.getElementById('login-sugestoes');
+    if (box) { box.classList.add('hidden'); box.innerHTML = ''; }
+
+    const status = document.getElementById('acessos-teste-status');
+    if (status) status.textContent = `Preenchido: ${acesso.rotulo} (${acesso.cpf}). Clique em "Acessar o Painel".`;
+
+    document.getElementById('auth-form')?.querySelector('button[type=submit]')?.focus();
+}
+
 // O QUE: Filtra e exibe as sugestões de acesso temporário conforme o digitado.
 // PORQUÊ: Experiência próxima ao login salvo do navegador.
 // DEMO (mock): Filtro por substring nos apelidos/rótulos; sem backend.

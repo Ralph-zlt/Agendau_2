@@ -1,6 +1,7 @@
 # AGENTS.md — DayVet-Gestão
 
 > ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
+> **Exceção vigente (decisão do dono, 2026-11-13):** o bypass **fica** enquanto durar a fase de testes. Ele é exposto por botões visíveis no login (`#acessos-teste` → `preencherAcessoTeste()`), que preenchem CPF + senha dos 3 perfis. Não remover sem ordem explícita; ao ligar o Supabase, os botões passam a apontar para as contas de teste reais.
 
 Instruções para **IAs e colaboradores** que forem editar este código.
 
@@ -62,7 +63,7 @@ A skill cobre 4 verificações obrigatórias via `node` (sem browser):
 4. Funções `onclick="fn()"` no HTML definidas no JS.
 
 Adicionalmente, teste no navegador abrindo `dayvet/index.html`:
-- Logins de teste CPF `1` (Admin), `2` (Veterinário), `3` (Funcionário); alternância de tema claro/escuro.
+- Logins de teste: botões de acesso rápido (Admin/Veterinário/Funcionário) preenchem CPF + senha; digitar `1`, `2`, `3` no CPF continua funcionando como bypass. Alternância de tema claro/escuro.
 - Fluxo "Esqueci a senha?" deve abrir o modal por cima da tela de login.
 - Ao remover funcionalidade: conferir com busca (grep) que não sobraram referências em `index.html` e `script.js`.
 

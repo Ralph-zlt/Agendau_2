@@ -9,6 +9,14 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-13 · (teste) — Botões de acesso rápido de teste no login
+**O que:** card `#acessos-teste` na tela de login com 3 botões (Admin / Veterinário / Funcionário). Cada um preenche `#login-cpf` e `#login-password` com as credenciais do perfil (`ACESSOS_TESTE` em `script.js`) e escreve o status em `#acessos-teste-status`; o usuário confirma em "Acessar o Painel". O atalho digitado 1/2/3 (`perfisTestes`) continua funcionando.
+**Por quê:** decisão do dono em 2026-11-13 — o bypass **fica durante os testes**, mas precisa ser explícito e de um clique, em vez de exigir adivinhar que digitar `1` loga. Diferente do atalho, os botões passam pelo caminho de login real (`usuariosMock`), então ao ligar o Supabase basta apontar as contas de teste.
+**Onde:** `dayvet/index.html` (bloco após o campo de senha), `dayvet/script.js` (`ACESSOS_TESTE` + `preencherAcessoTeste()`), `tests/e2e.mjs` (novo cenário `acessos`, incluído na lista padrão), `docs/MAPA_DO_SISTEMA.md`, `AGENTS.md` e `ROADMAP.md` (registram que o bypass permanece por decisão do dono).
+**Validações:** `node --check dayvet/script.js`; `tests/estatico.mjs` verde; `tests/unit/regras.mjs` 17/17; `tests/regressao/run.mjs` 2/2; `tests/e2e.mjs` com 5 cenários (admin, vet, func, acessos, mobile) verde — o cenário novo prova CPF/senha preenchidos e login dos 3 perfis, com `#nav-clinica` oculto para o funcionário. Prints em `/tmp/ai-evidence/login-dark.png`, `login-light.png` e `login-mobile.png` (3 botões cabem em 390 px).
+
+---
+
 ## 2026-11-13 · (main publicada) — itens 18–22 na produção do GitHub Pages
 **O que:** `teste` (`e7a57b6`) mesclada na `main` (`9b6abd6`, merge `--no-ff`) e publicada. Workflow `deploy-pages` rodou com sucesso (`run 43451618568`) e a demo passou a servir `regras.js` em `dist/dayvet/`.
 **Por quê:** autorização do dono ("pode ir pra main, garanta que esteja na demo").
