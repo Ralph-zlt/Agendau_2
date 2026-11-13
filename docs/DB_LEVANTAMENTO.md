@@ -1,9 +1,10 @@
 # LEVANTAMENTO — Banco de Dados (DayVet-Gestão)
 
 > Documento de levantamento **sem código**. Define entidades, mapeia TODOs existentes e lista opções de persistência.
-> Última atualização: 2026-09-22.
-> Status: **Decisão tomada: SQL via Supabase** — projeto ainda NÃO criado; código segue 100% mock.
+> Última atualização: 2026-11-13.
+> Status: **Decisão tomada: SQL via Supabase** — porém **PAUSADA por decisão do dono em 2026-11-13**; projeto não criado e código segue 100% mock.
 > **Nota (2026-09-17):** Laudos foram removidos do escopo por decisão da clínica. Não criar tabela nem endpoint para laudo.
+> **Nota (2026-11-13):** Guias de encaminhamento (RF-10) foram removidas do escopo por decisão do dono. O enum de `historico_clinico` fica `receita` e `vacina`.
 
 ---
 
@@ -50,6 +51,7 @@
 - **email** (string)
 - **tel** (string, 11 dígitos)
 - **endereco** (string)
+- **arquivado** (boolean, default false) — soft delete; tutor arquivado não aparece em agendamentos/novos vínculos (decisão 2026-11-13)
 - **senha** (string — observação: tutores possuem senha no mock; definir se terão acesso ao sistema)
 
 **Regra de negócio:** Máximo 10 pets por tutor (RNF via RF-02).
@@ -84,7 +86,7 @@
 ### 1.6 HistoricoClinico (tabela `historico_clinico`)
 - **id** (PK, string/UUID)
 - **petId** (FK → pets.id)
-- **tipo** (enum: `receita`, `guia`, `vacina`) ~~`laudo`~~ **FORA DE ESCOPO** — decisão clínica 2026-09-17
+- **tipo** (enum: `receita`, `vacina`) ~~`guia`~~ ~~`laudo`~~ **FORA DE ESCOPO** — laudo por decisão clínica 2026-09-17; guia por decisão do dono 2026-11-13
 - **data** (date)
 - **detalhe** (text)
 
@@ -184,7 +186,7 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` (no
 
 ## 4. Decisão adotada: SQL via Supabase
 
-> **Decisão tomada em 2026-09-22: SQL via Supabase (Postgres).** Projeto ainda NÃO criado — nenhum código de banco implementado; mocks em memória mantidos.
+> **Decisão tomada em 2026-09-22: SQL via Supabase (Postgres) — execução PAUSADA em 2026-11-13 por decisão do dono.** Projeto NÃO criado — nenhum código de banco implementado; mocks em memória mantidos.
 >
 > **Motivo:** Auth + banco SQL + RLS com mínimo de código para MVP; tabelas §1 viram schema Supabase; bypass 1/2/3 mantido no protótipo para teste do usuário final (sem dados reais).
 >
@@ -212,6 +214,8 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` (no
 ---
 
 ## 6. Próximos passos
+
+> **PAUSADO em 2026-11-13 por decisão do dono.** Os passos abaixo ficam registrados para quando o banco voltar ao escopo; nada deve ser criado/aplicado antes disso.
 
 1. **Decisão adotada:** SQL via Supabase (projeto ainda a criar) + infra Pages já definida.
 2. **Criar projeto Supabase + migrations/schema:** mapear entidades (§1) para Postgres (`supabase.sql`).

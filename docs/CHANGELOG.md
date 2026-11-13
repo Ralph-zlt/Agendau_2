@@ -9,6 +9,30 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-13 · (teste) — Item 20: exclusão de tutor (arquivar → restaurar → excluir definitivo)
+**O que:** tutor ganhou `arquivado` (soft delete) com ações "Arquivar", "Restaurar" e "Excluir definitivo" e selo "Arquivado"; botão "Mostrar arquivados" na aba Tutores & Pets; arquivado sai da lista padrão e dos 3 selects (agendamento, novo pet, módulo clínico). Regras puras em `dayvet/regras.js` (`podeArquivarTutor`, `podeExcluirTutor`): arquivar bloqueado com agendamento pendente/confirmado; excluir só depois de arquivado e sem pets/agendamentos/histórico clínico, com confirmação digitando o CPF. RBAC: `tutor_editar`/`tutor_arquivar`/`tutor_excluir` para admin e funcionário (decisão do dono 2026-11-13).
+**Por quê:** pedido do dono — permitir tirar tutores inativos da operação sem perder histórico (LGPD/retenção) e evitar exclusão acidental.
+**Onde:** `dayvet/index.html` (botão do filtro + `<script src="regras.js">`), `dayvet/regras.js` (novo), `dayvet/script.js` (RBAC, `renderizarTutores`, ações, filtros dos selects), `.github/workflows/deploy-pages.yml` (copia `regras.js`), `tests/unit/regras.mjs`, `tests/regressao/02-tutor-arquivar.mjs`, `tests/e2e.mjs`, docs.
+**Validações:** `node tests/estatico.mjs` ✓; `node tests/unit/regras.mjs` 17/17 ✓; `node tests/regressao/run.mjs` 2/2 ✓; `node tests/e2e.mjs` (Chromium) e `firefox` ✓ com prints em `/tmp/ai-evidence/`.
+
+---
+
+## 2026-11-13 · (teste) — Item 19: guia de encaminhamento removida (RF-10 cancelado)
+**O que:** removidos o atalho "Incluir Guia", a opção "Guia de Encaminhamento / Exame" do select de tipo, o mock 403, os branches `tipo === 'guia'` (render/impressão/label), a entrada nos títulos de impressão, o título "Receitas e Guias Emitidos" e a opção "Relatório de Receitas e Guias Emitidas" (agora "Receitas Emitidas"). `docs/requisitos-funcionais-dayvet.docx`: RF-10 marcado como FORA DE ESCOPO / REQUISITO CANCELADO.
+**Por quê:** decisão do dono em 2026-11-13 — a clínica não emite guia; emissão fica restrita a receita e registro de imunização.
+**Onde:** `dayvet/index.html`, `dayvet/script.js`, `docs/requisitos-funcionais-dayvet.docx`, `docs/DB_LEVANTAMENTO.md` (enum), `docs/MAPA_DO_SISTEMA.md`, `ROADMAP.md` (item 19 + histórico).
+**Validações:** `grep -i guia dayvet/` = zero; `node tests/estatico.mjs` ✓; `tests/regressao/01-guia-removida.mjs` ✓ (inclui leitura do docx); E2E admin ✓ (atalho ausente, select só com receita/vacina); docx reaberto (`unzip -t` OK).
+
+---
+
+## 2026-11-13 · (teste) — Escopo: banco/Vercel/LGPD pausados + harness de testes + PROJETOS.md
+**O que:** Supabase, importação de dados, Vercel e LGPD marcados como **pausados** em ROADMAP §2.b, no MAPA, no AGENTS e no DB_LEVANTAMENTO (sem alterar a arquitetura decidida); `~/Público/Projetos/PROJETOS.md` recriado com o índice real de projetos; criada a suíte `tests/` (estático, unitário, E2E Playwright e regressão numerada) e registrada a reinstalação dos navegadores em `TOOLS.md`.
+**Por quê:** decisão do dono — foco no frontend; documentação não podia continuar dizendo que banco/hospedagem eram o próximo passo.
+**Onde:** `ROADMAP.md`, `AGENTS.md`, `docs/MAPA_DO_SISTEMA.md`, `docs/DB_LEVANTAMENTO.md`, `docs/CHANGELOG.md`, `tests/*`, `~/Público/Projetos/PROJETOS.md`, `~/workspace/agents/TOOLS.md`.
+**Validações:** baseline e pós-mudança do `tests/estatico.mjs` e `tests/e2e.mjs` (Chromium/Firefox) ✓; Chromium+Firefox reinstalados e verificados (`~/.cache/ms-playwright` com symlink).
+
+---
+
 ## 2026-10-16 · (teste) — Botão "Agendar Vacinação" p/ admin + veterinário
 **O que:** rótulo `Solicitar Vacinação` → "Agendar Vacinação" (id/onclick mantidos); visibilidade `currentRole === 'admin'` → `temPermissao('vacinacao_agendar')`, liberando o botão ao veterinário; funcionário segue sem ver (só-leitura).
 **Por quê:** pedido do dono — padronizar nome com o título do modal e dar a opção ao veterinário.

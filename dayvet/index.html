@@ -441,6 +441,10 @@
                         <p class="text-xs text-slate-400">Gerenciamento completo de clientes, contatos e perfil comportamental dos animais.</p>
                     </div>
                     <div class="flex items-center gap-3">
+                        <button id="btn-mostrar-arquivados" onclick="alternarTutoresArquivados()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs font-bold text-slate-300 rounded-xl flex items-center gap-2" title="Exibir ou ocultar tutores arquivados">
+                            <i data-lucide="archive" class="w-4 h-4 text-slate-400"></i>
+                            <span>Mostrar arquivados</span>
+                        </button>
                         <button id="btn-novo-tutor" onclick="abrirModalTutor()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs font-bold text-white rounded-xl flex items-center gap-2">
                             <i data-lucide="user-plus" class="w-4 h-4 text-brand-blue"></i>
                             <span>Novo Tutor</span>
@@ -480,16 +484,12 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-950 p-6 rounded-3xl border border-slate-850">
                     <div>
                         <h3 class="text-xl font-black text-white">Atendimento Clínico & Documentos Médicos</h3>
-                        <p class="text-xs text-slate-400">Gestão completa de Prescrições e Guias de Encaminhamento.</p>
+                        <p class="text-xs text-slate-400">Gestão de Prescrições e Registros de Imunização.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <button onclick="prepararNovoDocumentoClinico('receita')" class="btn-incluir-doc-clinico px-3.5 py-2 bg-slate-900 border border-slate-800 hover:border-brand-lime text-slate-200 text-xs font-bold rounded-xl flex items-center gap-1.5">
                             <i data-lucide="file-plus" class="w-4 h-4 text-brand-lime"></i>
                             <span>Incluir Receita</span>
-                        </button>
-                        <button onclick="prepararNovoDocumentoClinico('guia')" class="btn-incluir-doc-clinico px-3.5 py-2 bg-slate-900 border border-slate-800 hover:border-brand-pink text-slate-200 text-xs font-bold rounded-xl flex items-center gap-1.5">
-                            <i data-lucide="file-check" class="w-4 h-4 text-brand-pink"></i>
-                            <span>Incluir Guia</span>
                         </button>
                         <button onclick="document.getElementById('input-upload-anexo').click()" class="btn-incluir-doc-clinico px-3.5 py-2 bg-slate-900 border border-slate-800 hover:border-brand-blue text-slate-200 text-xs font-bold rounded-xl flex items-center gap-1.5" title="Anexar exames e documentos (PDF, JPG, PNG)">
                             <i data-lucide="paperclip" class="w-4 h-4 text-brand-blue"></i>
@@ -537,7 +537,7 @@
                 </div>
 
                 <div id="clinica-allowed-content" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Formulário de Receita / Guia -->
+                    <!-- Formulário de Receita / Registro de Imunização -->
                     <div id="clinica-form-coluna" class="lg:col-span-1 bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-4">
                         <h4 id="clinica-form-title" class="font-bold text-slate-100 text-sm flex items-center gap-2">
                             <i data-lucide="file-plus" class="w-4 h-4 text-brand-lime"></i>
@@ -563,7 +563,6 @@
                                 <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Tipo de Documento</label>
                                 <select id="clinica-tipo" onchange="atualizarLabelDocumento()" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
                                     <option value="receita">Receita Médica</option>
-                                    <option value="guia">Guia de Encaminhamento / Exame</option>
                                     <option value="vacina">Registro de Imunização</option>
                                 </select>
                             </div>
@@ -580,7 +579,7 @@
 
                             <div>
                                 <label id="clinica-detalhe-label" class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Detalhamento / Prescrição</label>
-                                <textarea id="clinica-detalhe" rows="4" placeholder="Descreva diagnósticos, posologias, resultados de exame ou autorizações da guia..." required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none placeholder:text-slate-600"></textarea>
+                                <textarea id="clinica-detalhe" rows="4" placeholder="Descreva diagnósticos, posologias ou resultados de exame..." required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none placeholder:text-slate-600"></textarea>
                             </div>
 
                             <div class="flex items-center gap-2 pt-1">
@@ -598,7 +597,7 @@
                         <div class="flex items-center justify-between">
                             <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
                                 <i data-lucide="history" class="w-4 h-4 text-brand-blue"></i>
-                                <span>Receitas e Guias Emitidos</span>
+                                <span>Receitas e Registros Emitidos</span>
                             </h4>
                             <span id="prontuario-count" class="text-xs text-slate-400 font-bold">0 registros</span>
                         </div>
@@ -1144,7 +1143,7 @@
                     <select id="relatorio-tipo" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
                         <option value="financeiro">Relatório Financeiro Completo</option>
                         <option value="agendamentos">Relatório de Agendamentos & Consultas</option>
-                        <option value="receitas">Relatório de Receitas e Guias Emitidas</option>
+                        <option value="receitas">Relatório de Receitas Emitidas</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -1272,7 +1271,7 @@
         </div>
     </div>
 
-    <!-- Modal Universal de Impressão (Receita, Guia) -->
+    <!-- Modal Universal de Impressão (Receita, Vacina) -->
     <div id="modal-impressao-documento" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
         <div id="doc-print-card" class="bg-white text-slate-900 w-full max-w-2xl p-8 rounded-2xl shadow-2xl space-y-6 print-card">
             <div class="flex items-center justify-between border-b pb-4 border-slate-200">
@@ -1446,6 +1445,7 @@
     </div>
 
     <!-- Script principal do projeto -->
+    <script src="regras.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
