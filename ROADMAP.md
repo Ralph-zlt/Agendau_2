@@ -2,8 +2,8 @@
 
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
-> Última atualização: 2026-09-25.
-> Estado dos branches: `main` = `fe9ba87` (itens 1–6, 8–17); `teste` = `main` + item 18 (vacinas admin/vet, a validar/mergear).
+> Última atualização: 2026-11-13.
+> Estado dos branches: `main` = `2186c34` (itens 1–6, 8–17 + LICENSE + SQL em `docs/sql/`); `teste` = `main` + itens 18–22 (vacinas admin/vet, guia removida, exclusão de tutor, harness de testes, docs), pronto para merge.
 
 ## 0. Links e deploy (espelho fixo da main)
 
@@ -12,6 +12,7 @@
   - Artefato: `site/index.html` → `dist/index.html` (landing) + `dayvet/*` → `dist/dayvet/` (SPA).
   - **Regra: este link SEMPRE reflete a `main`. Nunca publicar a `teste` nele.**
 - **Teste:** validar na branch `teste` em ambiente local (`dayvet/index.html`) ou preview temporário da `teste`. Só mergear na `main` após validação do dono.
+- **Vercel: PAUSADO** por decisão do dono em 2026-11-13. A produção continua exclusivamente no GitHub Pages (§ links acima).
 
 ---
 
@@ -35,31 +36,53 @@
 - [x] **16. Dashboard do vet sem financeiro:** `vetId` nos agendamentos; vet não vê Faturamento/Receita — vê Próxima Consulta + barras por hora (consultas × vacinações de hoje, só dele); admin intacto. Entregue na `main` (merge `fe9ba87`).
 - [x] **17. Expirados colapsado + pesquisa mês/ano:** abre só Últimos 7 dias + "Carregar mais antigas" (este mês/meses ao expandir); selects mês/ano (`#pesquisa-mes-sel`, `#pesquisa-ano-sel`) filtram o histórico (funcionário também pesquisa — só leitura). Entregue na `main` (merge `fe9ba87`).
 - [x] **18. Vacinas = admin/vet; funcionário fora do clínico (decisão 2026-09-25):** `vacina_tipos_criar/editar/excluir` p/ admin+veterinário (vet ganha total em vacinação); funcionário perde `clinica_*` + `vacina_tipos_*` (sem aba Módulo Clínico; mantém agendamentos só-leitura, tutor/pet e tipos de raça). Entregue na `teste` (`44326bc`, aguarda validação do dono p/ merge).
+- [x] **19. Remover a guia de encaminhamento do produto (decisão do dono 2026-11-13):** atalho "Incluir Guia", opção do select, mock 403, branches de render/impressão, título da timeline e opção do relatório removidos; RF-10 marcado como **FORA DE ESCOPO** em `docs/requisitos-funcionais-dayvet.docx`. Justificativa: o dono não usa guia na operação da clínica; a emissão fica restrita a receita e registro de imunização.
+- [x] **20. Exclusão de tutor (soft delete + definitiva):** `arquivado` no tutor; `tutor_editar`/`tutor_arquivar`/`tutor_excluir` p/ **admin e funcionário** (decisão 2026-11-13); arquivar bloqueado com agendamento pendente/confirmado; exclusão definitiva só após arquivar e bloqueada se houver pets, agendamentos ou histórico clínico; tutor arquivado some dos selects e ganha "Mostrar arquivados"/"Restaurar".
+- [x] **21. Harness de testes do projeto:** `tests/estatico.mjs`, `tests/unit/regras.mjs`, `tests/e2e.mjs` (Playwright Chromium+Firefox, desktop e 390×844) + `tests/regressao/` numerada; screenshots em `/tmp/ai-evidence/`.
+- [x] **22. Documentação do ciclo:** ROADMAP/MAPA/AGENTS/DB/CHANGELOG sincronizados com a pausa de banco/Vercel e com os itens 19–21; `PROJETOS.md` recriado na raiz de `~/Público/Projetos`.
 
-**Aceite geral:** skill `testar-frontend` passa; teste manual na `teste` antes de qualquer novo merge; `docs/CHANGELOG.md` atualizado. Fluxo padrão: código na `teste` → validação do dono → merge na `main` (exceção desta vez: merge direto `teste`→`main` validado em teste manual).
+**Aceite geral:** `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/e2e.mjs` verdes; teste manual na `teste` antes de qualquer novo merge; `docs/CHANGELOG.md` atualizado. Fluxo padrão: código na `teste` → validação do dono → merge na `main` (exceção desta vez: merge direto `teste`→`main` validado em teste manual).
 
 ---
 
 ## 2. Alta prioridade (próximos — lembrar ao mexer no sistema)
 
-- [ ] **Escalar para multi-clinic (seguir "receita de bolo" em docs/levantamento-bd.md)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
-- [ ] **Corrigir: Admin não consegue excluir Tutor** — ao acessar o sistema, o admin não está conseguindo excluir o Tutor. Investigar RLS/policies ou lógica de frontend/backend que bloqueia a exclusão (soft delete via `deleted_at` na tabela `tutores`).
+- [x] Refinamento modo claro/paleta + contrastes WCAG — parcial 2026-09-25 (`--texto-fraco` → AA; demais textos AA-OK). Refinamento amplo segue aberto.
+- [x] **Login no modo claro (observação do dono, 2026-09-24):** entregue 2026-09-25 — `#login-cabecalho` com gradiente claro explícito; paw-print lima fixo `#ccff00` nos 2 temas.
+- [x] RF-02 restante: tel 11 dígitos + máx 10 pets por tutor — entregue 2026-09-25.
+- [x] RF-05: janela 07h–19h no agendamento — entregue 2026-09-25.
+- [ ] **RF-08 real (pós-banco):** CRMV do veterinário logado + assinatura. Prep ilustrativo entregue (usa `currentUser.crm` com fallback mock).
+- [x] **Corrigir: Admin não consegue excluir Tutor** — entregue no item 20 (13/11/2026): exclusão passou a existir no frontend (arquivar → excluir definitivo, sem depender de RLS porque não há banco ainda).
+- [x] **Remover "Incluir Guia" do sistema** — entregue no item 19 (13/11/2026): removida de frontend, mocks e relatórios; RF-10 marcado FORA DE ESCOPO no docx.
 - [ ] **Excluir Pet** — implementar exclusão de pet (soft delete via `deleted_at` na tabela `pets`), com confirmação e validação de dependências (agendamentos, vacinações, histórico clínico).
-- [ ] **Remover "Incluir Guia" do sistema** — funcionalidade deve ser retirada completamente (backend, frontend, rotas, banco).
 - [ ] **Adicionar barra de pesquisa de Tutores** — implementar campo de busca (por nome/CPF/telefone) na listagem de tutores, com debounce e filtro em tempo real.
+- [ ] **Sanitizar `innerHTML` (XSS de protótipo):** nome/CPF/endereço de tutor, pet e detalhes clínicos entram em `innerHTML` sem escape em vários renders. Com dados mock o risco é local; ao ir para banco (pausado) vira XSS armazenado. Correção mínima: helper `escaparHtml()` aplicado nos renders e `onclick` com CPF via atributo `data-*`.
 
-## 3. Baixa prioridade (para não esquecer — sem data)
+### 2.b Pausados por decisão do dono (2026-11-13) — NÃO executar agora
 
-- [ ] **Simplificar SQL para single-clinic real** — remover `clinica_id` de todas as tabelas, dropar tabela `clinicas`, ajustar índices, views e RLS. Hoje o schema tem estrutura multi-clinic completa; simplificar quando for migrar para Supabase single-clinic.
-- Banco Supabase (schema, Auth+RLS, migração dos mocks), LGPD, remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`).
+> Decisão do dono: o foco volta para o frontend. Banco, migração, hospedagem e
+> LGPD ficam **parados** até nova ordem. Nada de criar projeto, aplicar SQL ou
+> publicar fora do Pages.
+
+- [ ] **Integração do banco de dados no Supabase** — schema, Auth + RLS, migração dos mocks atuais; remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`).
+- [ ] **Importação de dados legados** — scripts de migração dos mocks (`localStorage`/`mockData.js`) para tabelas Supabase (tutores, pets, agendamentos, vacinas, anexos, usuários, clínica).
+- [ ] **Escalar para multi-clinic (seguir "receita de bolo" em `docs/levantamento-bd.md`)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
+- [ ] **Hospedagem no Vercel** — configurar projeto, variáveis de ambiente (Supabase URL/anon key, flags de feature), build `npm run build` → `dist/`, preview automático em PRs, domínio customizado.
+- [ ] **Conformidade total com a LGPD (Lei 13.709/2018)** — mapeamento de dados pessoais/sensíveis, base legal por tratamento, consentimento granular (tutor/pet/agendamento), direitos do titular (acesso, retificação, exclusão, portabilidade), DPO/encarregado, registro de operações (ROPA), política de retenção/exclusão automática, DPIA para dados de saúde animal, cláusulas contratuais com Subprocessadores (Supabase, Vercel), incidente de segurança (plano de notificação 48h ANPD).
+
+### 2.c Baixa prioridade (para não esquecer — sem data)
+
+- [ ] **Simplificar SQL para single-clinic real** — remover `clinica_id` de todas as tabelas, dropar tabela `clinicas`, ajustar índices, views e RLS. Hoje o schema (em `docs/sql/`, escrito mas **não aplicado**) tem estrutura multi-clinic; simplificar quando o banco voltar ao escopo.
+- [ ] Banco Supabase (schema, Auth+RLS, migração dos mocks), LGPD, remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`) — ver §2.b.
 
 ## 4. Histórico (detalhe em `docs/CHANGELOG.md`)
 
-- Auth empresarial (Fase 2) · Painel vet + login claro (Fase 5, refeito se preciso após reset da `teste`) · Implantação método do dono (sem `/setup`) · RF-09 laudo **cancelado** (fora de escopo, decisão clínica 2026-09-17).
+- Auth empresarial (Fase 2) · Painel vet + login claro (Fase 5, refeito se preciso após reset da `teste`) · Implantação método do dono (sem `/setup`) · RF-09 laudo **cancelado** (fora de escopo, decisão clínica 2026-09-17) · **RF-10 guia cancelado** (fora de escopo, decisão do dono 2026-11-13).
 
 ## 5. Regras
 
-- Validação: skill `testar-frontend` (`../.github/skills/testar-frontend/SKILL.md`) + navegador (logins 1/2/3, temas).
+- Validação (obrigatória antes de qualquer commit): `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/e2e.mjs` (Chromium; `node tests/e2e.mjs firefox` quando mexer em layout/tema). Screenshots em `/tmp/ai-evidence/`. Teste manual no navegador (logins 1/2/3, temas) continua obrigatório.
+- Teste de regressão: bug corrigido gera `tests/regressao/NN-<slug>.mjs` que falha sem o fix e passa com ele (suíte só cresce).
 - Docs: entrada no topo de `docs/CHANGELOG.md` a cada commit; `AGENTS.md` e `docs/MAPA_DO_SISTEMA.md` sincronizados.
 - Git: `main` estável (só dono mergeia; IA nunca pusha direto); `teste` = única branch de trabalho, cópia da `main` para os itens da §1. Produção = §0.
 - Código: pt-BR, seções numeradas, `TODO [INTEGRAÇÃO SUPABASE]` nos pontos de banco. Não versionar `local/` e `opencode.json`.

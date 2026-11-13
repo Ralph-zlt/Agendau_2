@@ -89,12 +89,11 @@ let tiposVacina = ["Antirrábica", "V8", "V10", "V12", "Tríplice Felina", "Quá
 const TIPOS_VACINA = tiposVacina;
 
 let historicoClinico = [
-    { id: "402", petId: "102", tutorCpf: "222.333.444-55", tipo: "receita", data: "2026-05-12", detalhe: "PRESCRIÇÃO: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." },
-    { id: "403", petId: "101", tutorCpf: "111.222.333-44", tipo: "guia", data: "2026-05-10", detalhe: "GUIA DE ENCAMINHAMENTO: Solicitação de Ecocardiograma Veterinário de rotina." }
+    { id: "402", petId: "102", tutorCpf: "222.333.444-55", tipo: "receita", data: "2026-05-12", detalhe: "PRESCRIÇÃO: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." }
 ];
 
 // O QUE: Anexos do módulo clínico (exames, documentos) — protótipo em memória.
-// PORQUÊ: Área de upload junto ao criar (Receita/Guia); some ao recarregar.
+// PORQUÊ: Área de upload junto ao criar (Receita/Vacina); some ao recarregar.
 // DEMO (mock): Guarda só metadados (nome/tipo/tamanho/data/vínculos).
 // TODO [INTEGRAÇÃO SUPABASE - DB SQL] (storage + tabela documentos):
 //   POST /api/documentos (multipart) → Supabase Storage; metadados em
@@ -163,9 +162,11 @@ const PERMISSOES = {
     ],
     funcionario: [
         // Sem modo clínico (decisão 2026-09-25): sem clinica_* e sem vacina_tipos_*.
-        // Agendamentos só-leitura; mantém ver + relatórios, tutor/pet incluir e tipos de raça.
+        // Agendamentos só-leitura; mantém ver + relatórios, tutor/pet e tipos de raça.
+        // Tutor: incluir/editar/arquivar/excluir (decisão do dono 2026-11-13).
         'raca_tipos_criar', 'raca_tipos_editar', 'raca_tipos_excluir', 'raca_tipos_listar',
-        'relatorios_gerar', 'tutor_incluir', 'pet_incluir'
+        'relatorios_gerar', 'tutor_incluir', 'tutor_editar', 'tutor_arquivar', 'tutor_excluir',
+        'pet_incluir'
     ]
 };
 
@@ -883,14 +884,29 @@ function remarcarAgendamento(id) {
     remarcandoAgendamento = true;
 }
 
+// O QUE: Preenche um select de tutores apenas com tutores ativos.
+// PORQUÊ: centraliza o filtro de arquivados (agendamento, pet e clínico)
+//         e avisa quando todos estão arquivados, em vez de deixar select vazio.
+// Retorna a lista de tutores ativos (vazia = nenhum disponível).
+function preencherSelectTutores(select, placeholder) {
+    const ativos = RegrasTutor.tutoresSelecionaveis(tutores);
+    if (ativos.length === 0) {
+        select.innerHTML = '<option value="">Nenhum tutor ativo — cadastre ou restaure um tutor</option>';
+        return ativos;
+    }
+    select.innerHTML = placeholder ? `<option value="">${placeholder}</option>` : '';
+    ativos.forEach(t => select.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`);
+    return ativos;
+}
+
 function abrirModalAgendamento() {
     if (!temPermissao('consulta_agendar') && !temPermissao('vacinacao_agendar')) {
         showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
         return;
     }
     const selectT = document.getElementById('agend-tutor-select');
-    selectT.innerHTML = '';
-    tutores.forEach(t => selectT.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`);
+    const tutoresAtivos = preencherSelectTutores(selectT, '');
+    if (tutoresAtivos.length === 0) showToast("Nenhum tutor ativo: cadastre ou restaure um tutor.", "error");
     popularPetsDoTutor();
 
     // Reseta o formulário para modo "novo agendamento"
@@ -994,18 +1010,46 @@ function salvarAgendamento(e) {
 // SEÇÃO 7: TUTORES & PETS
 // ==========================================================
 
+// O QUE: Estado da lista de tutores (mostrar ou ocultar arquivados).
+let mostrarTutoresArquivados = false;
+
 function renderizarTutores() {
     const grid = document.getElementById('tutores-grid');
     if (!grid) return;
     grid.innerHTML = '';
 
-    tutores.forEach(t => {
+    const arquivados = tutores.filter(t => RegrasTutor.tutorArquivado(t)).length;
+    const visiveis = mostrarTutoresArquivados ? tutores : RegrasTutor.tutoresSelecionaveis(tutores);
+
+    const btnAlternar = document.getElementById('btn-mostrar-arquivados');
+    if (btnAlternar) {
+        const rotulo = btnAlternar.querySelector('span');
+        if (rotulo) rotulo.innerText = (mostrarTutoresArquivados ? 'Ocultar' : 'Mostrar') + ' arquivados' + (arquivados ? ` (${arquivados})` : '');
+    }
+
+    if (visiveis.length === 0) {
+        grid.innerHTML = `<p class="text-xs text-slate-500 italic">${arquivados ? 'Nenhum tutor ativo — use "Mostrar arquivados".' : 'Nenhum tutor cadastrado.'}</p>`;
+        lucide.createIcons();
+        return;
+    }
+
+    visiveis.forEach(t => {
         const petsDoTutor = pets.filter(p => p.tutorCpf === t.cpf);
+        const arquivado = RegrasTutor.tutorArquivado(t);
         let petsHTML = '';
+
         const btnEditarTutor = temPermissao('tutor_editar')
             ? `<button onclick="abrirModalEditarTutor('${t.cpf}')" class='text-[10px] text-brand-blue font-bold hover:underline flex items-center gap-1'>
                         <i data-lucide='edit-3' class='w-3 h-3'></i> Editar Tutor
                     </button>` : '';
+        const btnArquivar = (!arquivado && temPermissao('tutor_arquivar'))
+            ? `<button onclick="arquivarTutor('${t.cpf}')" class='text-[10px] text-amber-400 font-bold hover:underline'>Arquivar</button>` : '';
+        const btnRestaurar = (arquivado && temPermissao('tutor_arquivar'))
+            ? `<button onclick="restaurarTutor('${t.cpf}')" class='text-[10px] text-brand-lime font-bold hover:underline'>Restaurar</button>` : '';
+        const btnExcluirTutor = (arquivado && temPermissao('tutor_excluir'))
+            ? `<button onclick="excluirTutorDefinitivo('${t.cpf}')" class='text-[10px] text-rose-400 font-bold hover:underline'>Excluir definitivo</button>` : '';
+        const seloArquivado = arquivado
+            ? `<span class='text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30'>Arquivado</span>` : '';
 
         petsDoTutor.forEach(p => {
             const btnEditarPet = temPermissao('pet_editar')
@@ -1027,15 +1071,15 @@ function renderizarTutores() {
         });
 
         grid.innerHTML += `
-            <div class='bg-slate-950 rounded-2xl border border-slate-850 p-5 flex flex-col md:flex-row gap-4'>
+            <div class='bg-slate-950 rounded-2xl border ${arquivado ? 'border-amber-500/30 opacity-80' : 'border-slate-850'} p-5 flex flex-col md:flex-row gap-4'>
                 <div class='md:w-1/3 space-y-2 border-b md:border-b-0 md:border-r border-slate-800 pb-4 md:pb-0 md:pr-4'>
                     <div class='flex items-center justify-between gap-2'>
-                        <h4 class='font-bold text-slate-100 text-base'>${t.nome}</h4>
-                        ${btnEditarTutor}
+                        <h4 class='font-bold text-slate-100 text-base flex items-center gap-2'>${t.nome} ${seloArquivado}</h4>
                     </div>
                     <p class='text-xs text-slate-400'>CPF: ${t.cpf}</p>
                     <p class='text-xs text-slate-400'>Tel: ${t.tel}</p>
                     <p class='text-xs text-slate-400'>${t.endereco}</p>
+                    <div class='flex flex-wrap items-center gap-3 pt-1'>${btnEditarTutor}${btnArquivar}${btnRestaurar}${btnExcluirTutor}</div>
                 </div>
                 <div class='md:w-2/3 space-y-2'>
                     <span class='text-xs font-bold text-slate-400 uppercase'>Pets Vinculados (${petsDoTutor.length})</span>
@@ -1047,6 +1091,50 @@ function renderizarTutores() {
         `;
     });
     lucide.createIcons();
+}
+
+// O QUE: Alterna a exibição de tutores arquivados (soft delete).
+function alternarTutoresArquivados() {
+    mostrarTutoresArquivados = !mostrarTutoresArquivados;
+    renderizarTutores();
+}
+
+// O QUE: Arquiva o tutor — sai de agendamentos e novos vínculos, mantém histórico.
+// PORQUÊ: exclusão definitiva perderia pets/agenda/prontuário (LGPD/retenção).
+// REGRAS: RegrasTutor.podeArquivarTutor (sem agendamento pendente/confirmado).
+function arquivarTutor(cpf) {
+    if (!temPermissao('tutor_arquivar')) { showToast("Acesso restrito.", "error"); return; }
+    const tutor = tutores.find(t => t.cpf === cpf);
+    const regra = RegrasTutor.podeArquivarTutor(tutor, agendamentos);
+    if (!regra.ok) { showToast(regra.motivo, "error"); return; }
+    if (!confirm(`Arquivar ${tutor.nome}?\n\nO tutor deixa de aparecer em novos agendamentos e vínculos; o histórico é mantido.`)) return;
+    tutor.arquivado = true;
+    renderizarTutores();
+    showToast("Tutor arquivado.");
+}
+
+function restaurarTutor(cpf) {
+    if (!temPermissao('tutor_arquivar')) { showToast("Acesso restrito.", "error"); return; }
+    const tutor = tutores.find(t => t.cpf === cpf);
+    if (!tutor) return;
+    tutor.arquivado = false;
+    renderizarTutores();
+    showToast("Tutor restaurado.");
+}
+
+// O QUE: Exclusão definitiva (irreversível) — arquivado e sem vínculos.
+// SEGURANÇA: confirmação digitando o CPF, além do confirm().
+function excluirTutorDefinitivo(cpf) {
+    if (!temPermissao('tutor_excluir')) { showToast("Acesso restrito.", "error"); return; }
+    const tutor = tutores.find(t => t.cpf === cpf);
+    const regra = RegrasTutor.podeExcluirTutor(tutor, { pets, agendamentos, historico: historicoClinico });
+    if (!regra.ok) { showToast(regra.motivo, "error"); return; }
+    if (!confirm(`EXCLUIR DEFINITIVAMENTE ${tutor.nome}?\n\nEsta ação não pode ser desfeita.`)) return;
+    const digitado = prompt(`Para confirmar, digite o CPF do tutor:\n${tutor.cpf}`);
+    if ((digitado || "").trim() !== tutor.cpf) { showToast("Exclusão cancelada: CPF não confere.", "error"); return; }
+    tutores = tutores.filter(t => t.cpf !== tutor.cpf);
+    renderizarTutores();
+    showToast("Tutor excluído definitivamente.");
 }
 
 function abrirModalTutor() { document.getElementById('modal-tutor').classList.remove('hidden'); }
@@ -1129,8 +1217,8 @@ function salvarEdicaoTutor(e) {
 
 function abrirModalPet() {
     const select = document.getElementById('pet-tutor-select');
-    select.innerHTML = '';
-    tutores.forEach(t => select.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`);
+    const ativos = preencherSelectTutores(select, '');
+    if (ativos.length === 0) showToast("Nenhum tutor ativo: restaure ou cadastre um tutor para vincular pets.", "error");
     popularRacasPet('');
     document.getElementById('modal-pet').classList.remove('hidden');
 }
@@ -1233,7 +1321,6 @@ function renderizarHistoricoClinico() {
         const tutor = tutores.find(t => t.cpf === (h.tutorCpf || (pet ? pet.tutorCpf : null)));
         let tipoTagColor = "text-brand-lime";
         let docLabel = "RECEITA";
-        if (h.tipo === 'guia') { tipoTagColor = "text-brand-pink"; docLabel = "GUIA DE ENCAMINHAMENTO"; }
         if (h.tipo === 'vacina') { tipoTagColor = "text-brand-blue"; docLabel = "VACINA" + (h.vacinaTipo ? " — " + h.vacinaTipo.toUpperCase() : ""); }
 
         const btnImprimir = temPermissao('clinica_imprimir')
@@ -1274,8 +1361,7 @@ function prepararNovoDocumentoClinico(tipoDoc) {
 function atualizarLabelDocumento() {
     const tipo = document.getElementById('clinica-tipo').value;
     const label = document.getElementById('clinica-detalhe-label');
-    if (tipo === 'guia') label.innerText = "Instruções e Encaminhamento da Guia";
-    else if (tipo === 'receita') label.innerText = "Prescrição e Posologia de Medicamentos";
+    if (tipo === 'receita') label.innerText = "Prescrição e Posologia de Medicamentos";
     else label.innerText = "Detalhamento / Vacina";
     // Tipo de vacina só aparece no Registro de Imunização
     const bloco = document.getElementById('clinica-vacina-bloco');
@@ -1644,7 +1730,6 @@ function imprimirDocumentoGenerico(id) {
 
     let titulos = {
         receita: "Prescrição Médica Veterinária (Receituário)",
-        guia: "Guia de Encaminhamento Veterinário",
         vacina: "Comprovante de Imunização"
     };
 
@@ -2203,10 +2288,7 @@ function popularTutoresClinicos() {
     const selectT = document.getElementById('clinica-tutor-select');
     if (!selectT) return;
     const atual = selectT.value;
-    selectT.innerHTML = '<option value="">Selecione o tutor (CPF)...</option>';
-    tutores.forEach(t => {
-        selectT.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`;
-    });
+    preencherSelectTutores(selectT, 'Selecione o tutor (CPF)...');
     if (atual) selectT.value = atual;
     filtrarPetsClinicaPorTutor();
 }
