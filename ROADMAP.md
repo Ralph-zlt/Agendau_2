@@ -59,13 +59,19 @@
 - [ ] **Adicionar barra de pesquisa de Tutores** — implementar campo de busca (por nome/CPF/telefone) na listagem de tutores, com debounce e filtro em tempo real.
 - [ ] **Sanitizar `innerHTML` (XSS de protótipo):** nome/CPF/endereço de tutor, pet e detalhes clínicos entram em `innerHTML` sem escape em vários renders. Com dados mock o risco é local; ao ir para banco (pausado) vira XSS armazenado. Correção mínima: helper `escaparHtml()` aplicado nos renders e `onclick` com CPF via atributo `data-*`.
 
-### 2.b Pausados por decisão do dono (2026-11-13) — NÃO executar agora
+### 2.b Banco de dados — EM ANDAMENTO (autorizado pelo dono em 2026-11-13)
 
-> Decisão do dono: o foco volta para o frontend. Banco, migração, hospedagem e
-> LGPD ficam **parados** até nova ordem. Nada de criar projeto, aplicar SQL ou
-> publicar fora do Pages.
+> O dono autorizou subir o Supabase. Plano de 5 fases (A–E) acordado:
+> A = SQL v2 validado localmente · B = criar projeto e aplicar · C = ponte de
+> auth · D = ponte de dados · E = testes integrados + docs.
+> **Fase A concluída em 2026-11-13** (ver `docs/CHANGELOG.md`): migrations
+> `0001_schema`, `0002_seed`, `0003_rls` + `tests/db.mjs` (73 casos de RLS verdes).
+> Hospedagem (Vercel) e LGPD continuam parados até ordem específica.
 
-- [ ] **Integração do banco de dados no Supabase** — schema, Auth + RLS, migração dos mocks atuais. **Bypass permanece para testes** (decisão do dono 2026-11-13): os botões de acesso rápido (`#acessos-teste`) passam a preencher as contas reais de teste em vez de `perfisTestes`; remoção definitiva só depois da homologação.
+- [x] **Fase A — SQL v2 consolidado e validado localmente** — single-clinic (sem `clinicas`/`clinica_id`), sem `vacinacoes`/`forma_farmaceutica`, sem `guia` no enum, `usuarios.id = auth.users.id`, `pet_id` nullable, `historico` editável por admin/vet. Validado em Postgres 17 descartável com matriz de permissões idêntica ao RBAC do `script.js`.
+- [ ] **Fase B — subir o Supabase** — projeto `agendau-2` (org `biblioteca-org`, `sa-east-1`, free), aplicar migrations, criar os 3 usuários de teste via Auth Admin, guardar `publishable` em `dayvet/config.js` e `service_role` fora do repo.
+
+- [ ] **Integração do banco de dados no Supabase (fases C–E)** — ponte de Auth, migração dos mocks e suíte integrada. **Bypass permanece para testes** (decisão do dono 2026-11-13): os botões de acesso rápido (`#acessos-teste`) passam a preencher as contas reais de teste em vez de `perfisTestes`; remoção definitiva só depois da homologação.
 - [ ] **Importação de dados legados** — scripts de migração dos mocks (`localStorage`/`mockData.js`) para tabelas Supabase (tutores, pets, agendamentos, vacinas, anexos, usuários, clínica).
 - [ ] **Escalar para multi-clinic (seguir "receita de bolo" em `docs/levantamento-bd.md`)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
 - [ ] **Hospedagem no Vercel** — configurar projeto, variáveis de ambiente (Supabase URL/anon key, flags de feature), build `npm run build` → `dist/`, preview automático em PRs, domínio customizado.

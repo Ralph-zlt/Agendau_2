@@ -9,6 +9,15 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-13 · (teste) — Fase A: SQL v2 (single-clinic) validado localmente
+**O que:** três migrations novas em `supabase/migrations/` substituem o SQL antigo de `docs/sql/` (que fica só como histórico): `0001_schema.sql` (7 tabelas, IDs/enums/índices/checks/triggers), `0002_seed.sql` (catálogos `vacina_tipos` e `raca_tipos`, idempotente) e `0003_rls.sql` (policies + grants + helpers). Junto entrou `supabase/tests/` (stub de `auth` + matriz de permissões) e o runner `tests/db.mjs`.
+**Por quê:** o SQL de 2026-11-02 não executava (typo `OG.created_at`, `END IF` sem `;`, `INSERT` sem `;`, enum `guia`) e, se executasse, negava todo acesso (`current_setting('request.jwt.claims.cpf')` não existe) e recursava o RLS (`is_admin()` consultando a própria tabela protegida). Decisões do dono: single-clinic, Auth por CPF, projeto novo `agendau-2`, demo continua mock.
+**Onde:** `supabase/migrations/0001_schema.sql`, `0002_seed.sql`, `0003_rls.sql`; `supabase/tests/00_auth_stub.sql`, `10_matriz_rls.sql`; `tests/db.mjs`; docs (`ROADMAP.md` §2.b, `AGENTS.md`, `docs/DB_LEVANTAMENTO.md`).
+**Decisões embutidas:** sem `clinicas`/`clinica_id`; `usuarios.id = auth.users.id` (senha fica no Auth); enum de histórico só `receita`/`vacina`; sem `vacinacoes`/`forma_farmaceutica`; `agendamentos.pet_id` nullable; `historico_clinico` editável/excluível por admin e vet (RLS, sem trigger de imutabilidade); papel lido de `usuarios.role` (não do JWT) por função `SECURITY DEFINER` — sem recursão de policy e sem claim forjável.
+**Validações:** `node tests/db.mjs` em Postgres 17 (`postgres:17-alpine`) — 0001→0003 aplicam com `ON_ERROR_STOP`, seed rodado 2× sem duplicar (10 vacinas / 31 raças), **73 casos de matriz de RLS verdes** (admin/vet/func × SELECT/INSERT/UPDATE/DELETE, anon negado por GRANT, usuário inativo/excluído sem acesso, funcionário não consegue se promover a admin). Suíte do front segue verde (estático, unit 17/17, regressão 2/2, E2E 5 cenários).
+
+---
+
 ## 2026-11-13 · (teste) — Botões de acesso rápido de teste no login
 **O que:** card `#acessos-teste` na tela de login com 3 botões (Admin / Veterinário / Funcionário). Cada um preenche `#login-cpf` e `#login-password` com as credenciais do perfil (`ACESSOS_TESTE` em `script.js`) e escreve o status em `#acessos-teste-status`; o usuário confirma em "Acessar o Painel". O atalho digitado 1/2/3 (`perfisTestes`) continua funcionando.
 **Por quê:** decisão do dono em 2026-11-13 — o bypass **fica durante os testes**, mas precisa ser explícito e de um clique, em vez de exigir adivinhar que digitar `1` loga. Diferente do atalho, os botões passam pelo caminho de login real (`usuariosMock`), então ao ligar o Supabase basta apontar as contas de teste.

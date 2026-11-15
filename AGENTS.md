@@ -29,13 +29,13 @@ ou da professora têm prioridade sobre convenções genéricas.
 
 ## Onde está o código
 - O produto fica em **`dayvet/`**: `index.html` (estrutura), `styles.css` (estilos), `script.js` (lógica). Nada fora dessa pasta é o produto.
-- SPA + Supabase SQL **pausado** (decisão do dono 2026-11-13; decisão original 2026-09-22): hoje e por tempo indeterminado os dados são mock em memória; pontos de migração em `TODO [INTEGRAÇÃO SUPABASE]:` (antes `TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:`). Nada de criar projeto, aplicar SQL ou publicar fora do GitHub Pages.
+- SPA + Supabase **em integração** (autorizado pelo dono em 2026-11-13): o banco ainda NÃO existe na nuvem, mas o schema v2 já está em `supabase/migrations/` (`0001_schema`, `0002_seed`, `0003_rls`) e validado localmente por `node tests/db.mjs`. Os dados seguem mock em memória nos pontos `TODO [INTEGRAÇÃO SUPABASE]:` até a Fase D. Nada de publicar fora do GitHub Pages.
 
 ## Não versionar
 - `local/` (relatórios pessoais de metodologia/commit) e `opencode.json` (config local da ferramenta).
 
 ## Stack
-- HTML/CSS/JS puros + CDNs externas: Tailwind CSS, Lucide (ícones), Chart.js (gráficos), Google Fonts. Sem build e sem servidor; backend SQL via Supabase planejado, **não criado e pausado**. Regras puras de negócio testáveis ficam em `dayvet/regras.js`.
+- HTML/CSS/JS puros + CDNs externas: Tailwind CSS, Lucide (ícones), Chart.js (gráficos), Google Fonts. Sem build e sem servidor; backend SQL via Supabase com schema escrito e validado localmente, **projeto na nuvem ainda não criado** (Fase B). Regras puras de negócio testáveis ficam em `dayvet/regras.js`.
 
 ## RBAC vigente (resumo — detalhe em `docs/MAPA_DO_SISTEMA.md` §3 e `script.js` SEÇÃO 2)
 - `admin` = `*` (tudo, incl. tipos de vacina/raça). `veterinario` = clínico + vacinação total + CRUD tipos de vacina + dashboard sem financeiro. `funcionario` = SEM modo clínico (sem `clinica_*`/`vacina_tipos_*`); agendamentos só-leitura + tutor/pet (inclui `tutor_editar`/`tutor_arquivar`/`tutor_excluir`, decisão 2026-11-13) + tipos de raça. Item 18 (só na `teste`, a mergear) consolidou a parte de vacinas — `main` ainda tem vacina=funcionário.
@@ -49,6 +49,7 @@ node tests/estatico.mjs      # sintaxe, IDs/handlers, blocos, z-index
 node tests/unit/regras.mjs   # regras puras (tabela entrada → saída)
 node tests/e2e.mjs           # Chromium: login 1/2/3, abas, clínico, tutores, mobile
 node tests/e2e.mjs firefox   # quando mexer em layout/tema
+node tests/db.mjs            # migrations + matriz de RLS em Postgres 17 (Docker)
 ```
 
 Correção de bug exige `tests/regressao/NN-<slug>.mjs` (falha sem o fix, passa com ele).
