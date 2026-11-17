@@ -76,6 +76,18 @@ const cenarios = {
         const opcoes = await page.locator("#clinica-tipo option").allInnerTexts();
         opcoes.some(t => /guia/i.test(t)) ? erro("tipo 'guia' ainda no select: " + opcoes.join(" | ")) : ok("select de tipo sem guia");
 
+        // Assinatura do documento clínico: nome e CRMV têm que ser da MESMA pessoa.
+        // Admin não tem CRMV — assina o veterinário de referência (regressão 03).
+        await page.evaluate(() => imprimirDocumentoGenerico(historicoClinico[0].id));
+        await page.waitForTimeout(200);
+        const assinNome = (await page.locator("#doc-vet-nome").innerText()).trim();
+        const assinCrm = (await page.locator("#doc-vet-crmv").innerText()).trim();
+        assinNome === "Dra. Laís" && assinCrm === "CRMV-SP 00000"
+            ? ok("admin: documento assinado pelo vet de referência (nome+CRMV juntos)")
+            : erro(`admin: assinatura incoerente — "${assinNome}" / "${assinCrm}"`);
+        (await visivel(page, "#modal-impressao-documento")) ? ok("modal de impressão abriu") : erro("modal de impressão não abriu");
+        await page.click("#modal-impressao-documento button:has-text('Fechar')").catch(() => {});
+
         await shot(page, "admin-clinica");
         problemas.forEach(p => erro(p));
         await page.close();
@@ -161,6 +173,81 @@ const cenarios = {
         await page.close();
     },
 
+    // Botões de acesso rápido de teste: preenchem CPF + senha e o login real
+    // (não o atalho 1/2/3) autentica cada perfil.
+    async acessos(browser) {
+        const perfis = [
+            { botao: "Admin", usuario: "raphael_dias", nome: "Raphael Dias", nav: "#nav-usuarios", deveVer: true },
+            { botao: "Veterinário", usuario: "lais_vet", nome: "Dra. Laís", nav: "#nav-clinica", deveVer: true },
+            { botao: "Funcionário", usuario: "douglas_funcionario", nome: "Douglas", nav: "#nav-clinica", deveVer: false }
+        ];
+        for (const p of perfis) {
+            const { page, problemas } = await abrirPage(browser);
+            const botao = page.locator("#acessos-teste button").filter({ hasText: p.botao }).first();
+            (await botao.isVisible()) ? ok(`botão "${p.botao}" visível`) : erro(`botão "${p.botao}" não apareceu`);
+            await botao.click();
+
+            const usuarioPreenchido = await page.inputValue("#login-cpf");
+            const senhaPreenchida = await page.inputValue("#login-password");
+            usuarioPreenchido === p.usuario ? ok(`${p.botao}: usuário preenchido`) : erro(`${p.botao}: usuário "${usuarioPreenchido}"`);
+            senhaPreenchida === "Veterin@ria" ? ok(`${p.botao}: senha preenchida`) : erro(`${p.botao}: senha "${senhaPreenchida}"`);
+
+            await page.click("#auth-form button[type=submit]");
+            await page.waitForFunction(
+                () => document.getElementById("login-screen")?.classList.contains("hidden"),
+                null, { timeout: 8000 }
+            );
+            ok(`${p.botao}: login concluído`);
+
+            const viu = await visivel(page, p.nav);
+            viu === p.deveVer ? ok(`${p.botao}: "${p.nav}" ${p.deveVer ? "visível" : "oculto"} como esperado`)
+                : erro(`${p.botao}: "${p.nav}" inesperado (${viu})`);
+
+            problemas.forEach(x => erro(x));
+            await page.close();
+        }
+    },
+
+    // Login aceita usuário, CPF (com/sem máscara) e e-mail; senha errada não entra.
+    async identificadores(browser) {
+        const perfis = [
+            { nome: "Raphael Dias", usuario: "raphael_dias", cpf: "11111111111", mask: "111.111.111-11", email: "raphael.dias@dayvet.com" },
+            { nome: "Dra. Laís", usuario: "lais_vet", cpf: "22222222222", mask: "222.222.222-22", email: "lais.vet@dayvet.com" },
+            { nome: "Douglas", usuario: "douglas_funcionario", cpf: "33333333333", mask: "333.333.333-33", email: "douglas.funcionario@dayvet.com" }
+        ];
+        for (const p of perfis) {
+            for (const [rotulo, identificador] of [
+                ["usuário", p.usuario], ["usuário com maiúsculas", p.usuario.toUpperCase()],
+                ["CPF sem máscara", p.cpf], ["CPF mascarado", p.mask], ["e-mail", p.email]
+            ]) {
+                const { page, problemas } = await abrirPage(browser);
+                await page.fill("#login-cpf", identificador);
+                await page.fill("#login-password", "Veterin@ria");
+                await page.click("#auth-form button[type=submit]");
+                await page.waitForFunction(
+                    () => document.getElementById("login-screen")?.classList.contains("hidden"),
+                    null, { timeout: 8000 }
+                );
+                const nomeNoHeader = await page.locator("#header-user-name").innerText();
+                nomeNoHeader === p.nome
+                    ? ok(`${p.nome} por ${rotulo} ("${identificador}")`)
+                    : erro(`${p.nome} por ${rotulo}: header mostrou "${nomeNoHeader}"`);
+                problemas.forEach(x => erro(x));
+                await page.close();
+            }
+        }
+
+        // Senha errada: continua na tela de login
+        const { page } = await abrirPage(browser);
+        await page.fill("#login-cpf", "raphael_dias");
+        await page.fill("#login-password", "senha-errada");
+        await page.click("#auth-form button[type=submit]");
+        await page.waitForTimeout(600);
+        (await page.locator("#login-screen").isVisible())
+            ? ok("senha errada mantém na tela de login") : erro("senha errada logou!");
+        await page.close();
+    },
+
     // Admin em viewport mobile (390x844).
     async mobile(browser) {
         const { page, problemas } = await abrirPage(browser, { mobile: true });
@@ -179,7 +266,7 @@ const cenarios = {
 const alvo = process.argv[2] || "todos";
 const navegador = alvo === "firefox" ? "firefox" : "chromium";
 const tipo = navegador === "firefox" ? firefox : chromium;
-const lista = alvo === "todos" ? ["admin", "vet", "func", "mobile"]
+const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mobile"]
     : alvo === "firefox" ? ["admin", "func"]
     : [alvo];
 

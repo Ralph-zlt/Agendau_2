@@ -68,8 +68,76 @@
         return (tutores || []).filter(t => !tutorArquivado(t));
     }
 
-    const api = { tutorArquivado, agendamentosAtivosDoTutor, podeArquivarTutor, podeExcluirTutor, tutoresSelecionaveis };
+    // ======================================================
+    // LOGIN — identificação por usuário, CPF ou e-mail
+    // DECISÃO (dono, 2026-11-17): aceitar usuário (`raphael_dias`),
+    // CPF (com ou sem máscara) e e-mail no mesmo campo. A comparação
+    // é normalizada: CPF vira só dígitos; o resto vira minúsculas.
+    // ======================================================
+
+    function somenteDigitos(valor) {
+        return String(valor == null ? "" : valor).replace(/\D/g, "");
+    }
+
+    // Parece CPF? 11 dígitos e nada além de dígito, ponto, hífen ou espaço.
+    function pareceCpf(entrada) {
+        const bruto = String(entrada == null ? "" : entrada).trim();
+        if (!bruto) return false;
+        if (!/^[\d.\-\s]+$/.test(bruto)) return false;
+        return somenteDigitos(bruto).length === 11;
+    }
+
+    // Chave de comparação do que foi digitado.
+    function chaveLogin(entrada) {
+        const bruto = String(entrada == null ? "" : entrada).trim();
+        if (!bruto) return "";
+        return pareceCpf(bruto) ? somenteDigitos(bruto) : bruto.toLowerCase();
+    }
+
+    // Acha o usuário pelo identificador digitado (usuário, CPF ou e-mail).
+    function encontraUsuario(usuarios, entrada) {
+        const chave = chaveLogin(entrada);
+        if (!chave) return null;
+        return (usuarios || []).find(u => {
+            if (!u) return false;
+            const usuario = String(u.username || "").toLowerCase();
+            const email = String(u.email || "").toLowerCase();
+            return usuario === chave || email === chave || somenteDigitos(u.cpf) === chave;
+        }) || null;
+    }
+
+    // Formata CPF para exibição (11 dígitos → 000.000.000-00); devolve o
+    // original quando não for CPF, para não estragar usuário/e-mail.
+    function formatarCpf(entrada) {
+        if (!pareceCpf(entrada)) return String(entrada == null ? "" : entrada);
+        const d = somenteDigitos(entrada);
+        return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+    }
+
+    const apiLogin = { somenteDigitos, pareceCpf, chaveLogin, encontraUsuario, formatarCpf };
+
+    // ======================================================
+    // ASSINATURA DE DOCUMENTO CLÍNICO
+    // Nome e CRMV andam JUNTOS: quem assina é o veterinário.
+    // Admin/funcionário (sem CRMV) não pode assinar documento
+    // clínico — nesse caso usa-se o vet de referência da clínica.
+    // ======================================================
+    function assinaturaDocumento(usuarioLogado, vetReferencia) {
+        const ref = vetReferencia || { nome: "—", crm: "—" };
+        const logado = usuarioLogado || {};
+        const temRegistro = String(logado.crm || "").trim() !== "";
+        return {
+            nome: temRegistro ? logado.nome : ref.nome,
+            crm: temRegistro ? logado.crm : ref.crm
+        };
+    }
+
+    const api = {
+        tutorArquivado, agendamentosAtivosDoTutor, podeArquivarTutor, podeExcluirTutor, tutoresSelecionaveis,
+        ...apiLogin, assinaturaDocumento
+    };
 
     if (typeof module !== "undefined" && module.exports) module.exports = api;
     raiz.RegrasTutor = api;
+    raiz.RegrasLogin = apiLogin;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -2,7 +2,7 @@
 
 > Documento de levantamento **sem código**. Define entidades, mapeia TODOs existentes e lista opções de persistência.
 > Última atualização: 2026-11-13.
-> Status: **Decisão tomada: SQL via Supabase** — porém **PAUSADA por decisão do dono em 2026-11-13**; projeto Supabase não criado, nada aplicado e o código segue 100% mock.
+> Status: **em integração (autorizado em 2026-11-13).** Schema v2 escrito e **validado localmente** em `supabase/migrations/` (`0001_schema`, `0002_seed`, `0003_rls`) — Postgres 17 descartável, `tests/db.mjs` com 68 casos de RLS verdes. **Nada aplicado na nuvem:** o projeto Supabase ainda não existe (Fase B) e o código segue 100% mock.
 > **Nota (2026-11-13):** o SQL já está **escrito** em `docs/sql/` (`schema.sql`, `seeds.sql`, `rls-policies.sql`, `dayvet-completo.sql`, gerado em 2026-11-02) e a receita de migração em `docs/levantamento-bd.md`. Escrito ≠ aplicado: nenhum projeto Supabase existe e nenhum script rodou. Este documento segue sendo o levantamento conceitual; os `.sql` refletem a estrutura multi-clinic proposta.
 > **Nota (2026-09-17):** Laudos foram removidos do escopo por decisão da clínica. Não criar tabela nem endpoint para laudo.
 > **Nota (2026-11-13):** Guias de encaminhamento (RF-10) foram removidas do escopo por decisão do dono. O enum de `historico_clinico` fica `receita` e `vacina`.
