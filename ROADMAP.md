@@ -48,11 +48,11 @@
 
 ## 2. Alta prioridade (próximos — lembrar ao mexer no sistema)
 
-- [x] Refinamento modo claro/paleta + contrastes WCAG — parcial 2026-09-25 (`--texto-fraco` → AA; demais textos AA-OK). Refinamento amplo segue aberto.
+- [ ] **Refinamento fino da paleta do modo claro** — contrastes já passam AA (2026-09-25, `--texto-fraco` → AA). A escolha estética da paleta fica **adiada por decisão do dono (2026-11-17)**: o projeto segue sem ela; retomar se o dono pedir.
 - [x] **Login no modo claro (observação do dono, 2026-09-24):** entregue 2026-09-25 — `#login-cabecalho` com gradiente claro explícito; paw-print lima fixo `#ccff00` nos 2 temas.
 - [x] RF-02 restante: tel 11 dígitos + máx 10 pets por tutor — entregue 2026-09-25.
 - [x] RF-05: janela 07h–19h no agendamento — entregue 2026-09-25.
-- [ ] **RF-08 real (pós-banco):** CRMV do veterinário logado + assinatura. Prep ilustrativo entregue (usa `currentUser.crm` com fallback mock).
+- [ ] **RF-08 real (bloqueado pela Fase B):** CRMV do veterinário logado + assinatura vindos do banco. Prep entregue: `currentUser.crm` já é preenchido no login (hoje mock — Laís usa `CRMV-SP 00000`), com fallback no array `administradores`.
 - [x] **Corrigir: Admin não consegue excluir Tutor** — entregue no item 20 (13/11/2026): exclusão passou a existir no frontend (arquivar → excluir definitivo, sem depender de RLS porque não há banco ainda).
 - [x] **Remover "Incluir Guia" do sistema** — entregue no item 19 (13/11/2026): removida de frontend, mocks e relatórios; RF-10 marcado FORA DE ESCOPO no docx.
 - [ ] **Excluir Pet** — implementar exclusão de pet (soft delete via `deleted_at` na tabela `pets`), com confirmação e validação de dependências (agendamentos, vacinações, histórico clínico).
@@ -69,7 +69,7 @@
 > Hospedagem (Vercel) e LGPD continuam parados até ordem específica.
 
 - [x] **Fase A — SQL v2 consolidado e validado localmente** — single-clinic (sem `clinicas`/`clinica_id`), sem `vacinacoes`/`forma_farmaceutica`, sem `guia` no enum, `usuarios.id = auth.users.id`, `pet_id` nullable, `historico` editável por admin/vet. Validado em Postgres 17 descartável com matriz de permissões idêntica ao RBAC do `script.js`.
-- [ ] **Fase B — subir o Supabase** — projeto `agendau-2` (org `biblioteca-org`, `sa-east-1`, free), aplicar migrations, criar os 3 usuários de teste via Auth Admin, guardar `publishable` em `dayvet/config.js` e `service_role` fora do repo.
+- [ ] **Fase B — subir o Supabase (PARADA por decisão do dono em 2026-11-17)** — quando voltar: **organização nova e dedicada `dayvet-org`** (não usar `biblioteca-org`, que é de outro produto), projeto `agendau-2`, `sa-east-1`, free; aplicar migrations, criar os 3 usuários de teste via Auth Admin, guardar `publishable` em `dayvet/config.js` e `service_role` fora do repo. **Até lá a página roda 100% com dados mockados.**
 
 - [ ] **Integração do banco de dados no Supabase (fases C–E)** — ponte de Auth, migração dos mocks e suíte integrada. **Bypass permanece para testes** (decisão do dono 2026-11-13): os botões de acesso rápido (`#acessos-teste`) passam a preencher as contas reais de teste em vez de `perfisTestes`; remoção definitiva só depois da homologação.
 - [ ] **Importação de dados legados** — scripts de migração dos mocks (`localStorage`/`mockData.js`) para tabelas Supabase (tutores, pets, agendamentos, vacinas, anexos, usuários, clínica).
@@ -79,7 +79,7 @@
 
 ### 2.c Baixa prioridade (para não esquecer — sem data)
 
-- [ ] **Simplificar SQL para single-clinic real** — remover `clinica_id` de todas as tabelas, dropar tabela `clinicas`, ajustar índices, views e RLS. Hoje o schema (em `docs/sql/`, escrito mas **não aplicado**) tem estrutura multi-clinic; simplificar quando o banco voltar ao escopo.
+- [x] **Simplificar SQL para single-clinic real** — entregue na Fase A (2026-11-13): `supabase/migrations/0001_schema.sql` não tem `clinicas` nem `clinica_id`; `docs/sql/` fica só como histórico. Validado por `node tests/db.mjs`.
 - [ ] Banco Supabase (schema, Auth+RLS, migração dos mocks), LGPD, remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`) — ver §2.b.
 
 ## 4. Histórico (detalhe em `docs/CHANGELOG.md`)

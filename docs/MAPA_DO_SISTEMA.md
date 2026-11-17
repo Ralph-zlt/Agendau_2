@@ -39,7 +39,15 @@
 > **Decisão do dono (2026-11-13):** o bypass **fica durante os testes**. Ele foi tornado explícito: o card `#acessos-teste` na tela de login tem 3 botões (Admin / Veterinário / Funcionário) que **preenchem CPF + senha** e deixam o usuário confirmar em "Acessar o Painel" (`preencherAcessoTeste()` → `ACESSOS_TESTE`). O atalho digitado 1/2/3 continua funcionando.
 
 - **Login por CPF ou e-mail + senha** — campo aceita ambos; erro sempre genérico "Credenciais inválidas" (não revela existência de conta).
-- **Usuários de teste**: botões de acesso rápido em `#acessos-teste` preenchem — Admin `111.111.111-11`/`1` · Veterinário `333.333.333-33`/`2` · Funcionário `444.444.444-44`/`3` (constante `ACESSOS_TESTE` em `script.js`). O preenchimento passa pelo login real (`usuariosMock`) e não pelo atalho; digitar `1`/`2`/`3` no campo CPF ainda usa o bypass `perfisTestes`. `mustChange:false` p/ os 3 — ver alerta em `AGENTS.md`; em produção `mustChange=true`.
+- **Usuários de teste** (decisão do dono 2026-11-17): o campo de login aceita **usuário, CPF (com/sem máscara) ou e-mail**, comparados pela regra pura `RegrasLogin` de `dayvet/regras.js`:
+
+| Perfil | Usuário | Senha | CPF | CRM |
+|---|---|---|---|---|
+| Admin — Raphael Dias | `raphael_dias` | `Veterin@ria` | `111.111.111-11` | — |
+| Veterinário — Dra. Laís | `lais_vet` | `Veterin@ria` | `222.222.222-22` | `CRMV-SP 00000` |
+| Funcionário — Douglas | `douglas_funcionario` | `Veterin@ria` | `333.333.333-33` | — |
+
+  Os botões de `#acessos-teste` preenchem **usuário + senha**; digitar `1`/`2`/`3` ainda usa o bypass `perfisTestes`. `mustChange:false` p/ os 3 — ver alerta em `AGENTS.md`; em produção `mustChange=true`. Credenciais também em `local/ACESSOS_TESTE.md` (fora do Git).
 - **Primeiro acesso (mustChange=true)**: usuários 2 e 3 são obrigados a trocar a senha antes de entrar. Política: 8+ chars, 1 maiúscula, 1 número, 1 especial. Indicadores visuais em tempo real. Mock: flag reseta ao recarregar (sem banco).
 - **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
 - **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
@@ -59,7 +67,7 @@
 | 5 · NAVEGAÇÃO E TABS | ~423 | `switchTab` (guards RBAC, incl. clínica↔funcionário), `atualizarPermissoesNavegacao`, `atualizarDashboardPorPerfil` |
 | 6 · AGENDAMENTOS | ~541 | CRUD/status + `vetId` (dono do atendimento); seções empilhadas Ativos (crescente) + Expirados (`#expirados-table-body`, decrescente, grupos "Últimos 7 dias"/"Este mês"/por mês via `grupoExpirado`); Expirados colapsado (`expiradosExpandido`, `#btn-expandir-expirados`) + pesquisa por selects mês/ano (`#pesquisa-mes-sel`, `#pesquisa-ano-sel`, só leitura p/ todos); mocks com datas relativas (`isoDeslocado`); Concluir, Remarcar (volta pendente), Nova consulta (de concluído), Editar troca data/hora; janela 07h–19h (RF-05); funcionário só-leitura |
 | 7 · TUTORES & PETS | ~991 | CRUD de tutores e pets (tutor com `arquivado`: arquivar/restaurar/excluir definitivo; exclusão bloqueada com pets/agenda/histórico; arquivado some dos dropdowns e da lista padrão), dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`); pet com espécie/raça/sexo em selects (`ESPECIES_PET`, `RACAS_POR_ESPECIE` + `popularRacasPet`, `SEXOS_PET`) + peso kg opcional; card `#racas-card-gerenciar` + `#modal-tipos-raca` |
-| 8 · MÓDULO CLÍNICO | ~1219 | Histórico clínico: **receita e vacina** + impressão (**laudo FORA DE ESCOPO** 2026-09-17; **guia FORA DE ESCOPO** 2026-11-13); CRUD de tipos de vacina admin/vet (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`, item 18); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo (CRMV do logado com fallback mock) |
+| 8 · MÓDULO CLÍNICO | ~1219 | Histórico clínico: **receita e vacina** + impressão (**laudo FORA DE ESCOPO** 2026-09-17; **guia FORA DE ESCOPO** 2026-11-13); CRUD de tipos de vacina admin/vet (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`, item 18); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo — assinatura por `RegrasTutor.assinaturaDocumento`: **nome e CRMV sempre da mesma pessoa**; admin/funcionário (sem CRMV) não assina, assina o vet de referência (regressão 03) |
 | 9 · RELATÓRIOS | ~1672 | Relatórios de serviços, tutor e período |
 | 10 · USUÁRIOS & PERMISSÕES | ~1870 | Gestão de logins mock (CRUD simulado) |
 | 11 · GRÁFICOS (Chart.js) | ~2232 | `financeChart` (receita, admin) + `consultasChart` (barras/hora hoje do vet) + `DADOS_FATURAMENTO`/`atualizarPeriodoFaturamento` |

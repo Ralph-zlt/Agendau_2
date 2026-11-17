@@ -25,7 +25,7 @@
 // módulo clínico). Futuramente: tabela `tutores` com PK em `cpf`.
 // via id. Futuramente: GET /api/profissional/:id
 let administradores = [
-    { id: "admin1", nome: "Dr. Douglas Ferreira", cpf: "111.111.111-11", profissao: "veterinario", crm: "CRM-SP 45678", crmValidade: "2029-10-12", senha: "admin" }
+    { id: "u2", nome: "Dra. Laís", cpf: "222.222.222-22", profissao: "veterinario", crm: "CRMV-SP 00000", crmValidade: "2029-12-31", senha: "Veterin@ria" }
 ];
 
 let tutores = [
@@ -111,18 +111,18 @@ let anexosClinicos = [];
 //   criadoPor UUID FK, criadoEm TIMESTAMP);
 //   Senhas armazenadas com bcrypt; LGPD exige minimização de dados.
 let usuariosMock = [
-    { id: 'u1', nome: 'Dr. Douglas Ferreira', cpf: '111.111.111-11', email: 'douglas@dayvet.com', role: 'admin', password_demo: '1', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
+    { id: 'u1', username: 'raphael_dias', nome: 'Raphael Dias', cpf: '111.111.111-11', email: 'raphael.dias@dayvet.com', role: 'admin', password_demo: 'Veterin@ria', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
     // mustChange: true — primeiro acesso obrigatório: usuários criados pelo sistema devem
     // definir senha forte (8+ chars, 1 maiúscula, 1 número, 1 especial) antes de entrar.
     // DEMO (mock): flag reseta a cada F5 pois não há banco. Comportamento esperado e documentado.
     // TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users): mustChange persistido no banco; após troca → false permanente.
     // CONTAS TESTE 1/2/3: bypass troca p/ prototipação — REMOVER EM PRODUÇÃO
     // TODO [SECURITY]: remover bypass demo antes da produção
-    { id: 'u2', nome: 'Dr. Carlos Silva', cpf: '333.333.333-33', email: 'carlos@dayvet.com', role: 'veterinario', password_demo: '2', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
-    { id: 'u3', nome: 'Lucas Atendente', cpf: '444.444.444-44', email: 'lucas@dayvet.com', role: 'funcionario', password_demo: '3', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' }
+    { id: 'u2', username: 'lais_vet', nome: 'Dra. Laís', cpf: '222.222.222-22', email: 'lais.vet@dayvet.com', role: 'veterinario', crm: 'CRMV-SP 00000', password_demo: 'Veterin@ria', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
+    { id: 'u3', username: 'douglas_funcionario', nome: 'Douglas', cpf: '333.333.333-33', email: 'douglas.funcionario@dayvet.com', role: 'funcionario', password_demo: 'Veterin@ria', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' }
 ];
 
-let currentUser = { id: "1", nome: "Dr. Douglas Ferreira", role: "admin", profissao: "admin" };
+let currentUser = { id: "u1", username: "raphael_dias", nome: "Raphael Dias", role: "admin", profissao: "admin" };
 let currentRole = 'admin';
 let configRestricao = "comercial";
 let filtroAgendamentosStatus = "todos";
@@ -196,17 +196,17 @@ function temPermissao(acao) {
 //   na tabela `users` e valida bcrypt. Este mapa é exclusivo do protótipo.
 // TODO [SECURITY]: remover bypass demo antes da produção
 const perfisTestes = {
-    "1":   { id: "u1", nome: "Dr. Douglas Ferreira", role: "admin", profissao: "admin", password_demo: "1" },
-    "111": { id: "u1", nome: "Dr. Douglas Ferreira", role: "admin", profissao: "admin", password_demo: "1" },
-    "2":   { id: "u2", nome: "Dr. Carlos Silva", role: "veterinario", profissao: "veterinario", crm: "CRM-SP 12345", password_demo: "2" },
-    "222": { id: "u2", nome: "Dr. Carlos Silva", role: "veterinario", profissao: "veterinario", crm: "CRM-SP 12345", password_demo: "2" },
-    "3":   { id: "u3", nome: "Lucas Atendente", role: "funcionario", profissao: "funcionario", password_demo: "3" },
-    "333": { id: "u3", nome: "Lucas Atendente", role: "funcionario", profissao: "funcionario", password_demo: "3" }
+    "1":   { id: "u1", username: "raphael_dias", nome: "Raphael Dias", role: "admin", profissao: "admin", password_demo: "Veterin@ria" },
+    "111": { id: "u1", username: "raphael_dias", nome: "Raphael Dias", role: "admin", profissao: "admin", password_demo: "Veterin@ria" },
+    "2":   { id: "u2", username: "lais_vet", nome: "Dra. Laís", role: "veterinario", profissao: "veterinario", crm: "CRMV-SP 00000", password_demo: "Veterin@ria" },
+    "222": { id: "u2", username: "lais_vet", nome: "Dra. Laís", role: "veterinario", profissao: "veterinario", crm: "CRMV-SP 00000", password_demo: "Veterin@ria" },
+    "3":   { id: "u3", username: "douglas_funcionario", nome: "Douglas", role: "funcionario", profissao: "funcionario", password_demo: "Veterin@ria" },
+    "333": { id: "u3", username: "douglas_funcionario", nome: "Douglas", role: "funcionario", profissao: "funcionario", password_demo: "Veterin@ria" }
 };
 
-// O QUE: Handler de login — aceita CPF (atalho demo 1/2/3) ou CPF/email + senha.
+// O QUE: Handler de login — aceita usuário, CPF (atalho demo 1/2/3) ou e-mail + senha.
 // PORQUÊ: Fluxo unificado: atalhos demo bypassam senha para teste rápido;
-//   login real busca em usuariosMock por CPF ou email, valida password_demo.
+//   login real busca em usuariosMock por usuário/CPF/e-mail, valida password_demo.
 //   Erro único "Credenciais inválidas" para não revelar existência de contas.
 // DEMO (mock): Senhas são password_demo em texto plano; no backend seria bcrypt.
 // TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
@@ -238,10 +238,9 @@ function handleAuthSubmit(e) {
         return;
     }
 
-    // Login real: busca por CPF (formato completo) ou e-mail em usuariosMock
-    const user = usuariosMock.find(u =>
-        u.cpf === input || u.email.toLowerCase() === input.toLowerCase()
-    );
+    // Login real: usuário (`raphael_dias`), CPF (com ou sem máscara) ou e-mail.
+    // A comparação normalizada vive em `regras.js` (RegrasLogin), testada em node.
+    const user = RegrasLogin.encontraUsuario(usuariosMock, input);
 
     // Validação: erro único sem revelar se usuário existe, senha errada ou inativo
     if (!user || user.password_demo !== senha || !user.active) {
@@ -256,7 +255,14 @@ function handleAuthSubmit(e) {
         return;
     }
 
-    const userObj = { id: user.id, nome: user.nome, role: user.role, profissao: user.role };
+    const userObj = {
+        id: user.id,
+        username: user.username || '',
+        nome: user.nome,
+        role: user.role,
+        profissao: user.role,
+        crm: user.crm || ''
+    };
     realizarLogin(userObj, user.role);
 }
 
@@ -292,9 +298,9 @@ const CPF_DEMO_POR_ROLE = { admin: '1', veterinario: '2', funcionario: '3' };
 //   basta apontar aqui as contas de teste reais — o botão deixa de ser bypass.
 // TODO [SECURITY]: remover o bloco de acesso rápido antes da produção.
 const ACESSOS_TESTE = {
-    admin:       { rotulo: 'Admin',       cpf: '111.111.111-11', senha: '1' },
-    veterinario: { rotulo: 'Veterinário', cpf: '333.333.333-33', senha: '2' },
-    funcionario: { rotulo: 'Funcionário', cpf: '444.444.444-44', senha: '3' }
+    admin:       { rotulo: 'Admin',       usuario: 'raphael_dias',        cpf: '111.111.111-11', senha: 'Veterin@ria' },
+    veterinario: { rotulo: 'Veterinário', usuario: 'lais_vet',            cpf: '222.222.222-22', senha: 'Veterin@ria' },
+    funcionario: { rotulo: 'Funcionário', usuario: 'douglas_funcionario', cpf: '333.333.333-33', senha: 'Veterin@ria' }
 };
 
 // O QUE: Preenche CPF + senha do perfil clicado (não envia o formulário).
@@ -309,7 +315,7 @@ function preencherAcessoTeste(role) {
     const campoSenha = document.getElementById('login-password');
     if (!campoCpf || !campoSenha) return;
 
-    campoCpf.value = acesso.cpf;
+    campoCpf.value = acesso.usuario;
     campoSenha.value = acesso.senha;
 
     // Fecha a lista de sugestões para não cobrir o botão de acesso.
@@ -317,7 +323,7 @@ function preencherAcessoTeste(role) {
     if (box) { box.classList.add('hidden'); box.innerHTML = ''; }
 
     const status = document.getElementById('acessos-teste-status');
-    if (status) status.textContent = `Preenchido: ${acesso.rotulo} (${acesso.cpf}). Clique em "Acessar o Painel".`;
+    if (status) status.textContent = `Preenchido: ${acesso.rotulo} — usuário ${acesso.usuario} (CPF ${acesso.cpf}). Clique em "Acessar o Painel".`;
 
     document.getElementById('auth-form')?.querySelector('button[type=submit]')?.focus();
 }
@@ -1782,9 +1788,12 @@ function imprimirDocumentoGenerico(id) {
     // PREP pós-banco: prefere CRMV do veterinário logado (currentUser.crm) com fallback no mock.
     // TODO [INTEGRAÇÃO SUPABASE - DB SQL]: buscar nome+CRMV do veterinário
     //   logado (users JOIN profissional) + assinatura digital (pós-banco/LGPD).
+    // Nome e CRMV andam juntos: admin/funcionário sem CRMV não assina documento
+    // clínico — nesse caso assina o veterinário de referência (regra pura testada).
     const vetRef = (administradores && administradores[0]) || { nome: '—', crm: '—' };
-    const vetNome = (currentUser && currentUser.nome) || vetRef.nome;
-    const vetCrm = (currentUser && currentUser.crm) || vetRef.crm;
+    const assinatura = RegrasTutor.assinaturaDocumento(currentUser, vetRef);
+    const vetNome = assinatura.nome;
+    const vetCrm = assinatura.crm;
     document.getElementById('doc-vet-nome').innerText = vetNome;
     document.getElementById('doc-vet-crmv').innerText = vetCrm;
     document.getElementById('doc-assinatura-nome').innerText = vetNome;
@@ -2153,7 +2162,7 @@ function recuperarSenhaProximo() {
     const identifier = document.getElementById('recuperar-cpf').value.trim();
 
     if (!identifier) {
-        showToast("Informe seu CPF ou e-mail.", "error");
+        showToast("Informe seu usuário, CPF ou e-mail.", "error");
         return;
     }
 
@@ -2195,10 +2204,8 @@ function recuperarSenhaConfirmar() {
         return;
     }
 
-    // Busca usuario por CPF ou email para atualizar senha
-    const user = usuariosMock.find(u =>
-        u.cpf === identifier || u.email.toLowerCase() === identifier.toLowerCase()
-    );
+    // Busca usuário por usuário/CPF/e-mail para atualizar a senha (mesma regra do login)
+    const user = RegrasLogin.encontraUsuario(usuariosMock, identifier);
 
     // Se usuario nao existe no mock, apenas mostra sucesso (demo)
     if (user) {
