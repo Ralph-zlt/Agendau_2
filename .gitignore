@@ -3,3 +3,6 @@
 local/
 opencode.json
 .DS_Store
+
+# Estado local do CLI do Supabase (link, pooler, versoes) — nao versionar
+supabase/.temp/
