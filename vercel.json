@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "rm -rf dist && mkdir -p dist/dayvet && cp site/index.html dist/index.html && cp dayvet/index.html dayvet/styles.css dayvet/regras.js dayvet/script.js dayvet/config.js dist/dayvet/",
+  "outputDirectory": "dist",
+  "framework": null,
+  "cleanUrls": true,
+  "trailingSlash": false
+}
