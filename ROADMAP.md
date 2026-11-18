@@ -66,15 +66,17 @@
 > auth · D = ponte de dados · E = testes integrados + docs.
 > **Fase A concluída em 2026-11-13** (ver `docs/CHANGELOG.md`): migrations
 > `0001_schema`, `0002_seed`, `0003_rls` + `tests/db.mjs` (73 casos de RLS verdes).
-> Hospedagem (Vercel) e LGPD continuam parados até ordem específica.
+> **Fase B concluída em 2026-11-18**: banco na nuvem, RLS validada com tokens
+> reais e site publicado na Vercel. LGPD segue parada até ordem específica.
 
 - [x] **Fase A — SQL v2 consolidado e validado localmente** — single-clinic (sem `clinicas`/`clinica_id`), sem `vacinacoes`/`forma_farmaceutica`, sem `guia` no enum, `usuarios.id = auth.users.id`, `pet_id` nullable, `historico` editável por admin/vet. Validado em Postgres 17 descartável com matriz de permissões idêntica ao RBAC do `script.js`.
-- [ ] **Fase B — subir o Supabase (PARADA por decisão do dono em 2026-11-17)** — quando voltar: **organização nova e dedicada `dayvet-org`** (não usar `biblioteca-org`, que é de outro produto), projeto `agendau-2`, `sa-east-1`, free; aplicar migrations, criar os 3 usuários de teste via Auth Admin, guardar `publishable` em `dayvet/config.js` e `service_role` fora do repo. **Até lá a página roda 100% com dados mockados.**
+- [x] **Fase B — Supabase no ar (concluída em 2026-11-18)** — org `dayvet-org` (`xgtbjxhdtjnohiurbqzu`) + projeto `agendau-2` (`dkdvhstjnverofgzwzne`) em `sa-east-1`, free; migrations `0001..0003` aplicadas; 3 perfis no Auth Admin com claims `authenticated` e linha em `public.usuarios`; RLS conferida na nuvem (7 tabelas, 29 policies, `anon` sem GRANT e 401, funcionário/vet 403 ao criar usuário, **vet não exclui tutor**); `dayvet/config.js` com URL + chave `anon`; `service_role` em `~/.supabase/agendau-keys.env` (600), fora do Git. **O front continua 100% mock.**
+- [ ] **Integração Git da Vercel (bloqueada — depende do dono)** — todo push na `main` falha com "commit author doesn't have permission to create deployments". Falta adicionar a **Login Connection** do GitHub na conta Vercel (`vercel.com/accounts`). Enquanto isso, publicar com `./scripts/deploy-vercel.sh` (artefato pré-construído).
 
 - [ ] **Integração do banco de dados no Supabase (fases C–E)** — ponte de Auth, migração dos mocks e suíte integrada. **Bypass permanece para testes** (decisão do dono 2026-11-13): os botões de acesso rápido (`#acessos-teste`) passam a preencher as contas reais de teste em vez de `perfisTestes`; remoção definitiva só depois da homologação.
 - [ ] **Importação de dados legados** — scripts de migração dos mocks (`localStorage`/`mockData.js`) para tabelas Supabase (tutores, pets, agendamentos, vacinas, anexos, usuários, clínica).
 - [ ] **Escalar para multi-clinic (seguir "receita de bolo" em `docs/levantamento-bd.md`)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
-- [ ] **Hospedagem no Vercel** — configurar projeto, variáveis de ambiente (Supabase URL/anon key, flags de feature), build `npm run build` → `dist/`, preview automático em PRs, domínio customizado.
+- [x] **Hospedagem no Vercel (parcial, 2026-11-18)** — projeto `agendau-2` criado, produção em `https://agendau-2.vercel.app` (alias estável) e `node tests/publicado.mjs` 15/15. Feito **sem** flags de feature e sem preview por PR, porque a integração Git está bloqueada. Pendente quando a conexão existir: variáveis por ambiente, preview automático em PRs e domínio customizado.
 - [ ] **Conformidade total com a LGPD (Lei 13.709/2018)** — mapeamento de dados pessoais/sensíveis, base legal por tratamento, consentimento granular (tutor/pet/agendamento), direitos do titular (acesso, retificação, exclusão, portabilidade), DPO/encarregado, registro de operações (ROPA), política de retenção/exclusão automática, DPIA para dados de saúde animal, cláusulas contratuais com Subprocessadores (Supabase, Vercel), incidente de segurança (plano de notificação 48h ANPD).
 
 ### 2.c Baixa prioridade (para não esquecer — sem data)

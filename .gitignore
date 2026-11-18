@@ -6,3 +6,5 @@ opencode.json
 
 # Estado local do CLI do Supabase (link, pooler, versoes) — nao versionar
 supabase/.temp/
+.vercel
+.env*
