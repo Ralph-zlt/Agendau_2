@@ -9,6 +9,13 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-23 · (main, deploy pendente) — Conclusões visíveis fora do mês atual
+**Causa confirmada:** leitura autenticada somente de consulta encontrou 3 agendamentos `concluido` em dezembro/2026 e 1 cancelado em novembro. O histórico e o dashboard iniciavam em novembro; o painel estava correto ao agrupar valores pela data agendada, mas o filtro inicial do histórico ocultava os concluídos de dezembro. Dois ciclos de login/logout/login na produção também funcionaram; nenhum dado real foi alterado.
+**O que:** histórico inicia em "Todos os meses/anos", mantém concluídos de qualquer data visíveis no estado recolhido e identifica datas futuras sem chamá-las de últimos 7 dias. O dashboard explica que valores seguem a data agendada; selecionar dezembro exibe os valores concluídos daquele mês.
+**Onde:** `dayvet/index.html`, `dayvet/script.js`, `tests/e2e.mjs`, `tests/regressao/07-consistencia-dashboard-historico.mjs`, `tests/regressao/09-conclusao-persiste-no-historico-e-dashboard.mjs`, `tests/regressao/10-login-retorno-apos-logout.mjs`, `docs/MAPA_DO_SISTEMA.md`, `AGENTS.md`.
+**Validação:** estático 12/12, regras 42/42, persistência 9/9, regressões 10/10, E2E Chromium completo, Firefox (admin/funcionário) e Postgres 17 (migrations, 21 casos de login e 73 casos de RLS) passaram no worktree isolado da VPS.
+**Publicação:** pendente; nenhum registro QA existente foi editado ou removido.
+
 ## 2026-11-23 · (main `dc0e35b`; Vercel Ready `Bx2KqLPtTGv2yvBu1jimjFP7n8VK`) — Login só entra após confirmação explícita
 **O que:** a sessão Supabase salva não autentica a interface automaticamente ao abrir/recarregar; sugestões de acesso preenchem usuário e senha, sem enviar o formulário. O login manual e o atalho 1/2/3 continuam operando pelo botão "Acessar o Painel".
 **Por quê:** impedir entrada inesperada e garantir que os cliques de acesso levem a um envio explícito.

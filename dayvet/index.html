@@ -284,7 +284,7 @@
                             <span id="dash-titulo">Resumo Financeiro e Operacional</span>
                             <span class="text-xs font-bold bg-brand-lime/10 text-brand-lime border border-brand-lime/20 px-2.5 py-0.5 rounded-full">Ao Vivo</span>
                         </h3>
-                        <p id="dash-subtitulo" class="text-xs text-slate-400">Atendimentos e valores usam o período selecionado. Pets e tutores: totais gerais (tutores ativos). Valores são de agendamentos, não pagamentos.</p>
+                        <p id="dash-subtitulo" class="text-xs text-slate-400">Atendimentos e valores usam o período selecionado. Valores são agrupados pela data agendada, não pela data de conclusão nem por pagamentos. Pets e tutores: totais gerais (tutores ativos).</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                         <button id="btn-gerar-relatorios-dashboard" onclick="abrirModalGerarRelatorios()" class="px-4 py-2.5 bg-gradient-to-r from-brand-purple to-brand-blue hover:opacity-90 font-bold text-xs text-white rounded-xl shadow-md flex items-center gap-2">
@@ -445,7 +445,7 @@
                     <div class="flex flex-wrap items-center justify-between gap-2 px-1">
                         <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
                             <i data-lucide="history" class="w-4 h-4 text-slate-400"></i>
-                            <span>Expirados — histórico</span>
+                            <span>Histórico — concluídos e expirados</span>
                         </h4>
                         <div class="flex items-center gap-2">
                             <select id="pesquisa-mes-sel" title="Escolher mês" aria-label="Filtrar histórico por mês" onchange="pesquisarMesExpirados()" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-3 py-2 rounded-xl focus:outline-none"></select>

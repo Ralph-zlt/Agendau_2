@@ -19,8 +19,8 @@ check("contagem e taxa usam o mesmo intervalo do faturamento",
     /function atualizarKpisDashboard\(\)[\s\S]*?obterIntervaloFaturamento\(periodo\)[\s\S]*?const agendamentosPeriodo = agendamentos\.filter[\s\S]*?agendamentosPeriodo\.length/.test(js));
 check("mudar o período atualiza também os KPIs de agendamentos",
     /function atualizarPeriodoFaturamento\(\)[\s\S]*?atualizarKpisDashboard\(\);/.test(js));
-check("histórico inicia no mês atual e atualiza nos dois seletores",
-    /selM\.value = mesAtual;[\s\S]*?selA\.value = String\(anoAtual\);[\s\S]*?pesquisaMesExpirados = `\$\{anoAtual\}-\$\{mesAtual\}`/.test(js)
+check("histórico inicia sem mês/ano selecionados e atualiza nos dois seletores",
+    /selM\.value = '';[\s\S]*?selA\.value = '';[\s\S]*?pesquisaMesExpirados = ''/.test(js)
     && (html.match(/onchange="pesquisarMesExpirados\(\)"/g) || []).length === 2);
 check("limpar histórico remove o filtro e deixa explícitos todos os períodos",
     /function limparPesquisaMesExpirados\(\)[\s\S]*?pesquisaMesExpirados = '';[\s\S]*?selM\.value = '';[\s\S]*?selA\.value = ''/.test(js)

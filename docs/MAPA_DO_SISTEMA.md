@@ -2,7 +2,7 @@
 
 > Referência para IAs e colaboradores editarem o código com contexto.
 > Última revisão: 23/11/2026 · último commit funcional publicado: `main`=`dc0e35b`. A integração de dados está publicada na Vercel em modo Supabase real; migrations `0001..0006` estão aplicadas e `admin-criar-usuario` implantada.
-> Smoke real confirmou Auth/RBAC, persistência após reload para tutor, pet, agendamento e documento clínico. Dados sintéticos de QA permanecem na produção (2 tutores, 3 pets, 4 agendamentos, 2 registros clínicos; identificados com `TESTE`, não remover). Login, dashboard por período e histórico mensal estão publicados; validação inclui Postgres 17, E2E Chromium/Firefox e smoke publicado 13/13. Detalhes em `ROADMAP.md` §2.b e no topo do `CHANGELOG.md`.
+> Smoke real confirmou Auth/RBAC, persistência após reload para tutor, pet, agendamento e documento clínico. Dados sintéticos de QA permanecem na produção (2 tutores, 3 pets, 4 agendamentos, 2 registros clínicos; identificados com `TESTE`, não remover). Login e dashboard por período estão publicados; o histórico mostra concluídos de qualquer data por padrão e permite filtrar mês/ano. Detalhes em `ROADMAP.md` §2.b e no topo do `CHANGELOG.md`.
 > Atenção: números de linha são referências — confirme antes de editar.
 > A correção de contagem/taxa por período e filtro imediato do histórico está publicada na Vercel (`main` `cceb6af`).
 
@@ -26,7 +26,7 @@
 |---|---|---|
 | `dayvet/index.html` | Estrutura/marcação (SPA) | <head> com config Tailwind + cores de marca; tela de login; header; nav de tabs; seções `<section id="tab-...">`; modais `#modal-*`; CDNs |
 | `dayvet/styles.css` | Estilo (seções) | Base, scrollbar, neon, glass, impressão, **sistemas de tema escuro/claro** |
-| `dayvet/script.js` | Lógica (seções 0–13) | Seção 0: cliente Supabase, modo real, carregamento, sessão/Auth e escaping HTML; depois RBAC, renderização e CRUD de agenda, tutores/pets, clínica, relatórios, usuários, gráficos e tema. Histórico inicia no mês atual, reage aos selects e pode ser limpo para todos os períodos. CPF de tutor passa por `validarCPF()` e `RegrasLogin.formatarCpf()` antes da gravação |
+| `dayvet/script.js` | Lógica (seções 0–13) | Seção 0: cliente Supabase, modo real, carregamento, sessão/Auth e escaping HTML; depois RBAC, renderização e CRUD de agenda, tutores/pets, clínica, relatórios, usuários, gráficos e tema. Histórico mostra concluídos de qualquer período e recentes; filtros mês/ano são opcionais. CPF de tutor passa por `validarCPF()` e `RegrasLogin.formatarCpf()` antes da gravação |
 | `dayvet/persistencia.js` | Adaptadores Supabase | Leitura paginada, mapeamento do schema v2, filtros de carregamento por perfil e serialização de tutores/pets/agendamentos/histórico |
 | `dayvet/config.js` | Config pública do Supabase | `supabaseUrl` + chave `anon`/publishable; carregado pelo `index.html`. A `service_role` nunca entra aqui |
 | `supabase/migrations/` | Schema, seed, RLS, Auth e expansões (6 migrations locais) | `0001..0006` confirmadas no projeto Supabase remoto |
@@ -71,7 +71,7 @@
 | 3 · AUTENTICAÇÃO E LOGIN | ~178 | Login por usuário/CPF/e-mail, sessão Supabase, recuperação/troca de senha e logout |
 | 4 · TOASTS | ~380 | Notificações `showToast` |
 | 5 · NAVEGAÇÃO E TABS | ~423 | `switchTab` (guards RBAC, incl. clínica↔funcionário), `atualizarPermissoesNavegacao`, `atualizarDashboardPorPerfil` |
-| 6 · AGENDAMENTOS | ~541 | CRUD/status + `vetId` (dono do atendimento); seções Ativos/Expirados e filtros por mês/ano; Concluir, Remarcar, Nova consulta e Editar; validação horária conforme configuração persistida; funcionário só-leitura |
+| 6 · AGENDAMENTOS | ~541 | CRUD/status + `vetId` (dono do atendimento); seções Ativos/Histórico e filtros opcionais por mês/ano; concluídos aparecem mesmo fora dos últimos 7 dias; Concluir, Remarcar, Nova consulta e Editar; validação horária conforme configuração persistida; funcionário só-leitura |
 | 7 · TUTORES & PETS | ~991 | CRUD de tutores e pets (tutor com `arquivado`: arquivar/restaurar/excluir definitivo; exclusão bloqueada com pets/agenda/histórico; arquivado some dos dropdowns e da lista padrão), dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`); pet com espécie/raça/sexo em selects (`ESPECIES_PET`, `RACAS_POR_ESPECIE` + `popularRacasPet`, `SEXOS_PET`) + peso kg opcional; card `#racas-card-gerenciar` + `#modal-tipos-raca` |
 | 8 · MÓDULO CLÍNICO | ~1219 | Histórico clínico: **receita e vacina** + impressão (**laudo FORA DE ESCOPO** 2026-09-17; **guia FORA DE ESCOPO** 2026-11-13); CRUD de tipos de vacina admin/vet (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`, item 18); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo — assinatura por `RegrasTutor.assinaturaDocumento`: **nome e CRMV sempre da mesma pessoa**; admin/funcionário (sem CRMV) não assina, assina o vet de referência (regressão 03) |
 | 9 · RELATÓRIOS | ~1672 | Relatórios de serviços, tutor e período |

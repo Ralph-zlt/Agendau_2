@@ -43,10 +43,16 @@ async function abrirPage(browser, { mobile = false, mustChange = false, sessaoPe
                 { id: "u2", usuario: "lais_vet", cpf: "222.222.222-22", email: "lais.vet@dayvet.com", nome: "Dra. Laís", role: "veterinario", crm: "CRMV-SP 00000", must_change: false, active: true, deleted_at: null },
                 { id: "u3", usuario: "douglas_funcionario", cpf: "333.333.333-33", email: "douglas.funcionario@dayvet.com", nome: "Douglas", role: "funcionario", crm: null, must_change: false, active: true, deleted_at: null }
             ];
+            let agendamentosPersistidos = null;
+            if (window.name.startsWith("DAYVET_E2E:")) {
+                try {
+                    agendamentosPersistidos = JSON.parse(window.name.slice("DAYVET_E2E:".length));
+                } catch {}
+            }
             const tabelas = {
                 tutores: [],
                 pets: [],
-                agendamentos: agendamentosIniciais,
+                agendamentos: Array.isArray(agendamentosPersistidos) ? agendamentosPersistidos : agendamentosIniciais,
                 raca_tipos: [{ id: "raca-e2e-srd", especie: "Canino", nome: "SRD" }],
                 historico_clinico: [],
                 vacina_tipos: [],
@@ -146,6 +152,7 @@ async function abrirPage(browser, { mobile = false, mustChange = false, sessaoPe
                                 }
                                 if (operacao === "update") {
                                     encontrados.forEach(registro => Object.assign(registro, dadosEscrita));
+                                    if (tabela === "agendamentos") window.name = `DAYVET_E2E:${JSON.stringify(registros)}`;
                                     return encontrados;
                                 }
                                 if (operacao === "delete") {
@@ -537,6 +544,20 @@ const cenarios = {
             null, { timeout: 5000 }
         );
         ok("logout limpa credenciais e volta ao formulário");
+        await page.locator("#acessos-teste button").filter({ hasText: "Admin" }).click();
+        await page.click("#auth-form button[type=submit]");
+        await page.waitForFunction(
+            () => document.getElementById("login-screen")?.classList.contains("hidden"),
+            null, { timeout: 8000 }
+        );
+        (await page.locator("#header-user-name").innerText()).includes("Raphael Dias")
+            ? ok("login funciona novamente após logout")
+            : erro("login não retornou após logout");
+        await page.getByRole("button", { name: "Sair do Sistema" }).click();
+        await page.waitForFunction(
+            () => !document.getElementById("login-screen")?.classList.contains("hidden"),
+            null, { timeout: 5000 }
+        );
         problemas.forEach(p => erro(p));
         await page.close();
     },
@@ -694,13 +715,16 @@ const cenarios = {
 
         await page.click("#nav-agendamentos");
         await page.waitForFunction(
-            () => document.getElementById("expirados-counter")?.textContent.includes("Exibindo 1 de 3"),
+            () => document.getElementById("expirados-counter")?.textContent.includes("Exibindo 3 no histórico"),
             null, { timeout: 5000 }
         );
         let historico = await page.locator("#expirados-table-body").innerText();
-        historico.includes("Cancelado no mês atual") && !historico.includes("Concluído no próximo mês")
-            ? ok("histórico abre com o mês atual já filtrado")
-            : erro("filtro inicial do histórico não corresponde ao mês atual");
+        historico.includes("Cancelado no mês atual")
+            && historico.includes("Concluído no próximo mês")
+            && historico.includes("Cancelado no próximo mês")
+            && !historico.includes("Confirmado no próximo mês")
+            ? ok("histórico inicial mostra concluídos de outros meses e expirados recentes")
+            : erro("histórico inicial ocultou concluídos de outros meses ou incluiu agendamentos ativos");
 
         await page.locator("#pesquisa-mes-sel").selectOption(mesProximo.slice(5));
         await page.locator("#pesquisa-ano-sel").selectOption(mesProximo.slice(0, 4));
@@ -726,6 +750,68 @@ const cenarios = {
 
         problemas.forEach(p => erro(p));
         await page.close();
+    },
+
+    async concluirPersistencia(browser) {
+        const agora = new Date();
+        const data = new Date(agora.getFullYear(), agora.getMonth() + 1, 3);
+        const iso = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`;
+        const mes = iso.slice(0, 7);
+        const dados = [{
+            id: "concluir-persistente",
+            tutor_cpf: "111.111.111-11",
+            pet_id: "pet-e2e",
+            vet_id: "u2",
+            servico: "Consulta E2E Persistência",
+            data: iso,
+            hora: "10:00:00",
+            valor: 85,
+            status: "confirmado"
+        }];
+        const { page, problemas } = await abrirPage(browser, { agendamentos: dados });
+        await login(page, "1");
+        await page.click("#nav-agendamentos");
+
+        const linhaAtiva = page.locator("#agendamentos-table-body tr").filter({ hasText: "Consulta E2E Persistência" });
+        await linhaAtiva.getByRole("button", { name: "Concluir" }).click();
+        await page.waitForFunction(
+            () => document.getElementById("expirados-table-body")?.innerText.includes("Consulta E2E Persistência"),
+            null, { timeout: 5000 }
+        );
+        const linhaConcluida = page.locator("#expirados-table-body tr").filter({ hasText: "Consulta E2E Persistência" });
+        (await linhaConcluida.innerText()).includes("Concluído")
+            ? ok("conclusão atualiza o status e move o agendamento para o histórico")
+            : erro("conclusão não foi refletida no histórico");
+
+        await page.click("#nav-dashboard");
+        await page.locator("#mes-faturamento").fill(mes);
+        await page.waitForFunction(
+            () => document.getElementById("kpi-faturamento")?.textContent === "R$ 85,00"
+                && document.getElementById("kpi-agendamentos-count")?.textContent === "1 Atendimentos",
+            null, { timeout: 5000 }
+        );
+        ok("dashboard inclui o valor no mês da data agendada");
+
+        await page.reload({ waitUntil: "load" });
+        await page.locator("#login-screen").waitFor({ state: "visible", timeout: 5000 });
+        await login(page, "1");
+        await page.click("#nav-agendamentos");
+        await page.waitForFunction(
+            () => document.getElementById("expirados-table-body")?.innerText.includes("Consulta E2E Persistência")
+                && document.getElementById("expirados-table-body")?.innerText.includes("Concluído"),
+            null, { timeout: 5000 }
+        );
+        ok("status concluído permanece no banco de teste após recarregar");
+
+        await page.click("#nav-dashboard");
+        await page.locator("#mes-faturamento").fill(mes);
+        await page.waitForFunction(
+            () => document.getElementById("kpi-faturamento")?.textContent === "R$ 85,00",
+            null, { timeout: 5000 }
+        );
+        ok("valor concluído continua no dashboard após recarregar");
+        problemas.forEach(p => erro(p));
+        await page.close();
     }
 };
 
@@ -735,7 +821,7 @@ const cenarios = {
 const alvo = process.argv[2] || "todos";
 const navegador = alvo === "firefox" ? "firefox" : "chromium";
 const tipo = navegador === "firefox" ? firefox : chromium;
-const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile", "loginAlturaCurta", "loginExplicito", "financeMonth", "periodoHistorico"]
+const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile", "loginAlturaCurta", "loginExplicito", "financeMonth", "periodoHistorico", "concluirPersistencia"]
     : alvo === "firefox" ? ["admin", "func"]
     : [alvo];
 

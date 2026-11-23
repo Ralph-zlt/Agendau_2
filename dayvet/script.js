@@ -707,7 +707,7 @@ function renderizarAgendamentos() {
     bodyA.innerHTML = '';
     bodyE.innerHTML = '';
 
-    // Ativos em cima (ordem crescente), Expirados abaixo (mais recentes primeiro, agrupados).
+    // Ativos em cima e histórico abaixo, com os mais recentes primeiro.
     const porStatus = (a) => filtroAgendamentosStatus === 'todos' || a.status === filtroAgendamentosStatus;
     const ord = (x, y) => String(x.data + x.hora).localeCompare(String(y.data + y.hora));
     const ativos = agendamentos.filter(a => !agExpirado(a) && porStatus(a)).sort(ord);
@@ -723,8 +723,9 @@ function renderizarAgendamentos() {
     if (pesquisaMesExpirados) {
         listaExpirados = expirados.filter(a => (a.data || '').slice(0, 7) === pesquisaMesExpirados);
     } else if (!expiradosExpandido) {
-        // Colapsado: só Últimos 7 dias.
-        listaExpirados = expirados.filter(a => (a.data || '') >= limite7d);
+        listaExpirados = expirados.filter(a =>
+            a.status === 'concluido' || (a.data || '') >= limite7d
+        );
     }
     listaExpirados.forEach(a => {
         const grupo = grupoExpirado(a.data, limite7d, mesAtual);
@@ -740,7 +741,7 @@ function renderizarAgendamentos() {
     document.getElementById('expirados-counter').innerText = pesquisaMesExpirados
         ? `Exibindo ${listaExpirados.length} de ${totalExp} (${pesquisaMesExpirados.slice(5, 7)}/${pesquisaMesExpirados.slice(0, 4)})`
         : (!expiradosExpandido && totalExp > listaExpirados.length
-            ? `Últimos 7 dias (${listaExpirados.length} de ${totalExp}) — carregue mais antigas`
+            ? `Concluídos + últimos 7 dias (${listaExpirados.length} de ${totalExp}) — carregue mais antigas`
             : `Exibindo ${listaExpirados.length} no histórico`);
     const btnExp = document.getElementById('btn-expandir-expirados');
     if (btnExp) {
@@ -776,10 +777,9 @@ function inicializarPesquisaMes() {
     for (let a = anoAtual - 3; a <= anoAtual + 1; a++) {
         selA.innerHTML += `<option value="${a}">${a}</option>`;
     }
-    const mesAtual = String(new Date().getMonth() + 1).padStart(2, '0');
-    selM.value = mesAtual;
-    selA.value = String(anoAtual);
-    pesquisaMesExpirados = `${anoAtual}-${mesAtual}`;
+    selM.value = '';
+    selA.value = '';
+    pesquisaMesExpirados = '';
 }
 function pesquisarMesExpirados() {
     const mes = document.getElementById('pesquisa-mes-sel')?.value || '';
@@ -1017,7 +1017,7 @@ function hojeISO() { return new Date().toISOString().slice(0, 10); }
 function agVencido(a) { return (a.data || '') < hojeISO() && (a.status === 'pendente' || a.status === 'confirmado'); }
 function agExpirado(a) { return agVencido(a) || a.status === 'cancelado' || a.status === 'concluido'; }
 
-// O QUE: Faixa do histórico de Expirados — Últimos 7 dias, Este mês, depois um grupo por mês.
+// O QUE: Agrupa o histórico recente, concluídos e datas futuras de forma identificável.
 const MESES_PT = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 function nomeMesAno(dataISO) {
     const ano = dataISO.slice(0, 4);
@@ -1025,6 +1025,7 @@ function nomeMesAno(dataISO) {
     return (MESES_PT[mes - 1] || 'Mês') + ' de ' + ano;
 }
 function grupoExpirado(data, limite7d, mesAtual) {
+    if ((data || '') > hojeISO()) return `Data futura — ${nomeMesAno(data || '')}`;
     if ((data || '') >= limite7d) return 'Últimos 7 dias';
     if ((data || '').slice(0, 7) === mesAtual) return 'Este mês';
     return nomeMesAno(data || '');
