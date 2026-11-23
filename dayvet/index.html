@@ -90,6 +90,9 @@
 
             <!-- Corpo de Formulário -->
             <div class="p-8 space-y-6">
+                <p id="aviso-login-demo" class="aviso-demo text-[11px] font-bold text-center rounded-xl px-3 py-2 border" role="status">
+                    Ambiente de demonstração: dados fictícios, <strong>nada é salvo</strong> no banco.
+                </p>
                 <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF, e-mail ou usuário</label>
@@ -164,6 +167,14 @@
 
     <!-- ===================== APLICAÇÃO PRINCIPAL ===================== -->
     <div id="app-container" class="flex-1 flex flex-col">
+        <!-- Aviso de modo demonstração (Fase 0 — 2026-11-23).
+             Visível enquanto MODO_DADOS === 'mock'; some sozinho quando a
+             ponte de dados (Fase D) ligar o Supabase. Ver styles.css §10. -->
+        <div id="aviso-modo-demo" class="aviso-demo no-print" role="status">
+            <i data-lucide="alert-triangle" class="w-3.5 h-3.5 shrink-0"></i>
+            <span>Modo demonstração: os dados são fictícios e <strong>nada é salvo</strong> — recarregar a página restaura tudo. O banco ainda não está ligado a esta tela.</span>
+        </div>
+
         <!-- Topbar / Header -->
         <header class="no-print bg-slate-950/80 border-b border-slate-850 backdrop-blur-md sticky top-0 z-40 px-4 md:px-8 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center justify-between md:justify-start gap-4">

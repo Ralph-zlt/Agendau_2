@@ -517,3 +517,36 @@ body {
     background-color: var(--branco-suave) !important;
     border-color: var(--borda-suave) !important;
 }
+
+/* ================================================================
+   10. AVISO DE MODO DEMONSTRAÇÃO (Fase 0 — 2026-11-23)
+   ----------------------------------------------------------------
+   Enquanto MODO_DADOS === 'mock' (script.js), o front NÃO fala com o
+   banco: toda escrita vive só na memória e o F5 desfaz. Este aviso
+   existe para que ninguém confunda "apareceu na tela" com "foi salvo".
+   Cores explícitas (não Tailwind) para garantir contraste nos 2 temas.
+   Remover quando a ponte de dados (Fase D) entrar em produção.
+   ================================================================ */
+.aviso-demo {
+    background: #3b2a05;
+    color: #ffd48a;
+    border-color: #7c5c12;
+}
+:root[data-theme='light'] .aviso-demo {
+    background: #FEF3C7;
+    color: #78350F;
+    border-color: #D97706;
+}
+#aviso-modo-demo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .4rem;
+    text-align: center;
+    padding: .45rem 1rem;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1.35;
+    border-bottom: 1px solid;
+}

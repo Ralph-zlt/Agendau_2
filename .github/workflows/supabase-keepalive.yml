@@ -1,0 +1,113 @@
+# ============================================================================
+# Supabase keep-alive + smoke do banco
+# ----------------------------------------------------------------------------
+# POR QUÊ: o projeto `agendau-2` está no plano free, e a Supabase pausa
+#   projetos free com pouca atividade em 7 dias. Quando pausa, o host da API
+#   PARA DE RESOLVER (NXDOMAIN) e o site passa a parecer "fora do ar".
+#   Aconteceu em 23/11/2026: o projeto voltou como INACTIVE e só foi
+#   recuperado via Management API (POST /v1/projects/{ref}/restore).
+#
+# O QUE FAZ: uma vez por dia faz login com a conta de teste e uma leitura
+#   real (SELECT em `usuarios`). Isso conta como atividade de banco — e de
+#   quebra prova que Auth + RLS continuam de pé. Se falhar, abre uma issue.
+#
+# LIMITE CONHECIDO: a documentação da Supabase não garante que keep-alive
+#   impeça a pausa ("a few requests a day is usually enough"). Garantia só
+#   com plano pago. Este workflow é mitigação + alarme, não promessa.
+#
+# REQUISITOS (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL          https://<ref>.supabase.co
+#   SUPABASE_ANON_KEY     chave publishable/anon (pública)
+#   SMOKE_EMAIL           conta de teste (ex.: raphael.dias@dayvet.com)
+#   SMOKE_PASSWORD        senha da conta de teste
+#
+# OBS.: `schedule` e `workflow_dispatch` só rodam a partir da branch padrão
+#   (`main`). Enquanto este arquivo não estiver na `main`, ele não dispara.
+# ============================================================================
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # diário, 06:00 UTC (03:00 em Brasília)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Login no Auth
+        id: login
+        env:
+          URL: ${{ secrets.SUPABASE_URL }}
+          ANON: ${{ secrets.SUPABASE_ANON_KEY }}
+          EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SENHA: ${{ secrets.SMOKE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$SENHA"
+          corpo=$(jq -nc --arg e "$EMAIL" --arg p "$SENHA" '{email:$e,password:$p}')
+          resp=$(curl -sS --max-time 30 -X POST \
+            "$URL/auth/v1/token?grant_type=password" \
+            -H "apikey: $ANON" -H "Content-Type: application/json" \
+            -d "$corpo")
+          token=$(echo "$resp" | jq -r '.access_token // empty')
+          if [ -z "$token" ]; then
+            echo "Login falhou. Resposta (sem senha): $(echo "$resp" | jq -c '{error,error_description,msg,message}')"
+            exit 1
+          fi
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
+      - name: Leitura real no banco (conta como atividade)
+        env:
+          URL: ${{ secrets.SUPABASE_URL }}
+          ANON: ${{ secrets.SUPABASE_ANON_KEY }}
+          TOKEN: ${{ steps.login.outputs.token }}
+        run: |
+          set -euo pipefail
+          codigo=$(curl -sS --max-time 30 -o /tmp/linhas.json -w '%{http_code}' \
+            "$URL/rest/v1/usuarios?select=id,nome&limit=1" \
+            -H "apikey: $ANON" -H "Authorization: Bearer $TOKEN")
+          echo "HTTP $codigo"
+          cat /tmp/linhas.json
+          if [ "$codigo" != "200" ]; then
+            echo "Leitura falhou (projeto pausado? RLS quebrada?)"
+            exit 1
+          fi
+          total=$(jq 'length' /tmp/linhas.json)
+          if [ "$total" -lt 1 ]; then
+            echo "Nenhuma linha visível — a conta de smoke perdeu o perfil em usuarios."
+            exit 1
+          fi
+          echo "OK: banco respondeu com $total linha(s)."
+
+      - name: Abrir issue se algo falhar
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          {
+            echo "O workflow Supabase keep-alive falhou. Suspeita: projeto pausado por inatividade, chave trocada ou perfil de smoke removido."
+            echo
+            echo "Run: $RUN_URL"
+            echo
+            echo "Como verificar:"
+            echo "1. supabase projects list   (status do agendau-2)"
+            echo "2. dig +short A dkdvhstjnverofgzwzne.supabase.co   (vazio = pausado)"
+            echo "3. Se pausado: curl -X POST -H \"Authorization: Bearer \$TOKEN\" https://api.supabase.com/v1/projects/dkdvhstjnverofgzwzne/restore"
+            echo "4. Guia completo em local/AMBIENTE.md, secao 4.1"
+          } > /tmp/corpo.md
+          gh issue create --repo "${{ github.repository }}" \
+            --title "Supabase: keep-alive falhou em $(date -u +%Y-%m-%d)" \
+            --body-file /tmp/corpo.md | tail -2

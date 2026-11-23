@@ -15,7 +15,7 @@
 
 ## 1. Visão geral
 - SPA (single-page application) de agenda para **pet shop / clínica veterinária**.
-- **Backend: PAUSADO por decisão do dono em 2026-11-13** (decisão original de 2026-09-22: SQL via Supabase/Postgres + Auth + RLS). Projeto não criado; hoje, e por tempo indeterminado, os dados são mocks em memória (arrays).
+- **Backend: Supabase criado e validado (Fase B, 2026-11-18)** — projeto `agendau-2` com schema v2, Auth e RLS no ar. **O front ainda NÃO conversa com ele**: `index.html` não carrega `config.js` e `script.js` não faz chamada de rede nenhuma; os dados continuam mocks em memória até a Fase D. Enquanto `MODO_DADOS === 'mock'`, a faixa `#aviso-modo-demo` e o aviso do login deixam explícito que **nada é salvo**.
 - **Stack**: HTML + CSS + JS puros com CDNs externas — Tailwind CSS (utilitários), Lucide (ícones), Chart.js (gráficos), Google Fonts (Plus Jakarta Sans) + Supabase SQL planejado.
 - Estrutura em **3 arquivos na pasta `dayvet/`**.
 
@@ -25,7 +25,10 @@
 |---|---|---|
 | `dayvet/index.html` | Estrutura/marcação (SPA) | <head> com config Tailwind + cores de marca; tela de login; header; nav de tabs; seções `<section id="tab-...">`; modais `#modal-*`; CDNs |
 | `dayvet/styles.css` | Estilo (seções) | Base, scrollbar, neon, glass, impressão, **sistemas de tema escuro/claro** |
-| `dayvet/script.js` | Lógica (13 seções) | Mock data, RBAC, login, toasts, navegação, agendamentos, tutores & pets, clínico, relatórios, usuários, gráficos, tema, inicialização |
+| `dayvet/script.js` | Lógica (13 seções + seção 0) | **Seção 0**: `MODO_DADOS` (`'mock'` hoje) e `confirmarEscrita()` — toda escrita avisa que não foi salva enquanto o banco não estiver ligado. Depois: mock data, RBAC, login, toasts, navegação, agendamentos, tutores & pets, clínico, relatórios, usuários, gráficos, tema, inicialização |
+| `dayvet/config.js` | Config pública do Supabase | `supabaseUrl` + chave `anon`/publishable. **Ainda não é carregado pelo `index.html`** (Fase C). A `service_role` nunca entra aqui |
+| `supabase/migrations/` | Schema, seed e RLS (3 migrations) | Aplicadas na nuvem em 18/11/2026; validadas localmente por `tests/db.mjs` |
+| `scripts/deploy-vercel.sh` | Deploy de produção na Vercel | Monta o artefato em `/tmp` e publica; a integração Git da Vercel está bloqueada |
 | `dayvet/regras.js` | Regras puras (sem DOM) | `RegrasTutor`: `podeArquivarTutor`, `podeExcluirTutor`, `tutoresSelecionaveis`; testável em node e usada pelo `script.js` |
 | `tests/` | Testes do projeto | `estatico.mjs`, `unit/regras.mjs`, `e2e.mjs` (Playwright) e `regressao/NN-*.mjs` + `run.mjs` |
 | `docs/requisitos-funcionais-dayvet.docx` | Requisitos (fonte de RFs/RNFRs/RNFS) | RF-01–RF-10 + RNFS; sincronizado com o código na v2; frontend/temas fora (só roadmap). RF-09 e RF-10 marcados FORA DE ESCOPO |

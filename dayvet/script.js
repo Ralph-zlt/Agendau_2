@@ -12,6 +12,32 @@
 // ==========================================================
 
 // ==========================================================
+// SEÇÃO 0: MODO DE DADOS (Fase 0 — 2026-11-23)
+// ==========================================================
+// 'mock' = dados em memória (hoje). 'real' = Supabase (Fases C/D).
+// Enquanto for 'mock', toda escrita avisa que NÃO foi salva e o topo do
+// app mostra a faixa de demonstração (#aviso-modo-demo). Nenhum fallback
+// silencioso: quando o banco entrar, erro de rede aparece como erro.
+const MODO_DADOS = 'mock';
+
+function confirmarEscrita(mensagem) {
+    if (MODO_DADOS === 'real') {
+        showToast(mensagem);
+        return;
+    }
+    showToast(mensagem + ' — apenas nesta tela: nada foi salvo no banco.', 'aviso');
+}
+
+function aplicarAvisoModoDados() {
+    const emMock = MODO_DADOS !== 'real';
+    ['aviso-modo-demo', 'aviso-login-demo'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.display = emMock ? '' : 'none';
+    });
+}
+
+// ==========================================================
 // SEÇÃO 1: DADOS MOCK (simula banco de dados em memória)
 // ==========================================================
 
@@ -451,6 +477,10 @@ function showToast(mensagem, tipo) {
         bgClass = "bg-slate-900 border-rose-500/40 text-slate-100";
         icon = "<i data-lucide='alert-triangle' class='w-4 h-4 text-rose-400 shrink-0'></i>";
     }
+    if (tipo === 'aviso') {
+        bgClass = "bg-slate-900 border-amber-400/60 text-slate-100";
+        icon = "<i data-lucide='alert-triangle' class='w-4 h-4 text-amber-400 shrink-0'></i>";
+    }
 
     toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl pointer-events-auto transition-all duration-300 transform translate-y-5 opacity-0 " + bgClass;
     toast.innerHTML = icon + " <span class='text-xs font-semibold'>" + mensagem + "</span>";
@@ -854,7 +884,7 @@ function salvarRegistroValor(e) {
     if (ag) {
         ag.valor = novoValor;
         renderizarAgendamentos();
-        showToast("Valor do agendamento registrado/atualizado!");
+        confirmarEscrita("Valor do agendamento registrado/atualizado");
     }
     fecharModalRegistrarValor();
 }
@@ -873,7 +903,7 @@ function alterarStatusAgendamento(id, status) {
     if (item) {
         item.status = status;
         renderizarAgendamentos();
-        showToast("Agendamento atualizado com sucesso!");
+        confirmarEscrita("Agendamento atualizado");
     }
 }
 
@@ -1014,7 +1044,7 @@ function salvarAgendamento(e) {
             if (temPermissao('vacina_tipos_criar') || currentRole === 'veterinario') {
                 if (!tiposVacina.some(t => t.toLowerCase() === novo.toLowerCase())) {
                     tiposVacina.push(novo);
-                    showToast(`Tipo "${novo}" adicionado ao catálogo!`);
+                    confirmarEscrita(`Tipo "${novo}" adicionado ao catálogo`);
                 }
                 vacinaTipo = novo;
             }
@@ -1039,11 +1069,11 @@ function salvarAgendamento(e) {
                 ag.status = 'pendente';
             }
         }
-        showToast(remarcandoAgendamento ? "Agendamento remarcado!" : "Agendamento atualizado com sucesso!");
+        confirmarEscrita(remarcandoAgendamento ? "Agendamento remarcado" : "Agendamento atualizado");
         remarcandoAgendamento = false;
     } else {
         agendamentos.unshift({ id: Date.now().toString(), tutorCpf, petId, servico, vacinaTipo: ehVacinacao ? vacinaTipo : '', valor, data, hora, status: "confirmado", vetId: (currentUser && currentUser.id) || '' });
-        showToast("Agendamento criado!");
+        confirmarEscrita("Agendamento criado");
     }
     fecharModalAgendamento();
     renderizarAgendamentos();
@@ -1153,7 +1183,7 @@ function arquivarTutor(cpf) {
     if (!confirm(`Arquivar ${tutor.nome}?\n\nO tutor deixa de aparecer em novos agendamentos e vínculos; o histórico é mantido.`)) return;
     tutor.arquivado = true;
     renderizarTutores();
-    showToast("Tutor arquivado.");
+    confirmarEscrita("Tutor arquivado");
 }
 
 function restaurarTutor(cpf) {
@@ -1162,7 +1192,7 @@ function restaurarTutor(cpf) {
     if (!tutor) return;
     tutor.arquivado = false;
     renderizarTutores();
-    showToast("Tutor restaurado.");
+    confirmarEscrita("Tutor restaurado");
 }
 
 // O QUE: Exclusão definitiva (irreversível) — arquivado e sem vínculos.
@@ -1177,7 +1207,7 @@ function excluirTutorDefinitivo(cpf) {
     if ((digitado || "").trim() !== tutor.cpf) { showToast("Exclusão cancelada: CPF não confere.", "error"); return; }
     tutores = tutores.filter(t => t.cpf !== tutor.cpf);
     renderizarTutores();
-    showToast("Tutor excluído definitivamente.");
+    confirmarEscrita("Tutor excluído definitivamente");
 }
 
 function abrirModalTutor() { document.getElementById('modal-tutor').classList.remove('hidden'); }
@@ -1210,7 +1240,7 @@ function salvarTutor(e) {
     tutores.push({ nome, cpf, tel, email, endereco });
     fecharModalTutor();
     renderizarTutores();
-    showToast("Tutor cadastrado!");
+    confirmarEscrita("Tutor cadastrado");
 }
 
 function abrirModalEditarTutor(tutorCpf) {
@@ -1253,7 +1283,7 @@ function salvarEdicaoTutor(e) {
         tutor.email = document.getElementById('edit-tutor-email').value;
         tutor.endereco = document.getElementById('edit-tutor-endereco').value;
         renderizarTutores();
-        showToast("Cadastro do tutor alterado com sucesso!");
+        confirmarEscrita("Cadastro do tutor alterado");
     }
     fecharModalEditarTutor();
 }
@@ -1306,7 +1336,7 @@ function salvarPet(e) {
     pets.push({ id: Date.now().toString(), tutorCpf, nome, especie, raca, sexo, peso, comportamento, alergias });
     fecharModalPet();
     renderizarTutores();
-    showToast("Pet cadastrado com sucesso!");
+    confirmarEscrita("Pet cadastrado");
 }
 
 function abrirModalEditarPet(petId) {
@@ -1344,7 +1374,7 @@ function salvarEdicaoPet(e) {
         pet.alergias = document.getElementById('edit-pet-alergias').value;
         renderizarTutores();
         popularPetsDropdowns();
-        showToast("Cadastro do pet alterado com sucesso!");
+        confirmarEscrita("Cadastro do pet alterado");
     }
     fecharModalEditarPet();
 }
@@ -1487,13 +1517,13 @@ function salvarTipoVacina(e) {
         if (!temPermissao('vacina_tipos_criar')) { showToast("Acesso restrito: sem permissão para criar.", "error"); return; }
         if (tiposVacina.some(t => t.toLowerCase() === nome.toLowerCase())) { showToast("Tipo já cadastrado.", "error"); return; }
         tiposVacina.push(nome);
-        showToast("Tipo de vacina cadastrado!");
+        confirmarEscrita("Tipo de vacina cadastrado");
     } else {
         if (!temPermissao('vacina_tipos_editar')) { showToast("Acesso restrito: sem permissão para editar.", "error"); return; }
         const idx = parseInt(idxRaw, 10);
         if (tiposVacina.some((t, i) => i !== idx && t.toLowerCase() === nome.toLowerCase())) { showToast("Tipo já cadastrado.", "error"); return; }
         tiposVacina[idx] = nome;
-        showToast("Tipo de vacina atualizado!");
+        confirmarEscrita("Tipo de vacina atualizado");
     }
     document.getElementById('edit-tipo-vacina-idx').value = '';
     document.getElementById('input-tipo-vacina-nome').value = '';
@@ -1517,7 +1547,7 @@ function excluirTipoVacina(idx) {
     renderizarTiposVacina();
     popularVacinaTiposAg('');
     popularVacinaTiposClinica('');
-    showToast("Tipo de vacina excluído!");
+    confirmarEscrita("Tipo de vacina excluído");
 }
 
 // O QUE: CRUD de tipos de raça por espécie — funcionário e admin (como tipos de vacina).
@@ -1600,13 +1630,13 @@ function salvarTipoRaca(e) {
         if (!temPermissao('raca_tipos_criar')) { showToast("Acesso restrito: sem permissão para criar.", "error"); return; }
         if (racasPorEspecie[esp].some(r => r.toLowerCase() === nome.toLowerCase())) { showToast("Raça já cadastrada.", "error"); return; }
         racasPorEspecie[esp].push(nome);
-        showToast("Raça cadastrada!");
+        confirmarEscrita("Raça cadastrada");
     } else {
         if (!temPermissao('raca_tipos_editar')) { showToast("Acesso restrito: sem permissão para editar.", "error"); return; }
         const idx = parseInt(idxRaw, 10);
         if (racasPorEspecie[esp].some((r, i) => i !== idx && r.toLowerCase() === nome.toLowerCase())) { showToast("Raça já cadastrada.", "error"); return; }
         racasPorEspecie[esp][idx] = nome;
-        showToast("Raça atualizada!");
+        confirmarEscrita("Raça atualizada");
     }
     document.getElementById('edit-tipo-raca-idx').value = '';
     document.getElementById('input-tipo-raca-nome').value = '';
@@ -1633,7 +1663,7 @@ function excluirTipoRaca(idx) {
     renderizarTiposRaca();
     popularRacasPet('');
     popularRacasPet('edit-');
-    showToast("Raça excluída!");
+    confirmarEscrita("Raça excluída");
 }
 
 function editarDocumentoClinico(id) {
@@ -1657,7 +1687,7 @@ function editarDocumentoClinico(id) {
 function excluirDocumentoClinico(id) {
     historicoClinico = historicoClinico.filter(h => h.id !== id);
     renderizarHistoricoClinico();
-    showToast("Documento excluído!");
+    confirmarEscrita("Documento excluído");
 }
 
 // O QUE: Recebe arquivos do <input type="file"> e registra metadados.
@@ -1685,7 +1715,7 @@ function lidarUploadAnexos(e) {
     });
     e.target.value = '';
     renderizarAnexos();
-    showToast(arquivos.length + " documento(s) anexado(s)!");
+    confirmarEscrita(arquivos.length + " documento(s) anexado(s)");
 }
 
 function renderizarAnexos() {
@@ -1719,7 +1749,7 @@ function renderizarAnexos() {
 function excluirAnexo(id) {
     anexosClinicos = anexosClinicos.filter(a => a.id !== id);
     renderizarAnexos();
-    showToast("Anexo excluído!");
+    confirmarEscrita("Anexo excluído");
 }
 
 function resetarFormClinico() {
@@ -1754,11 +1784,11 @@ function salvarRegistroClinico(e) {
             doc.vacinaTipo = vacinaTipo;
             doc.data = data;
             doc.detalhe = detalhe;
-            showToast("Documento atualizado com sucesso!");
+            confirmarEscrita("Documento atualizado");
         }
     } else {
         historicoClinico.unshift({ id: Date.now().toString(), tutorCpf, petId, tipo, vacinaTipo, data, detalhe });
-        showToast("Novo documento registrado!");
+        confirmarEscrita("Novo documento registrado");
     }
 
     resetarFormClinico();
@@ -2085,7 +2115,7 @@ function salvarNovoUsuario(e) {
 
     fecharModalUsuario();
     renderizarUsuarios();
-    showToast("Novo usuário criado com sucesso!");
+    confirmarEscrita("Novo usuário criado");
 }
 
 function abrirModalEditarPermissao(id, roleAtual) {
@@ -2103,7 +2133,7 @@ function salvarPermissaoUsuario(e) {
     if (user) {
         user.role = novaRole;
         renderizarUsuarios();
-        showToast("Permissão de login alterada!");
+        confirmarEscrita("Permissão de login alterada");
     }
     fecharModalEditarPermissao();
 }
@@ -2611,6 +2641,7 @@ function inicializarTooltipInfoLogin() {
 
 window.onload = function() {
     inicializarTema();
+    aplicarAvisoModoDados();
     inicializarTooltipInfoLogin();
     lucide.createIcons();
     atualizarPermissoesNavegacao();
