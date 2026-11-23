@@ -1,7 +1,7 @@
 # MAPA DO SISTEMA — DayVet-Gestão
 
 > Referência para IAs e colaboradores editarem o código com contexto.
-> Última revisão: 23/11/2026 · `origin/main`/`origin/teste` em `e5c2e16`; Auth integrado. O worktree local da `teste` contém integração de dados (Fases D/E) sem commit ou deploy. No Supabase remoto, migrations `0001..0006` estão aplicadas e `admin-criar-usuario` está implantada.
+> Última revisão: 23/11/2026 · `origin/main`=`e5c2e16`; `origin/teste`=`ac8e0c6` com PR #2 aberto. Auth integrado e worktree de dados commitado na branch de trabalho, mas ainda sem deploy. No Supabase remoto, migrations `0001..0006` estão aplicadas e `admin-criar-usuario` está implantada.
 > O smoke de tutores autenticado confirmou CPF validado/formatado, cadastro e edição persistentes após reload; os registros sintéticos foram removidos. E2E Chromium passou (com stubs); restam smokes reais dos demais fluxos/perfis. Vercel está Ready/200, mas a URL ainda serve o modo demonstração da `main`. Detalhes em `ROADMAP.md` §2.b e no topo do `CHANGELOG.md`.
 > Atenção: números de linha são referências — confirme antes de editar.
 

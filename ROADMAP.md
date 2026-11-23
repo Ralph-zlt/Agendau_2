@@ -3,7 +3,7 @@
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
 > Última atualização: 2026-11-23.
-> Estado confirmado após `git fetch origin`: `origin/main` e `origin/teste` estão em `e5c2e16` (Fase C). A branch local é `teste`; o worktree contém alterações não commitadas da integração de dados (Fases D/E), que ainda não estão na produção. No Supabase remoto, migrations `0001..0006` estão aplicadas e a Edge Function administrativa foi publicada. Estático, unitários, regressões e E2E Chromium passaram; smokes reais dos demais fluxos/perfis ainda faltam. Vercel está Ready e responde 200, mas o endereço público ainda serve o modo demonstração da `main`; não descartar as alterações nem publicar esta branch.
+> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `e5c2e16`; `origin/teste` = `ac8e0c6` (Fases D/E), PR #2 aberto e sem checks configurados. O commit está na branch de trabalho, não na produção. No Supabase remoto, migrations `0001..0006` estão aplicadas e a Edge Function administrativa foi publicada. Estático, unitários, regressões e E2E Chromium passaram; o smoke real de tutor também passou, mas os demais fluxos/perfis ainda precisam de smoke. Vercel está Ready/200, mas a URL pública continua servindo a demonstração da `main`. O dono deve revisar/mesclar o PR; depois, publicar pela trava `scripts/deploy-vercel.sh` e validar a URL.
 
 ## 0. Links e deploy (espelho fixo da main)
 
