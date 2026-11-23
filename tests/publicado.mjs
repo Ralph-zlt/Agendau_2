@@ -87,6 +87,28 @@ for (const perfil of casos) {
     await perfilCtx.close();
 }
 
+// Uma sessão Auth salva deve continuar no formulário até um novo envio explícito.
+const sessaoCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+const pExplicito = await sessaoCtx.newPage();
+await entra(pExplicito, casos[0]);
+await pExplicito.reload({ waitUntil: "load" });
+await pExplicito.waitForTimeout(2000);
+const loginVisivel = await pExplicito.locator("#login-screen").isVisible();
+check("sessão salva não abre o painel ao recarregar", loginVisivel);
+if (loginVisivel) {
+    await pExplicito.fill("#login-cpf", "admin");
+    await pExplicito.locator("#login-sugestoes button").first().click();
+    check("sugestão de perfil só preenche", await pExplicito.locator("#login-screen").isVisible());
+    await pExplicito.click("#auth-form button[type=submit]");
+    await pExplicito.waitForFunction(
+        () => document.getElementById("login-screen")?.classList.contains("hidden"),
+        null, { timeout: 15000 }
+    );
+    check("botão Acessar funciona após selecionar sugestão",
+        (await pExplicito.locator("#header-user-name").innerText()).trim() === "Raphael Dias");
+}
+await sessaoCtx.close();
+
 // 3. Senha errada não entra
 const erroCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 const pErr = await erroCtx.newPage();

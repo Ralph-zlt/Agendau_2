@@ -364,48 +364,6 @@ async function handleAuthSubmit(e) {
     }
 }
 
-async function restaurarSessaoSupabase() {
-    let cliente;
-    try {
-        cliente = obterClienteSupabaseAuth();
-        const { data: sessaoData, error: erroSessao } = await cliente.auth.getSession();
-        if (erroSessao) throw erroSessao;
-        const usuarioAuth = sessaoData?.session?.user;
-        if (!usuarioAuth) return;
-
-        const { data: perfil, error: erroPerfil } = await cliente
-            .from('usuarios')
-            .select('id, usuario, nome, role, crm, must_change, active, deleted_at')
-            .eq('id', usuarioAuth.id)
-            .maybeSingle();
-        if (erroPerfil) throw erroPerfil;
-        if (!perfil || !perfil.active || perfil.deleted_at ||
-            !Object.prototype.hasOwnProperty.call(PERMISSOES, perfil.role)) {
-            await cliente.auth.signOut();
-            mostrarErroCredenciais();
-            return;
-        }
-
-        const userObj = {
-            id: usuarioAuth.id,
-            username: perfil.usuario || '',
-            nome: perfil.nome,
-            role: perfil.role,
-            profissao: perfil.role,
-            crm: perfil.crm || ''
-        };
-        if (perfil.must_change) {
-            abrirModalForcarTrocaSenha(userObj);
-            return;
-        }
-        await carregarDadosAutenticados(userObj);
-        realizarLogin(userObj, perfil.role);
-    } catch (erro) {
-        console.error("Falha ao restaurar sessão Supabase.", erro);
-        showToast("Não foi possível restaurar a sessão e carregar os dados.", "error");
-    }
-}
-
 function formatarCargo(role) {
     const mapa = {
         admin: 'Administrador',
@@ -417,8 +375,7 @@ function formatarCargo(role) {
 
 // O QUE: Acessos temporários do protótipo (estilo "login salvo").
 // PORQUÊ: Facilita o teste pelo usuário final sem decorar CPFs 1/2/3:
-//   digitar qualquer coisa no campo usuário exibe Administrador,
-//   Veterinário e Funcionário; clicar preenche usuário+senha e acessa.
+//   digitar no campo usuário exibe perfis; clicar preenche usuário+senha.
 // DEMO (mock): Atalhos por apelido (admin/vet/fun) + CPFs curtos 1/2/3.
 // TODO [INTEGRAÇÃO SUPABASE - DB SQL]: remover todo este bloco —
 //   o login real identifica o perfil pelo CPF/e-mail na tabela `users`.
@@ -428,8 +385,6 @@ const ACESSOS_TEMPORARIOS = [
     { role: 'veterinario', rotulo: 'Veterinário', icone: 'stethoscope', apelidos: ['vet', 'veterinario', 'veterinário', '2', '222'] },
     { role: 'funcionario', rotulo: 'Funcionário', icone: 'clipboard-list', apelidos: ['fun', 'func', 'funcionario', 'funcionário', '3', '333'] }
 ];
-
-const CPF_DEMO_POR_ROLE = { admin: '1', veterinario: '2', funcionario: '3' };
 
 // O QUE: Identificadores e senhas das 3 contas de teste, usados pelos botões.
 // PORQUÊ: Pedido do dono (2026-11-13): manter o bypass para testes, mas por botão
@@ -483,26 +438,17 @@ function filtrarSugestoesLogin() {
         `hover:border-brand-lime text-left transition-all group">` +
         `<i data-lucide="${a.icone}" class="w-4 h-4 text-slate-500 group-hover:text-brand-lime"></i>` +
         `<span><span class="block text-xs font-bold text-slate-200">${a.rotulo}</span>` +
-        `<span class="block text-[10px] text-slate-500">acesso temporário — toque para entrar</span></span>` +
+        `<span class="block text-[10px] text-slate-500">acesso temporário — toque para preencher</span></span>` +
         `</button>`
     ).join('');
     box.classList.remove('hidden');
     if (window.lucide) lucide.createIcons();
 }
 
-// O QUE: Preenche usuário+senha do acesso temporário e acessa automaticamente.
-// PORQUÊ: Um toque equivale ao "login salvo" do navegador no protótipo.
-// DEMO (mock): Usa os CPFs curtos 1/2/3 via perfisTestes; sem backend.
+// O QUE: Preenche usuário+senha; o envio exige clique em "Acessar o Painel".
+// PORQUÊ: Evita autenticação sem confirmação explícita do usuário.
 function preencherLoginTemporario(role) {
-    const cpf = CPF_DEMO_POR_ROLE[role];
-    if (!cpf) return;
-    const demoUser = perfisTestes[cpf];
-    if (!demoUser) return;
-    document.getElementById('login-cpf').value = cpf;
-    document.getElementById('login-password').value = demoUser.password_demo || '';
-    const box = document.getElementById('login-sugestoes');
-    if (box) { box.classList.add('hidden'); box.innerHTML = ''; }
-    handleAuthSubmit(null);
+    preencherAcessoTeste(role);
 }
 
 // O QUE: Valida CPF brasileiro (dígito verificador x10 e x11).
@@ -585,6 +531,15 @@ async function handleLogout() {
     currentUser = null;
     currentRole = '';
     limparDadosAutenticados();
+    document.getElementById('login-cpf').value = '';
+    document.getElementById('login-password').value = '';
+    const sugestoesLogin = document.getElementById('login-sugestoes');
+    if (sugestoesLogin) {
+        sugestoesLogin.classList.add('hidden');
+        sugestoesLogin.innerHTML = '';
+    }
+    const statusAcessoTeste = document.getElementById('acessos-teste-status');
+    if (statusAcessoTeste) statusAcessoTeste.textContent = 'Toque em um perfil para preencher usuário e senha.';
     document.getElementById('login-screen').classList.remove('hidden');
     showToast("Você saiu do sistema.");
 }
@@ -3334,7 +3289,6 @@ window.onload = async function() {
     renderizarAnexos();
     renderizarUsuarios();
     inicializarGraficos();
-    await restaurarSessaoSupabase();
     if (parametrosAuth.get('type') === 'recovery') {
         abrirEtapaRedefinirSenha();
     }

@@ -41,7 +41,7 @@
 ## 3. Autenticação e perfis (RBAC)
 
 > ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
-> **Decisão do dono (2026-11-13):** o bypass **fica durante os testes**. Ele foi tornado explícito: o card `#acessos-teste` na tela de login tem 3 botões (Admin / Veterinário / Funcionário) que **preenchem CPF + senha** e deixam o usuário confirmar em "Acessar o Painel" (`preencherAcessoTeste()` → `ACESSOS_TESTE`). O atalho digitado 1/2/3 continua funcionando.
+> **Decisão do dono (2026-11-13):** o bypass **fica durante os testes**. Ele foi tornado explícito: o card `#acessos-teste` na tela de login tem 3 botões (Admin / Veterinário / Funcionário) que **preenchem usuário + senha** e deixam o usuário confirmar em "Acessar o Painel" (`preencherAcessoTeste()` → `ACESSOS_TESTE`). Sugestões de perfil também só preenchem; sessão salva não abre o painel ao recarregar. O atalho digitado 1/2/3 continua funcionando ao enviar o formulário.
 
 - **Login por usuário, CPF ou e-mail + senha** — RPC `resolver_login(text)` resolve o e-mail; `signInWithPassword` valida a senha; o perfil é lido de `public.usuarios` com RLS. Erro de credenciais é genérico e contas inativas/excluídas não autenticam.
 - **Usuários de teste** (decisão do dono 2026-11-17): o campo de login aceita **usuário, CPF (com/sem máscara) ou e-mail**, comparados pela regra pura `RegrasLogin` de `dayvet/regras.js`:
@@ -59,7 +59,7 @@
 - **Implantação (método do dono)**: sem rota de setup — admin cadastra CPF+e-mail do responsável; 1º acesso exige troca de senha para todos os perfis (admin/vet/func) via `mustChange`.
 - **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico + vacinação total `vacinacao_*` + CRUD tipos de vacina `vacina_tipos_*` + quick-add "Outro"), `funcionario` (SEM modo clínico: agendamentos só-leitura + tutor/pet + **editar/arquivar/excluir tutor** (decisão 2026-11-13) + CRUD tipos de raça `raca_tipos_*`). O cargo `gestor` foi **removido**.
 - Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
-- **Fase C (Auth) concluída no baseline:** login, recovery, restauração de sessão e atualização de senha usam Supabase Auth.
+- **Fase C (Auth) concluída no baseline:** login, recovery e atualização de senha usam Supabase Auth. Cada carregamento exige envio explícito do formulário; sessão salva e sugestões não autenticam sozinhas.
 - **Fases D/E no worktree:** tabelas operacionais, clínico, catálogos, usuários e Storage têm integração no frontend. Banco e migrations foram validados; o smoke real de tutor passou e os dados de teste foram removidos. Ainda é necessário validar os demais fluxos/perfis, rodar a suíte E2E e só então preparar deploy pela `main`.
 
 ## 4. Mapa de seções (script.js)

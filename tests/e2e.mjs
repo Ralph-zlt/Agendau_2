@@ -27,7 +27,7 @@ const falhas = [];
 function ok(msg) { console.log("  ✓ " + msg); }
 function erro(msg) { falhas.push(msg); console.error("  ✗ " + msg); }
 
-async function abrirPage(browser, { mobile = false, mustChange = false, agendamentos = [] } = {}) {
+async function abrirPage(browser, { mobile = false, mustChange = false, sessaoPersistida = false, agendamentos = [] } = {}) {
     const page = await browser.newPage({ viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 800 } });
     const problemas = [];
     page.on("console", m => { if (m.type() === "error") problemas.push("console: " + m.text()); });
@@ -37,7 +37,7 @@ async function abrirPage(browser, { mobile = false, mustChange = false, agendame
         await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js", route =>
             route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
         );
-        await page.addInitScript(({ exigeTroca, agendamentosIniciais }) => {
+        await page.addInitScript(({ exigeTroca, sessaoSalva, agendamentosIniciais }) => {
             const contas = [
                 { id: "u1", usuario: "raphael_dias", cpf: "111.111.111-11", email: "raphael.dias@dayvet.com", nome: "Raphael Dias", role: "admin", crm: null, must_change: exigeTroca, active: true, deleted_at: null },
                 { id: "u2", usuario: "lais_vet", cpf: "222.222.222-22", email: "lais.vet@dayvet.com", nome: "Dra. Laís", role: "veterinario", crm: "CRMV-SP 00000", must_change: false, active: true, deleted_at: null },
@@ -97,7 +97,12 @@ async function abrirPage(browser, { mobile = false, mustChange = false, agendame
                                 return { data: { subscription: { unsubscribe() {} } } };
                             },
                             async getSession() {
-                                return { data: { session: null }, error: null };
+                                return {
+                                    data: {
+                                        session: sessaoSalva ? { user: { id: "u1", email: "raphael.dias@dayvet.com" } } : null
+                                    },
+                                    error: null
+                                };
                             },
                             async resetPasswordForEmail(email, options) {
                                 window.__supabaseTestState.emailRedefinicao = email;
@@ -177,7 +182,7 @@ async function abrirPage(browser, { mobile = false, mustChange = false, agendame
                     };
                 }
             };
-        }, { exigeTroca: mustChange, agendamentosIniciais: agendamentos });
+        }, { exigeTroca: mustChange, sessaoSalva: sessaoPersistida, agendamentosIniciais: agendamentos });
     }
     await page.goto(url, { waitUntil: "load" });
     return { page, problemas };
@@ -502,6 +507,40 @@ const cenarios = {
         await page.close();
     },
 
+    // Login exige ação explícita mesmo com sessão salva e após escolher uma sugestão.
+    async loginExplicito(browser) {
+        const { page, problemas } = await abrirPage(browser, { sessaoPersistida: true });
+        await page.locator("#login-screen").waitFor({ state: "visible", timeout: 5000 });
+        await page.fill("#login-cpf", "admin");
+        await page.locator("#login-sugestoes button").first().click();
+
+        const continuaNoLogin = await page.locator("#login-screen").isVisible();
+        const identificadorPreenchido = (await page.locator("#login-cpf").inputValue()) === "raphael_dias";
+        const senhaPreenchida = (await page.locator("#login-password").inputValue()).length > 0;
+        continuaNoLogin && identificadorPreenchido && senhaPreenchida
+            ? ok("sessão salva e sugestão não autenticam sem envio explícito")
+            : erro("sessão salva ou sugestão autenticou sem clique em Acessar o Painel");
+
+        await page.click("#auth-form button[type=submit]");
+        await page.waitForFunction(
+            () => document.getElementById("login-screen")?.classList.contains("hidden"),
+            null, { timeout: 8000 }
+        );
+        (await page.locator("#header-user-name").innerText()).includes("Raphael Dias")
+            ? ok("Acessar o Painel autentica após confirmação")
+            : erro("envio explícito não concluiu o login");
+        await page.getByRole("button", { name: "Sair do Sistema" }).click();
+        await page.waitForFunction(
+            () => !document.getElementById("login-screen")?.classList.contains("hidden")
+                && document.getElementById("login-cpf")?.value === ""
+                && document.getElementById("login-password")?.value === "",
+            null, { timeout: 5000 }
+        );
+        ok("logout limpa credenciais e volta ao formulário");
+        problemas.forEach(p => erro(p));
+        await page.close();
+    },
+
     // O painel mensal deve incluir agendamentos do mês futuro selecionado.
     async financeMonth(browser) {
         const { page, problemas } = await abrirPage(browser);
@@ -696,7 +735,7 @@ const cenarios = {
 const alvo = process.argv[2] || "todos";
 const navegador = alvo === "firefox" ? "firefox" : "chromium";
 const tipo = navegador === "firefox" ? firefox : chromium;
-const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile", "loginAlturaCurta", "financeMonth", "periodoHistorico"]
+const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile", "loginAlturaCurta", "loginExplicito", "financeMonth", "periodoHistorico"]
     : alvo === "firefox" ? ["admin", "func"]
     : [alvo];
 
