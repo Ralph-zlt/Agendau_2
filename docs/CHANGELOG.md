@@ -9,11 +9,11 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
-## 2026-11-23 · (main) — Login só entra após confirmação explícita
+## 2026-11-23 · (main `dc0e35b`; Vercel Ready `Bx2KqLPtTGv2yvBu1jimjFP7n8VK`) — Login só entra após confirmação explícita
 **O que:** a sessão Supabase salva não autentica a interface automaticamente ao abrir/recarregar; sugestões de acesso preenchem usuário e senha, sem enviar o formulário. O login manual e o atalho 1/2/3 continuam operando pelo botão "Acessar o Painel".
 **Por quê:** impedir entrada inesperada e garantir que os cliques de acesso levem a um envio explícito.
 **Onde:** `dayvet/script.js`, `tests/e2e.mjs`, `tests/regressao/08-login-exige-confirmacao.mjs`, `docs/MAPA_DO_SISTEMA.md`.
-**Validação:** `node --check`, estático 12/12, regras 42/42, persistência 9/9, regressões 8/8, E2E Chromium completo, Firefox (admin/funcionário) e DB em Postgres 17 (73 casos de RLS) passaram. `tests/publicado.mjs` agora também verifica a sessão salva, a sugestão de perfil e o envio manual após o deploy.
+**Validação:** `node --check`, estático 12/12, regras 42/42, persistência 9/9, regressões 8/8, E2E Chromium completo, Firefox (admin/funcionário) e DB em Postgres 17 (73 casos de RLS) passaram. `scripts/deploy-vercel.sh` publicou a `main`; 7 rotas responderam HTTP 200 e `tests/publicado.mjs` passou 16/16, incluindo sessão salva, sugestão e envio manual.
 
 ## 2026-11-23 · (main `cceb6af`; Vercel Ready `FAPWsv6YUDr6v7B9HWQo9hxH5Bbo`) — Alinhando KPIs e histórico ao período
 **O que:** contagem e taxa de agendamentos usam o mesmo intervalo mensal/semanal/anual do faturamento; pets e tutores ficam identificados como totais gerais. O histórico abre filtrado no mês atual e reage às mudanças de mês/ano; "Limpar" deixa ambos os seletores em "Todos".

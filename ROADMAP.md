@@ -3,7 +3,7 @@
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
 > Última atualização: 2026-11-23.
-> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `cceb6af`; `origin/teste` = `6cd5c06`. A produção Vercel usa o Supabase real; migrations `0001..0006` e `admin-criar-usuario` estão publicados. Estático, unitários, regressões, E2E Chromium/Firefox, Postgres 17 e smoke publicado 13/13 passaram. Ainda faltam smokes reais dos demais fluxos/perfis (pets, agenda, clínico, anexos e configuração).
+> Estado após `git fetch origin` em 23/11/2026: último commit funcional publicado na `main` = `dc0e35b`; `origin/teste` = `6cd5c06`. A produção Vercel usa o Supabase real; migrations `0001..0006` e `admin-criar-usuario` estão publicados. Estático, unitários, regressões 8/8, E2E Chromium/Firefox, Postgres 17 e smoke publicado 16/16 passaram. Ainda faltam smokes reais dos demais fluxos/perfis (pets, agenda, clínico, anexos e configuração).
 
 ## 0. Links e deploy (espelho fixo da main)
 
@@ -12,7 +12,7 @@
   - Artefato: `site/index.html` → `dist/index.html` (landing) + `dayvet/*` → `dist/dayvet/` (SPA).
   - **Regra: este link SEMPRE reflete a `main`. Nunca publicar a `teste` nele.**
 - **Fluxo atual (decisão do dono em 23/11/2026):** trabalhar diretamente na `main` para acelerar o projeto; não usar `teste` durante essa orientação.
-- **Vercel:** https://agendau-2.vercel.app — deployment `FAPWsv6YUDr6v7B9HWQo9hxH5Bbo` da `main` `cceb6af` Ready; 7 caminhos HTTP 200 e `tests/publicado.mjs` 13/13. A integração Git continua bloqueada, então publicações usam `scripts/deploy-vercel.sh`.
+- **Vercel:** https://agendau-2.vercel.app — deployment `Bx2KqLPtTGv2yvBu1jimjFP7n8VK` da `main` `dc0e35b` Ready; 7 caminhos HTTP 200 e `tests/publicado.mjs` 16/16. A integração Git continua bloqueada, então publicações usam `scripts/deploy-vercel.sh`.
 
 ---
 

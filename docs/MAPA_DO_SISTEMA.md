@@ -1,7 +1,7 @@
 # MAPA DO SISTEMA — DayVet-Gestão
 
 > Referência para IAs e colaboradores editarem o código com contexto.
-> Última revisão: 23/11/2026 · `origin/main`=`cceb6af`. A integração de dados está publicada na Vercel em modo Supabase real; migrations `0001..0006` estão aplicadas e `admin-criar-usuario` implantada.
+> Última revisão: 23/11/2026 · último commit funcional publicado: `main`=`dc0e35b`. A integração de dados está publicada na Vercel em modo Supabase real; migrations `0001..0006` estão aplicadas e `admin-criar-usuario` implantada.
 > Smoke real confirmou Auth/RBAC, persistência após reload para tutor, pet, agendamento e documento clínico. Dados sintéticos de QA permanecem na produção (2 tutores, 3 pets, 4 agendamentos, 2 registros clínicos; identificados com `TESTE`, não remover). Login, dashboard por período e histórico mensal estão publicados; validação inclui Postgres 17, E2E Chromium/Firefox e smoke publicado 13/13. Detalhes em `ROADMAP.md` §2.b e no topo do `CHANGELOG.md`.
 > Atenção: números de linha são referências — confirme antes de editar.
 > A correção de contagem/taxa por período e filtro imediato do histórico está publicada na Vercel (`main` `cceb6af`).
@@ -12,7 +12,7 @@
 - Workflow `.github/workflows/deploy-pages.yml` dispara **somente em `push` na `main`**; publica `site/index.html` → `dist/index.html` + `dayvet/*` → `dist/dayvet/`.
 - **Nunca publicar a branch `teste` neste link.** Por decisão do dono em 23/11/2026, alterações autorizadas são feitas diretamente na `main`; valide antes do push.
 - Itens 18–22 estão no baseline `origin/main` (`cceb6af`). A integração D/E e as correções de login/dashboard estão publicadas.
-- **Vercel:** https://agendau-2.vercel.app; deployment `FAPWsv6YUDr6v7B9HWQo9hxH5Bbo` da `main` `cceb6af` Ready, assets retornam 200 e o smoke publicado passou 13/13. A integração Git segue bloqueada; novas publicações usam `scripts/deploy-vercel.sh`.
+- **Vercel:** https://agendau-2.vercel.app; deployment `Bx2KqLPtTGv2yvBu1jimjFP7n8VK` da `main` `dc0e35b` Ready, assets retornam 200 e o smoke publicado passou 16/16. A integração Git segue bloqueada; novas publicações usam `scripts/deploy-vercel.sh`.
 
 ## 1. Visão geral
 - SPA (single-page application) de agenda para **pet shop / clínica veterinária**.
