@@ -3,7 +3,7 @@
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
 > Última atualização: 2026-11-23.
-> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `e3edffe` (merge do PR #2); `origin/teste` = `bb4f532`. A integração está publicada na Vercel; o teste de produção confirmou modo real, Auth/RBAC dos 3 perfis e persistência de tutor após reload. Migrations `0001..0006` estão aplicadas e `admin-criar-usuario` está implantada. Estático, unitários, regressões, E2E Chromium e verificação publicada passaram. Ainda faltam smokes reais dos demais fluxos/perfis (pets, agenda, clínico, anexos e configuração).
+> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `e3edffe` (merge do PR #2); `origin/teste` = `256ec43`. A integração está publicada na Vercel; o teste de produção confirmou modo real, Auth/RBAC dos 3 perfis e persistência de tutor após reload. Migrations `0001..0006` estão aplicadas e `admin-criar-usuario` está implantada. Estático, unitários, regressões, E2E Chromium e verificação publicada passaram. Ainda faltam smokes reais dos demais fluxos/perfis (pets, agenda, clínico, anexos e configuração).
 
 ## 0. Links e deploy (espelho fixo da main)
 
@@ -70,9 +70,10 @@
 > em 2026-11-23. Restam smokes autenticados reais dos demais fluxos/perfis.
 > O banco foi validado em Postgres 17 na VPS; migrations `0001..0006` foram
 > confirmadas no projeto remoto, e a Edge Function `admin-criar-usuario` foi
-> implantada com JWT obrigatório. O smoke autenticado confirmou leitura,
-> cadastro/edição de tutor com CPF canônico e persistência após reload; o dado
-> sintético foi removido após o teste.
+> implantada com JWT obrigatório. Smokes autenticados confirmaram CRUD e
+> persistência após reload de tutor, pet, agendamento e documento clínico.
+> Dados sintéticos de QA permanecem na produção por decisão do dono: 2 tutores,
+> 3 pets, 4 agendamentos e 2 registros clínicos, todos marcados `TESTE`.
 
 - [x] **Fase A — SQL v2 consolidado e validado localmente** — single-clinic (sem `clinicas`/`clinica_id`), sem `vacinacoes`/`forma_farmaceutica`, sem `guia` no enum, `usuarios.id = auth.users.id`, `pet_id` nullable, `historico` editável por admin/vet. Validado em Postgres 17 descartável com matriz de permissões idêntica ao RBAC do `script.js`.
 - [x] **Fase B — Supabase no ar (concluída em 2026-11-18)** — org `dayvet-org` + projeto `agendau-2` em `sa-east-1`; migrations `0001..0003` e Auth/RLS foram aplicados/validados na nuvem conforme histórico do changelog.
@@ -81,7 +82,8 @@
 - [x] **Vercel reflete a `main` (2026-11-23)** — decisão do dono. `scripts/deploy-vercel.sh` agora aborta se `HEAD != origin/main` ou se `dayvet/`/`site/` estiverem sujos; publicação só a partir da `main`. Regra escrita no `AGENTS.md` do projeto.
 - [x] **Fase C — autenticação Supabase (baseline `e5c2e16`)** — login por usuário/CPF/e-mail via RPC `resolver_login` + `signInWithPassword`; perfil/RBAC em `public.usuarios`; recuperação de senha, sessão e troca obrigatória via Supabase Auth. O bypass de demonstração 1/2/3 permanece por decisão do dono.
 - [x] **Banco remoto e Edge Function (2026-11-23)** — migrations `0001..0006` confirmadas no projeto `agendau-2`; `tests/db.mjs` passou em Postgres 17 na VPS; `admin-criar-usuario` implantada com verificação JWT habilitada e chamada sem autenticação recusada (401).
-- [x] **Smoke real de tutores e CPF (2026-11-23)** — login admin e leitura pelo Supabase; cadastro com CPF sem máscara persistiu formatado, sobreviveu ao reload, edição para outro CPF sem máscara também persistiu após reload; CPF inválido foi rejeitado antes da escrita. Tutores sintéticos foram excluídos e conferidos ausentes após novo reload.
+- [x] **Smoke real de dados QA (2026-11-23)** — login Auth real e gravação pela aplicação/RLS de 2 tutores, 3 pets, 4 agendamentos e 2 registros clínicos sintéticos, identificados com `TESTE`; persistência e vínculos confirmados após reload. Cadastro/edição com CPF canônico e rejeição de CPF inválido também foram verificados.
+- [ ] **Correções de login e dashboard (2026-11-23, branch `teste`, validadas e não publicadas)** — permite rolagem do login em janelas baixas; seleciona mês para consultar agendamentos confirmados/concluídos. Valores não representam pagamentos recebidos. Estático, unitários, regressões, E2E Chromium/Firefox e `tests/db.mjs` com Postgres 17 passaram; aguardam revisão/merge do dono antes da publicação.
 - [ ] **Fases D/E — completar validação funcional** — a integração está publicada em modo `MODO_DADOS='real'`; `persistencia.js` integra tutores, pets, agendamentos, catálogos, configuração, dados clínicos/anexos e usuários; Storage usa bucket privado. Smoke real do tutor passou em Vercel: cadastro/edição, reload, CPF inválido rejeitado e exclusão limpa. E2E Chromium passou com stubs; ainda faltam smokes autenticados reais dos demais fluxos/perfis. O teste de ouro continua: "desmarcar consulta → F5 → continua desmarcada".
 - [ ] **Integração Git da Vercel (bloqueada — depende do dono)** — todo push na `main` falha com "commit author doesn't have permission to create deployments". Falta adicionar a **Login Connection** do GitHub na conta Vercel (`vercel.com/accounts`). Enquanto isso, publicar com `./scripts/deploy-vercel.sh` (artefato pré-construído).
 

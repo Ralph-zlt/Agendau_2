@@ -70,8 +70,8 @@
     <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-md pointer-events-none"></div>
 
     <!-- ===================== TELA DE LOGIN (SISTEMA DE ACESSO FUTURISTA) ===================== -->
-    <div id="login-screen" class="fixed inset-0 bg-brand-dark/90 backdrop-blur-xl z-50 flex items-center justify-center p-4">
-        <div class="bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-brand-blue/30 flex flex-col neon-border-blue-login">
+    <div id="login-screen" class="fixed inset-0 bg-brand-dark/90 backdrop-blur-xl z-50 flex items-center justify-center overflow-y-auto p-4">
+        <div class="my-auto bg-slate-900 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-brand-blue/30 flex flex-col neon-border-blue-login">
             <!-- Header do Login -->
             <div id="login-cabecalho" class="p-8 bg-gradient-to-br from-brand-dark via-slate-900 to-brand-purple text-white text-center relative border-b border-brand-purple/20">
                 <!-- Botão tema no login — canto superior direito
@@ -286,16 +286,22 @@
                         </h3>
                         <p id="dash-subtitulo" class="text-xs text-slate-400">Dados de atendimentos e cadastros carregados do banco. Valores são de agendamentos, não pagamentos.</p>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                         <button id="btn-gerar-relatorios-dashboard" onclick="abrirModalGerarRelatorios()" class="px-4 py-2.5 bg-gradient-to-r from-brand-purple to-brand-blue hover:opacity-90 font-bold text-xs text-white rounded-xl shadow-md flex items-center gap-2">
                             <i data-lucide="file-text" class="w-4 h-4"></i>
                             <span>Gerar Relatórios</span>
                         </button>
-                        <select id="periodo-faturamento" onchange="atualizarPeriodoFaturamento()" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-4 py-2.5 rounded-xl focus:outline-none">
-                            <option value="mensal">Período: Mês atual</option>
-                            <option value="semanal">Período: Semanal</option>
-                            <option value="anual">Período: Ano atual</option>
-                        </select>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="periodo-faturamento" onchange="atualizarPeriodoFaturamento()" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-4 py-2.5 rounded-xl focus:outline-none">
+                                <option value="mensal">Período: Mês selecionado</option>
+                                <option value="semanal">Período: Semanal</option>
+                                <option value="anual">Período: Ano atual</option>
+                            </select>
+                            <label for="mes-faturamento" class="sr-only">Mês de referência dos atendimentos</label>
+                            <input type="month" id="mes-faturamento" aria-label="Mês de referência dos atendimentos"
+                                onchange="atualizarPeriodoFaturamento()"
+                                class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-3 py-2.5 rounded-xl focus:outline-none">
+                        </div>
                     </div>
                 </div>
 
