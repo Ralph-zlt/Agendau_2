@@ -1,8 +1,8 @@
 # MAPA DO SISTEMA — DayVet-Gestão
 
 > Referência para IAs e colaboradores editarem o código com contexto.
-> Última revisão: 23/11/2026 · `origin/main`=`e5c2e16`; `origin/teste`=`ac8e0c6` com PR #2 aberto. Auth integrado e worktree de dados commitado na branch de trabalho, mas ainda sem deploy. No Supabase remoto, migrations `0001..0006` estão aplicadas e `admin-criar-usuario` está implantada.
-> O smoke de tutores autenticado confirmou CPF validado/formatado, cadastro e edição persistentes após reload; os registros sintéticos foram removidos. E2E Chromium passou (com stubs); restam smokes reais dos demais fluxos/perfis. Vercel está Ready/200, mas a URL ainda serve o modo demonstração da `main`. Detalhes em `ROADMAP.md` §2.b e no topo do `CHANGELOG.md`.
+> Última revisão: 23/11/2026 · `origin/main`=`e3edffe` (PR #2 mesclado); `origin/teste`=`bb4f532`. A integração de dados está publicada na Vercel em modo Supabase real; migrations `0001..0006` estão aplicadas e `admin-criar-usuario` implantada.
+> Smoke real em produção confirmou Auth/RBAC nos três perfis, cadastro/edição/reload de tutor e rejeição de CPF inválido; os registros sintéticos foram removidos. Estático, unitários, regressões, E2E Chromium e verificação publicada passaram. Restam smokes reais dos demais fluxos/perfis. Detalhes em `ROADMAP.md` §2.b e no topo do `CHANGELOG.md`.
 > Atenção: números de linha são referências — confirme antes de editar.
 
 ## 0. Links e deploy (espelho fixo da main)
@@ -10,8 +10,8 @@
 - **Produção (espelho fixo da `main`): https://ralph-zlt.github.io/Agendau_2/dayvet/**
 - Workflow `.github/workflows/deploy-pages.yml` dispara **somente em `push` na `main`**; publica `site/index.html` → `dist/index.html` + `dayvet/*` → `dist/dayvet/`.
 - **Nunca publicar a branch `teste` neste link.** Teste roda local (`dayvet/index.html`); merge na `main` só após validação do dono.
-- Itens 18–22 já estão no baseline `origin/main` (`e5c2e16`). As alterações locais de D/E ainda não foram commitadas ou publicadas.
-- **Vercel:** https://agendau-2.vercel.app; deploy somente da `main`, com trava em `scripts/deploy-vercel.sh`. A integração Git segue bloqueada. A URL foi revalidada: deploy Ready e resposta HTTP 200, mas a página ainda informa que usa dados fictícios e nada é salvo; a integração D/E não está no ar.
+- Itens 18–22 estão no baseline `origin/main` (`e3edffe`). A integração D/E foi mesclada e publicada em 23/11/2026.
+- **Vercel:** https://agendau-2.vercel.app; deploy Ready a partir da `main`, assets retornam 200 e a SPA carrega dados reais do Supabase. A integração Git segue bloqueada; novas publicações usam a trava de `scripts/deploy-vercel.sh`.
 
 ## 1. Visão geral
 - SPA (single-page application) de agenda para **pet shop / clínica veterinária**.

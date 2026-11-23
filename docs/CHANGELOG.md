@@ -9,6 +9,12 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-23 · (main `e3edffe`) — Integração real publicada na Vercel
+**O que:** PR #2 (`bb4f532`) foi mesclado pelo dono; `scripts/deploy-vercel.sh` publicou o artefato da `main` no projeto existente. `https://agendau-2.vercel.app/dayvet/` agora serve `MODO_DADOS='real'`; a Vercel marcou o deployment Ready e os assets principais retornaram HTTP 200.
+**Validação de produção:** `tests/publicado.mjs` confirmou `RegrasLogin`, `RegrasTutor`, `DayVetPersistencia`, modo real, Auth/RBAC de admin/veterinário/funcionário, senha incorreta rejeitada, sem erros de console/HTTP e mobile sem overflow (13 verificações). Cadastro de tutor no site real com CPF sem máscara persistiu após reload; edição para outro CPF sem máscara persistiu após novo reload; CPF inválido foi rejeitado; o tutor sintético foi arquivado/excluído e confirmado ausente após reload.
+**Correção do verificador:** o primeiro smoke falhou porque reutilizava contexto/sessão do Supabase entre perfis. `tests/publicado.mjs` agora isola contextos por login; a nova execução passou 13/13. Essa correção e a sincronização final desta documentação estão no commit de acompanhamento da branch `teste`, aguardando PR próprio.
+**Pendente/risco:** smokes autenticados reais de pets, agendamentos, clínico/anexos, configurações e fluxos restantes por perfil ainda faltam; E2E Chromium usa stubs. Sem novos dados sintéticos no banco. A integração Git da Vercel segue bloqueada; publicar mudanças futuras só depois de merge na `main` via `scripts/deploy-vercel.sh`.
+
 ## 2026-11-23 · (teste) — CPF canônico de tutor e smoke real de persistência
 **O que:** cadastro e edição de tutor agora validam os dígitos do CPF e persistem sempre no formato `000.000.000-00`; a comparação de duplicidade considera os dígitos, com ou sem máscara. A regressão 05 cobre os dois caminhos e o E2E foi ampliado para criar e editar um tutor com CPFs sem máscara.
 **Por quê:** o banco exige o CPF pontuado (`chk_tutores_cpf`); a tela antes enviava os dígitos sem máscara, fazendo o Supabase rejeitar o cadastro. Também é melhor rejeitar CPF com dígitos verificadores inválidos antes da escrita.

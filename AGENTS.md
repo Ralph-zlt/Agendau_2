@@ -41,7 +41,7 @@ ou da professora têm prioridade sobre convenções genéricas.
 
 ## Onde está o código
 - O produto fica em **`dayvet/`**: `index.html` (estrutura), `styles.css` (estilos), `script.js` (lógica). Nada fora dessa pasta é o produto.
-- SPA + Supabase: o worktree da `teste` contém a integração real de dados/Storage e usa `MODO_DADOS='real'`, sem fallback silencioso. As migrations `0001..0006` foram validadas em Postgres 17 na VPS e confirmadas no projeto remoto; `admin-criar-usuario` está implantada com JWT obrigatório. O smoke autenticado real de cadastro/edição de tutor passou após a normalização de CPF; os registros sintéticos foram removidos. Estático, unitários, regressões e E2E Chromium passaram; ainda faltam smokes reais dos demais fluxos/perfis. A Vercel está Ready/200, mas ainda serve o frontend de demonstração da `main`; não publicar da `teste`. Nunca ler nem publicar `service_role`, senhas ou tokens; deploy segue as regras da seção acima.
+- SPA + Supabase: a integração real de dados/Storage está publicada na Vercel pela `main` (`e3edffe`), com `MODO_DADOS='real'` e sem fallback silencioso. Migrations `0001..0006` passaram em Postgres 17 e estão no projeto remoto; `admin-criar-usuario` está implantada com JWT obrigatório. O smoke real em produção confirmou Auth/RBAC, CRUD de tutor, validação/canonicalização de CPF e persistência após reload; os dados sintéticos foram removidos. Estático, unitários, regressões, E2E Chromium e verificação publicada passaram; faltam smokes dos demais fluxos/perfis. Novas publicações devem seguir o fluxo da seção acima. Nunca ler nem publicar `service_role`, senhas ou tokens.
 
 ## Não versionar
 - `local/` (relatórios pessoais de metodologia/commit) e `opencode.json` (config local da ferramenta).
