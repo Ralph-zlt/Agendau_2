@@ -4,13 +4,13 @@
     <!-- ==========================================================
          DAYVET-GESTÃO — Estrutura do Projeto
          ==========================================================
-         Este é o arquivo principal (SPA monolítica separada em 3 arquivos).
+         Este é o arquivo principal da SPA.
          ONDE MEXER:
            • <head>         → Meta-tags, CDN (Tailwind, Lucide, Chart.js), config Tailwind
            • #login-screen  → Tela de login (neon futurista)
            • #app-container → Toda a aplicação (header, nav, tabs, modais)
 • CSS            → styles.css (importado via <link>)
-            • JS             → script.js   (importado via <script> no final do <body>)
+            • JS             → persistencia.js, regras.js e script.js
          ========================================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,7 +46,7 @@
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://www.supabase.com/js/client/supabase.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -166,11 +166,25 @@
         </div>
     </div>
 
+    <div id="modal-senha-temporaria" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+            <h4 class="font-black text-white text-base">Usuário criado</h4>
+            <p class="text-xs text-slate-300">Copie a senha temporária agora e entregue ao usuário por um canal seguro. Ela não será exibida novamente e deverá ser trocada no primeiro acesso.</p>
+            <div class="flex gap-2">
+                <input id="senha-temporaria-gerada" type="text" readonly class="min-w-0 flex-1 bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white">
+                <button type="button" onclick="copiarSenhaTemporaria()" class="px-3 py-2 bg-brand-blue text-white text-xs font-bold rounded-xl">Copiar</button>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" onclick="fecharModalSenhaTemporaria()" class="px-4 py-2 bg-slate-800 text-xs font-bold text-white rounded-xl">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================== APLICAÇÃO PRINCIPAL ===================== -->
     <div id="app-container" class="flex-1 flex flex-col">
         <!-- Aviso de modo demonstração (Fase 0 — 2026-11-23).
-             Visível enquanto MODO_DADOS === 'mock'; some sozinho quando a
-             ponte de dados (Fase D) ligar o Supabase. Ver styles.css §10. -->
+             Só aparece se o app voltar explicitamente ao modo mock.
+             Ver styles.css §10. -->
         <div id="aviso-modo-demo" class="aviso-demo no-print" role="status">
             <i data-lucide="alert-triangle" class="w-3.5 h-3.5 shrink-0"></i>
             <span>Modo demonstração: os dados são fictícios e <strong>nada é salvo</strong> — recarregar a página restaura tudo. O banco ainda não está ligado a esta tela.</span>
@@ -185,7 +199,7 @@
                     </div>
                     <div>
                         <h1 class="font-black text-lg text-white leading-none tracking-wide">DAYVET<span class="text-brand-lime neon-text-lime">-GESTÃO</span></h1>
-                        <span id="page-title" class="text-[11px] font-bold text-slate-400">Dashboards & Finanças</span>
+                        <span id="page-title" class="text-[11px] font-bold text-slate-400">Painel de Gestão</span>
                     </div>
                 </div>
 
@@ -270,7 +284,7 @@
                             <span id="dash-titulo">Resumo Financeiro e Operacional</span>
                             <span class="text-xs font-bold bg-brand-lime/10 text-brand-lime border border-brand-lime/20 px-2.5 py-0.5 rounded-full">Ao Vivo</span>
                         </h3>
-                        <p id="dash-subtitulo" class="text-xs text-slate-400">Acompanhamento consolidado de vendas, atendimentos e fluxo de clínica.</p>
+                        <p id="dash-subtitulo" class="text-xs text-slate-400">Dados de atendimentos e cadastros carregados do banco. Valores são de agendamentos, não pagamentos.</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <button id="btn-gerar-relatorios-dashboard" onclick="abrirModalGerarRelatorios()" class="px-4 py-2.5 bg-gradient-to-r from-brand-purple to-brand-blue hover:opacity-90 font-bold text-xs text-white rounded-xl shadow-md flex items-center gap-2">
@@ -278,9 +292,9 @@
                             <span>Gerar Relatórios</span>
                         </button>
                         <select id="periodo-faturamento" onchange="atualizarPeriodoFaturamento()" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-4 py-2.5 rounded-xl focus:outline-none">
-                            <option value="mensal">Período: Mensal (Maio 2026)</option>
+                            <option value="mensal">Período: Mês atual</option>
                             <option value="semanal">Período: Semanal</option>
-                            <option value="anual">Período: Anual (2026)</option>
+                            <option value="anual">Período: Ano atual</option>
                         </select>
                     </div>
                 </div>
@@ -289,12 +303,12 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div id="card-faturamento" class="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-2 relative overflow-hidden">
                         <div class="flex items-center justify-between text-slate-400">
-                            <span class="text-xs font-bold uppercase tracking-wider">Faturamento Total</span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Valor confirmado/concluído</span>
                             <i data-lucide="dollar-sign" class="w-5 h-5 text-brand-lime"></i>
                         </div>
-                        <div id="kpi-faturamento" class="text-2xl font-black text-white">R$ 12.850,00</div>
+                        <div id="kpi-faturamento" class="text-2xl font-black text-white">R$ 0,00</div>
                         <span id="kpi-faturamento-nota" class="text-[11px] text-brand-lime font-bold flex items-center gap-1">
-                            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> +18.4% vs mês anterior
+                            Nenhum atendimento no período
                         </span>
                     </div>
 
@@ -303,20 +317,20 @@
                             <span class="text-xs font-bold uppercase tracking-wider">Agendamentos</span>
                             <i data-lucide="calendar" class="w-5 h-5 text-brand-pink"></i>
                         </div>
-                        <div id="kpi-agendamentos-count" class="text-2xl font-black text-white">24 Atendimentos</div>
-                        <span class="text-[11px] text-brand-pink font-bold flex items-center gap-1">
-                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> 88% taxa de confirmação
+                        <div id="kpi-agendamentos-count" class="text-2xl font-black text-white">0 Atendimentos</div>
+                        <span id="kpi-agendamentos-nota" class="text-[11px] text-brand-pink font-bold flex items-center gap-1">
+                            0% confirmados/concluídos
                         </span>
                     </div>
 
                     <div id="card-pacientes" class="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-2 relative overflow-hidden">
                         <div class="flex items-center justify-between text-slate-400">
-                            <span class="text-xs font-bold uppercase tracking-wider">Pacientes Ativos</span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Pacientes</span>
                             <i data-lucide="paw-print" class="w-5 h-5 text-brand-blue"></i>
                         </div>
-                        <div id="kpi-pacientes-count" class="text-2xl font-black text-white">18 Pets</div>
-                        <span class="text-[11px] text-brand-blue font-bold flex items-center gap-1">
-                            <i data-lucide="users" class="w-3.5 h-3.5"></i> 12 Tutores Cadastrados
+                        <div id="kpi-pacientes-count" class="text-2xl font-black text-white">0 Pets</div>
+                        <span id="kpi-tutores-count" class="text-[11px] text-brand-blue font-bold flex items-center gap-1">
+                            0 Tutores ativos
                         </span>
                     </div>
 
@@ -328,7 +342,7 @@
                         <div class="flex items-center justify-between">
                             <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
                                 <i data-lucide="line-chart" class="w-4 h-4 text-brand-blue"></i>
-                                <span>Evolução da Receita (R$)</span>
+                                <span>Valor de atendimentos confirmados/concluídos (R$)</span>
                             </h4>
                         </div>
                         <div class="h-64 relative">
@@ -545,7 +559,7 @@
                     </div>
                 </div>
 
-                <!-- Anexos do módulo clínico (protótipo: memória — some ao recarregar) -->
+                <!-- Anexos clínicos persistidos no Supabase Storage privado -->
                 <div id="anexos-card" class="bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-3">
                     <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
                         <i data-lucide="folder-open" class="w-4 h-4 text-brand-blue"></i>
@@ -675,7 +689,7 @@
                             <h4 id="rel-serv-total-atend" class="text-2xl font-black text-white mt-1">0</h4>
                         </div>
                         <div class="bg-slate-950 p-5 rounded-2xl border border-slate-850">
-                            <p class="text-[11px] text-slate-400 font-bold uppercase">Receita Total</p>
+                            <p class="text-[11px] text-slate-400 font-bold uppercase">Valor não cancelado</p>
                             <h4 id="rel-serv-receita-total" class="text-2xl font-black text-brand-lime mt-1">R$ 0,00</h4>
                         </div>
                     </div>
@@ -687,8 +701,8 @@
                                         <th class="py-4 px-6">Serviço</th>
                                         <th class="py-4 px-6">Qtde. de Atendimentos</th>
                                         <th class="py-4 px-6">% Confirmados</th>
-                                        <th class="py-4 px-6">Receita Total</th>
-                                        <th class="py-4 px-6">Ticket Médio</th>
+                                        <th class="py-4 px-6">Valor não cancelado</th>
+                                        <th class="py-4 px-6">Média por agendamento</th>
                                     </tr>
                                 </thead>
                                 <tbody id="rel-servicos-table-body" class="divide-y divide-slate-850"></tbody>
@@ -705,11 +719,11 @@
                             <h4 id="rel-tutor-ativos" class="text-2xl font-black text-white mt-1">0</h4>
                         </div>
                         <div class="bg-slate-950 p-5 rounded-2xl border border-slate-850">
-                            <p class="text-[11px] text-slate-400 font-bold uppercase">Ticket Médio Geral</p>
+                            <p class="text-[11px] text-slate-400 font-bold uppercase">Média por agendamento</p>
                             <h4 id="rel-tutor-ticket-medio" class="text-2xl font-black text-white mt-1">R$ 0,00</h4>
                         </div>
                         <div class="bg-slate-950 p-5 rounded-2xl border border-slate-850">
-                            <p class="text-[11px] text-slate-400 font-bold uppercase">Receita Total</p>
+                            <p class="text-[11px] text-slate-400 font-bold uppercase">Valor não cancelado</p>
                             <h4 id="rel-tutor-receita-total" class="text-2xl font-black text-brand-lime mt-1">R$ 0,00</h4>
                         </div>
                     </div>
@@ -721,7 +735,7 @@
                                         <th class="py-4 px-6">Tutor</th>
                                         <th class="py-4 px-6">Pets Vinculados</th>
                                         <th class="py-4 px-6">Qtde. de Agendamentos</th>
-                                        <th class="py-4 px-6">Valor Total Gasto</th>
+                                        <th class="py-4 px-6">Valor de Agendamentos</th>
                                         <th class="py-4 px-6">Último Atendimento</th>
                                     </tr>
                                 </thead>
@@ -757,11 +771,11 @@
                             <h4 id="rel-periodo-qtde" class="text-2xl font-black text-white mt-1">0</h4>
                         </div>
                         <div class="bg-slate-950 p-5 rounded-2xl border border-slate-850">
-                            <p class="text-[11px] text-slate-400 font-bold uppercase">Receita no Período</p>
+                            <p class="text-[11px] text-slate-400 font-bold uppercase">Valor não cancelado</p>
                             <h4 id="rel-periodo-receita" class="text-2xl font-black text-brand-lime mt-1">R$ 0,00</h4>
                         </div>
                         <div class="bg-slate-950 p-5 rounded-2xl border border-slate-850">
-                            <p class="text-[11px] text-slate-400 font-bold uppercase">Ticket Médio</p>
+                            <p class="text-[11px] text-slate-400 font-bold uppercase">Média por agendamento</p>
                             <h4 id="rel-periodo-ticket" class="text-2xl font-black text-white mt-1">R$ 0,00</h4>
                         </div>
                     </div>
@@ -806,6 +820,7 @@
                                     <th class="py-4 px-6">Nome do Usuário</th>
                                     <th class="py-4 px-6">Cargo / Papel</th>
                                     <th class="py-4 px-6">CPF Registrado</th>
+                                    <th class="py-4 px-6">Acesso</th>
                                     <th class="py-4 px-6 text-right">Ações</th>
                                 </tr>
                             </thead>
@@ -1209,21 +1224,28 @@
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF (Identificador)</label>
                     <input type="text" id="user-new-cpf" placeholder="000.000.000-00" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
                 </div>
-                <!-- O QUE: Campo de e-mail obrigatório para auth empresarial.
-                     PORQUÊ: E-mail serve como alternativa de login ao CPF.
-                     DEMO (mock): Input HTML simples; validacao em JS (validarEmail).
-                     TODO [INTEGRAÇÃO SUPABASE - DB SQL] UNIQUE constraint no campo email da tabela users. -->
+                <!-- E-mail único usado pelo Supabase Auth e como alternativa de login. -->
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">E-mail</label>
                     <input type="email" id="user-new-email" placeholder="usuario@dominio.com" required class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Cargo / Papel</label>
-                    <select id="user-new-role" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
+                    <select id="user-new-role" onchange="atualizarCamposCrmvUsuario()" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
                         <option value="admin">Administrador</option>
                         <option value="veterinario">Veterinário</option>
                         <option value="funcionario">Atendente / Funcionário</option>
                     </select>
+                </div>
+                <div id="campos-crmv-usuario" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CRMV</label>
+                        <input type="text" id="user-new-crm" placeholder="CRMV-SP 00000" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Validade do CRMV</label>
+                        <input type="date" id="user-new-crm-validade" class="w-full bg-slate-900 border border-slate-800 text-xs rounded-xl p-2.5 text-white focus:outline-none">
+                    </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="fecharModalUsuario()" class="px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Cancelar</button>
@@ -1312,9 +1334,6 @@
                     </div>
                 </div>
                 <div class="no-print flex gap-2">
-                    <span class="px-4 py-2 bg-amber-100 text-amber-800 font-bold text-xs rounded-xl flex items-center gap-2" title="Tela ilustrativa de protótipo: com banco de dados, aqui entram nome + CRMV do veterinário logado e assinatura digital.">
-                        DEMONSTRAÇÃO
-                    </span>
                     <button onclick="window.print()" class="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl flex items-center gap-2">
                         <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Documento
                     </button>
@@ -1341,7 +1360,7 @@
                 <div class="pt-8 text-center border-t border-slate-200 space-y-1">
                     <div class="w-48 border-b border-slate-800 mx-auto"></div>
                     <p class="text-xs font-bold text-slate-800"><span id="doc-assinatura-nome">Dra. Laís</span> — Assinatura do Médico Veterinário Responsável</p>
-                    <p class="text-[10px] text-slate-500"><span id="doc-assinatura-crmv">CRMV-SP 00000</span> · ilustrativo (protótipo sem banco)</p>
+                    <p class="text-[10px] text-slate-500"><span id="doc-assinatura-crmv">CRMV-SP 00000</span></p>
                 </div>
             </div>
         </div>
@@ -1359,7 +1378,7 @@
 
             <!-- Etapa 1: Informar CPF ou e-mail -->
             <div id="recuperar-etapa-1">
-                <p class="text-xs text-slate-400 mb-4">Informe seu CPF ou e-mail para receber um código de verificação simulado.</p>
+                <p class="text-xs text-slate-400 mb-4">Informe seu usuário, CPF ou e-mail. Se houver uma conta correspondente, enviaremos um link para redefinir a senha.</p>
                 <div>
                     <label class="block text-xs font-bold text-slate-300 uppercase mb-1">CPF, e-mail ou usuário</label>
                     <div class="relative">
@@ -1411,7 +1430,7 @@
             <div class="flex justify-end gap-3 pt-2">
                 <button type="button" onclick="fecharModalRecuperarSenha()" class="px-4 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Cancelar</button>
                 <button type="button" id="btn-recuperar-proximo" onclick="recuperarSenhaProximo()" class="px-4 py-2 bg-brand-blue hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center gap-2">
-                    <span>Enviar Código</span> <i data-lucide="send" class="w-3 h-3"></i>
+                <span>Enviar link</span> <i data-lucide="send" class="w-3 h-3"></i>
                 </button>
                 <button type="button" id="btn-recuperar-confirmar" onclick="recuperarSenhaConfirmar()" class="hidden px-4 py-2 bg-brand-blue hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center gap-2">
                     <span>Alterar Senha</span> <i data-lucide="key-round" class="w-3 h-3"></i>
@@ -1420,12 +1439,11 @@
         </div>
     </div>
 
-    <!-- Modal: Troca Forçada de Senha (mustChange=true) -->
+    <!-- Modal: Troca Forçada de Senha (must_change=true) -->
     <!-- O QUE: Obriga usuario a definir senha forte no primeiro login.
          PORQUÊ: Usuarios novos recebem senha temporaria e devem trocar.
-         DEMO (mock): Modal fullscreen sobre login; confirma login automatico.
-         BUGFIX 2026-09-15: z-[60] em vez de z-50 — mesmo motivo do modal-recuperar-senha.
-         TODO [INTEGRAÇÃO SUPABASE - DB SQL] Fluxo via email com token JWT + POST /api/users/:id/change-password. -->
+         Supabase Auth atualiza a senha; RPC marca_senha_alterada baixa a flag.
+         BUGFIX 2026-09-15: z-[60] em vez de z-50 — mesmo motivo do modal-recuperar-senha. -->
     <div id="forcar-senha-etapa" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
             <div class="flex items-center gap-3 mb-2">
@@ -1472,7 +1490,9 @@
     </div>
 
     <!-- Script principal do projeto -->
+    <script src="config.js"></script>
     <script src="regras.js"></script>
+    <script src="persistencia.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 # MAPA DO SISTEMA — DayVet-Gestão
 
 > Referência para IAs e colaboradores editarem o código com contexto.
-> Última revisão: 13/11/2026 · Base: `main`=`fe9ba87` (itens 1–6, 8–17) + `teste` = item 18 (`44326bc`) + ciclo de correções 2026-11-13 (itens 19–21), a mergear.
-> Estado: `teste` tem item 18 (vacinas admin/vet) + remoção da guia + exclusão de tutor + harness de testes. `main` ainda tem vacina=funcionário e guia. Ver `ROADMAP.md` §1.
+> Última revisão: 23/11/2026 · `origin/main`=`e5c2e16`; `origin/teste`=`ac8e0c6` com PR #2 aberto. Auth integrado e worktree de dados commitado na branch de trabalho, mas ainda sem deploy. No Supabase remoto, migrations `0001..0006` estão aplicadas e `admin-criar-usuario` está implantada.
+> O smoke de tutores autenticado confirmou CPF validado/formatado, cadastro e edição persistentes após reload; os registros sintéticos foram removidos. E2E Chromium passou (com stubs); restam smokes reais dos demais fluxos/perfis. Vercel está Ready/200, mas a URL ainda serve o modo demonstração da `main`. Detalhes em `ROADMAP.md` §2.b e no topo do `CHANGELOG.md`.
 > Atenção: números de linha são referências — confirme antes de editar.
 
 ## 0. Links e deploy (espelho fixo da main)
@@ -10,14 +10,14 @@
 - **Produção (espelho fixo da `main`): https://ralph-zlt.github.io/Agendau_2/dayvet/**
 - Workflow `.github/workflows/deploy-pages.yml` dispara **somente em `push` na `main`**; publica `site/index.html` → `dist/index.html` + `dayvet/*` → `dist/dayvet/`.
 - **Nunca publicar a branch `teste` neste link.** Teste roda local (`dayvet/index.html`); merge na `main` só após validação do dono.
-- Fila de trabalho: `ROADMAP.md` §1 — itens 1–6, 8–17 na `main`; itens 18–22 (vacinas admin/vet, remoção da guia, exclusão de tutor, harness de testes, docs) na `teste`, a validar/mergear.
-- **Vercel: pausado (13/11/2026)** — produção continua só no GitHub Pages.
+- Itens 18–22 já estão no baseline `origin/main` (`e5c2e16`). As alterações locais de D/E ainda não foram commitadas ou publicadas.
+- **Vercel:** https://agendau-2.vercel.app; deploy somente da `main`, com trava em `scripts/deploy-vercel.sh`. A integração Git segue bloqueada. A URL foi revalidada: deploy Ready e resposta HTTP 200, mas a página ainda informa que usa dados fictícios e nada é salvo; a integração D/E não está no ar.
 
 ## 1. Visão geral
 - SPA (single-page application) de agenda para **pet shop / clínica veterinária**.
-- **Backend: Supabase criado e validado (Fase B, 2026-11-18)** — projeto `agendau-2` com schema v2, Auth e RLS no ar. **O front ainda NÃO conversa com ele**: `index.html` não carrega `config.js` e `script.js` não faz chamada de rede nenhuma; os dados continuam mocks em memória até a Fase D. Enquanto `MODO_DADOS === 'mock'`, a faixa `#aviso-modo-demo` e o aviso do login deixam explícito que **nada é salvo**.
-- **Stack**: HTML + CSS + JS puros com CDNs externas — Tailwind CSS (utilitários), Lucide (ícones), Chart.js (gráficos), Google Fonts (Plus Jakarta Sans) + Supabase SQL planejado.
-- Estrutura em **3 arquivos na pasta `dayvet/`**.
+- **Backend: Supabase** — `script.js` usa `MODO_DADOS='real'` e `DayVetPersistencia` após autenticação. Migrations `0001..0006` estão aplicadas no projeto remoto; o banco foi validado em Postgres 17 na VPS e `admin-criar-usuario` foi implantada com JWT obrigatório. O smoke autenticado real cobriu cadastro/edição de tutor, reload e rejeição de CPF inválido; não indica, por si só, que os outros fluxos/perfis já foram validados.
+- **Stack**: HTML + CSS + JS puros com CDNs externas — Tailwind CSS, Lucide, Chart.js, Google Fonts (Plus Jakarta Sans) e Supabase JS/Auth/Database/Storage.
+- Produto em `dayvet/` com HTML, CSS, JS, configuração pública e adaptadores de persistência.
 
 ## 2. Estrutura de arquivos
 
@@ -25,23 +25,24 @@
 |---|---|---|
 | `dayvet/index.html` | Estrutura/marcação (SPA) | <head> com config Tailwind + cores de marca; tela de login; header; nav de tabs; seções `<section id="tab-...">`; modais `#modal-*`; CDNs |
 | `dayvet/styles.css` | Estilo (seções) | Base, scrollbar, neon, glass, impressão, **sistemas de tema escuro/claro** |
-| `dayvet/script.js` | Lógica (13 seções + seção 0) | **Seção 0**: `MODO_DADOS` (`'mock'` hoje) e `confirmarEscrita()` — toda escrita avisa que não foi salva enquanto o banco não estiver ligado. Depois: mock data, RBAC, login, toasts, navegação, agendamentos, tutores & pets, clínico, relatórios, usuários, gráficos, tema, inicialização |
-| `dayvet/config.js` | Config pública do Supabase | `supabaseUrl` + chave `anon`/publishable. **Ainda não é carregado pelo `index.html`** (Fase C). A `service_role` nunca entra aqui |
-| `supabase/migrations/` | Schema, seed e RLS (3 migrations) | Aplicadas na nuvem em 18/11/2026; validadas localmente por `tests/db.mjs` |
+| `dayvet/script.js` | Lógica (seções 0–13) | Seção 0: cliente Supabase, modo real, carregamento, sessão/Auth e escaping HTML; depois RBAC, renderização e CRUD de agenda, tutores/pets, clínica, relatórios, usuários, gráficos e tema. CPF de tutor passa por `validarCPF()` e `RegrasLogin.formatarCpf()` antes da gravação |
+| `dayvet/persistencia.js` | Adaptadores Supabase | Leitura paginada, mapeamento do schema v2, filtros de carregamento por perfil e serialização de tutores/pets/agendamentos/histórico |
+| `dayvet/config.js` | Config pública do Supabase | `supabaseUrl` + chave `anon`/publishable; carregado pelo `index.html`. A `service_role` nunca entra aqui |
+| `supabase/migrations/` | Schema, seed, RLS, Auth e expansões (6 migrations locais) | `0001..0006` confirmadas no projeto Supabase remoto |
 | `scripts/deploy-vercel.sh` | Deploy de produção na Vercel | Monta o artefato em `/tmp` e publica; a integração Git da Vercel está bloqueada |
 | `dayvet/regras.js` | Regras puras (sem DOM) | `RegrasTutor`: `podeArquivarTutor`, `podeExcluirTutor`, `tutoresSelecionaveis`; testável em node e usada pelo `script.js` |
 | `tests/` | Testes do projeto | `estatico.mjs`, `unit/regras.mjs`, `e2e.mjs` (Playwright) e `regressao/NN-*.mjs` + `run.mjs` |
 | `docs/requisitos-funcionais-dayvet.docx` | Requisitos (fonte de RFs/RNFRs/RNFS) | RF-01–RF-10 + RNFS; sincronizado com o código na v2; frontend/temas fora (só roadmap). RF-09 e RF-10 marcados FORA DE ESCOPO |
-| `docs/DB_LEVANTAMENTO.md` | Levantamento conceitual do banco | Entidades, vínculos, opções de persistência; decisão Supabase **pausada** |
+| `docs/DB_LEVANTAMENTO.md` | Levantamento conceitual do banco | Referência histórica; status operacional atualizado no cabeçalho, schema efetivo em `supabase/migrations/` |
 | `docs/levantamento-bd.md` | Levantamento detalhado + receita de migração | Extraído do PDF de 2026-11-02; base do schema multi-clinic |
-| `docs/sql/*.sql` | SQL **escrito, não aplicado** | `schema.sql`, `seeds.sql`, `rls-policies.sql`, `dayvet-completo.sql` (2026-11-02). Nenhum projeto Supabase existe; nada rodou |
+| `docs/sql/*.sql` | SQL legado, não usar para migrations atuais | Esboços de 2026-11-02; schema efetivo está em `supabase/migrations/` |
 
 ## 3. Autenticação e perfis (RBAC)
 
 > ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
 > **Decisão do dono (2026-11-13):** o bypass **fica durante os testes**. Ele foi tornado explícito: o card `#acessos-teste` na tela de login tem 3 botões (Admin / Veterinário / Funcionário) que **preenchem CPF + senha** e deixam o usuário confirmar em "Acessar o Painel" (`preencherAcessoTeste()` → `ACESSOS_TESTE`). O atalho digitado 1/2/3 continua funcionando.
 
-- **Login por CPF ou e-mail + senha** — campo aceita ambos; erro sempre genérico "Credenciais inválidas" (não revela existência de conta).
+- **Login por usuário, CPF ou e-mail + senha** — RPC `resolver_login(text)` resolve o e-mail; `signInWithPassword` valida a senha; o perfil é lido de `public.usuarios` com RLS. Erro de credenciais é genérico e contas inativas/excluídas não autenticam.
 - **Usuários de teste** (decisão do dono 2026-11-17): o campo de login aceita **usuário, CPF (com/sem máscara) ou e-mail**, comparados pela regra pura `RegrasLogin` de `dayvet/regras.js`:
 
 | Perfil | Usuário | Senha | CPF | CRM |
@@ -50,29 +51,30 @@
 | Veterinário — Dra. Laís | `lais_vet` | `Veterin@ria` | `222.222.222-22` | `CRMV-SP 00000` |
 | Funcionário — Douglas | `douglas_funcionario` | `Veterin@ria` | `333.333.333-33` | — |
 
-  Os botões de `#acessos-teste` preenchem **usuário + senha**; digitar `1`/`2`/`3` ainda usa o bypass `perfisTestes`. `mustChange:false` p/ os 3 — ver alerta em `AGENTS.md`; em produção `mustChange=true`. Credenciais também em `local/ACESSOS_TESTE.md` (fora do Git).
-- **Primeiro acesso (mustChange=true)**: usuários 2 e 3 são obrigados a trocar a senha antes de entrar. Política: 8+ chars, 1 maiúscula, 1 número, 1 especial. Indicadores visuais em tempo real. Mock: flag reseta ao recarregar (sem banco).
-- **Recovery demo**: "Esqueci a senha?" → informa CPF ou e-mail → toast "e-mail enviado" (sempre, exista ou não o usuário) → define nova senha com mesma política. Botão fora do `<form>` (evita bloqueio de validação nativa do browser).
-- **Admin cria usuários**: aba Usuários → "+ Novo" → exige email obrigatório, valida CPF (dígito verificador), unicidade → gera senha temporária + mustChange=true.
+  Os botões de `#acessos-teste` preenchem **usuário + senha** e passam pelo Auth real; digitar `1`/`2`/`3` ainda usa o bypass `perfisTestes` (decisão do dono, somente enquanto durar a prototipação). As 3 contas de demonstração mantêm `must_change=false`; novos usuários devem trocar a senha no primeiro acesso.
+- **Primeiro acesso (`mustChange=true`)**: novos usuários são obrigados a trocar a senha via Auth; política: 8+ chars, 1 maiúscula, 1 número, 1 especial. As 3 contas de demonstração são a exceção autorizada.
+- **Recovery**: "Esqueci a senha?" resolve usuário/CPF/e-mail, solicita link via Supabase Auth e atualiza senha/flag de primeiro acesso; mensagens não revelam se o usuário existe. O botão fica fora do `<form>` para evitar bloqueio por validação nativa.
+- **Admin cria usuários**: aba Usuários → "+ Novo" → valida email/CPF e chama Edge Function `admin-criar-usuario`, que cria Auth + perfil e define troca obrigatória. A função precisa ser validada no deploy junto às migrations.
 - **Implantação (método do dono)**: sem rota de setup — admin cadastra CPF+e-mail do responsável; 1º acesso exige troca de senha para todos os perfis (admin/vet/func) via `mustChange`.
 - **Cargos**: `admin` (acesso total), `veterinario` (módulo clínico + vacinação total `vacinacao_*` + CRUD tipos de vacina `vacina_tipos_*` + quick-add "Outro"), `funcionario` (SEM modo clínico: agendamentos só-leitura + tutor/pet + **editar/arquivar/excluir tutor** (decisão 2026-11-13) + CRUD tipos de raça `raca_tipos_*`). O cargo `gestor` foi **removido**.
 - Matriz de permissões: `script.js` **SEÇÃO 2** (~linha 64, `PERMISSOES`).
-- **TODO [INTEGRAÇÃO SUPABASE]** (SQL via Supabase, projeto ainda não criado): tabela `users` com `role` vinculado ao CPF/email, Auth Supabase + RLS, `POST /api/login`, `GET /api/me` (ou `supabase.auth.signInWithPassword` + `supabase.from('users')`).
+- **Fase C (Auth) concluída no baseline:** login, recovery, restauração de sessão e atualização de senha usam Supabase Auth.
+- **Fases D/E no worktree:** tabelas operacionais, clínico, catálogos, usuários e Storage têm integração no frontend. Banco e migrations foram validados; o smoke real de tutor passou e os dados de teste foram removidos. Ainda é necessário validar os demais fluxos/perfis, rodar a suíte E2E e só então preparar deploy pela `main`.
 
 ## 4. Mapa de seções (script.js)
 
 | Seção | Linha | Conteúdo |
 |---|---|---|
-| 1 · DADOS MOCK | ~41 | Arrays simulando banco (agendamentos com `vetId` + datas relativas `isoDeslocado`, pets com espécie/raça/sexo/peso, tutores, `tiposVacina[]`, `racasPorEspecie`, `usuariosMock`) |
+| 1 · DADOS INICIAIS | ~41 | Estruturas iniciais para catálogo/estado; após Auth os dados autorizados são carregados do Supabase. Os exemplos de demonstração não são fonte de persistência |
 | 2 · MATRIZ DE PERMISSÕES (RBAC) | ~140 | `PERMISSOES` por perfil (ver §3: funcionário SEM clínico; vet com vacinação total) |
-| 3 · AUTENTICAÇÃO E LOGIN | ~178 | Login por CPF/e-mail, sessão mock (`currentUser`/`currentRole`), logout |
+| 3 · AUTENTICAÇÃO E LOGIN | ~178 | Login por usuário/CPF/e-mail, sessão Supabase, recuperação/troca de senha e logout |
 | 4 · TOASTS | ~380 | Notificações `showToast` |
 | 5 · NAVEGAÇÃO E TABS | ~423 | `switchTab` (guards RBAC, incl. clínica↔funcionário), `atualizarPermissoesNavegacao`, `atualizarDashboardPorPerfil` |
-| 6 · AGENDAMENTOS | ~541 | CRUD/status + `vetId` (dono do atendimento); seções empilhadas Ativos (crescente) + Expirados (`#expirados-table-body`, decrescente, grupos "Últimos 7 dias"/"Este mês"/por mês via `grupoExpirado`); Expirados colapsado (`expiradosExpandido`, `#btn-expandir-expirados`) + pesquisa por selects mês/ano (`#pesquisa-mes-sel`, `#pesquisa-ano-sel`, só leitura p/ todos); mocks com datas relativas (`isoDeslocado`); Concluir, Remarcar (volta pendente), Nova consulta (de concluído), Editar troca data/hora; janela 07h–19h (RF-05); funcionário só-leitura |
+| 6 · AGENDAMENTOS | ~541 | CRUD/status + `vetId` (dono do atendimento); seções Ativos/Expirados e filtros por mês/ano; Concluir, Remarcar, Nova consulta e Editar; validação horária conforme configuração persistida; funcionário só-leitura |
 | 7 · TUTORES & PETS | ~991 | CRUD de tutores e pets (tutor com `arquivado`: arquivar/restaurar/excluir definitivo; exclusão bloqueada com pets/agenda/histórico; arquivado some dos dropdowns e da lista padrão), dropdowns; RF-02: tel 11 dígitos (`telefoneTem11Digitos`) + máx 10 pets por tutor (`salvarPet`); pet com espécie/raça/sexo em selects (`ESPECIES_PET`, `RACAS_POR_ESPECIE` + `popularRacasPet`, `SEXOS_PET`) + peso kg opcional; card `#racas-card-gerenciar` + `#modal-tipos-raca` |
 | 8 · MÓDULO CLÍNICO | ~1219 | Histórico clínico: **receita e vacina** + impressão (**laudo FORA DE ESCOPO** 2026-09-17; **guia FORA DE ESCOPO** 2026-11-13); CRUD de tipos de vacina admin/vet (`tiposVacina[]`, `#modal-tipos-vacina`, `vacina_tipos_*`, item 18); anexos (`renderizarAnexos`, `#anexos-card`); RF-08 ilustrativo — assinatura por `RegrasTutor.assinaturaDocumento`: **nome e CRMV sempre da mesma pessoa**; admin/funcionário (sem CRMV) não assina, assina o vet de referência (regressão 03) |
 | 9 · RELATÓRIOS | ~1672 | Relatórios de serviços, tutor e período |
-| 10 · USUÁRIOS & PERMISSÕES | ~1870 | Gestão de logins mock (CRUD simulado) |
+| 10 · USUÁRIOS & PERMISSÕES | ~1870 | Gestão de usuários com Supabase Auth/Edge Function; permissões por RBAC |
 | 11 · GRÁFICOS (Chart.js) | ~2232 | `financeChart` (receita, admin) + `consultasChart` (barras/hora hoje do vet) + `DADOS_FATURAMENTO`/`atualizarPeriodoFaturamento` |
 | 12 · TEMA CLARO/ESCURO | ~2396 | `aplicarTema`, `temaSistema`, `inicializarTema`, `alternarTema`, `atualizarIconeTema` |
 | 13 · INICIALIZAÇÃO | ~2480 | `window.onload` (tema, tooltip, permissões, renders, `inicializarPesquisaMes`, gráficos) |
@@ -119,7 +121,7 @@
 | Scrollbar | `--trilha` · `--polegar` | #D9E6F2 · #8ecae6 |
 
 ## 7. Convenções
-- Comentários `// TODO [INTEGRAÇÃO SUPABASE]:` (antes `TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]`) marcam os pontos de plugar o Supabase SQL.
+- Comentários `// TODO [INTEGRAÇÃO SUPABASE]:` marcam pendências localizadas; não significam que toda a persistência ainda esteja ausente.
 - Nomes de funções/variáveis em **pt-BR**; código organizado em **SEÇÕES numeradas**.
 - Relatórios pessoais (metodologia/commit) ficam na pasta `local/` — **não versionar**, assim como `opencode.json`.
-- Validação mínima antes de concluir: `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/regressao/run.mjs` + `node tests/e2e.mjs` (Chromium e, quando aplicável, `firefox`) + testar logins 1/2/3 e alternância de tema. Regras puras de negócio ficam em `dayvet/regras.js` (testáveis em node); toda correção gera `tests/regressao/NN-*.mjs`.
+- Validação mínima antes de concluir: `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/unit/persistencia.mjs` + `node tests/regressao/run.mjs` + `node tests/e2e.mjs` (Chromium e, quando aplicável, `firefox`) + testar logins 1/2/3 e alternância de tema. Regras puras de negócio ficam em `dayvet/regras.js` (testáveis em node); persistência e autorização por perfil em `dayvet/persistencia.js`.

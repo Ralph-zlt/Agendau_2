@@ -2,18 +2,17 @@
 
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
-> Última atualização: 2026-11-13.
-> Estado dos branches (2026-11-13): `main` = `9b6abd6` — itens 1–6, 8–17 **+ 18–22** (vacinas admin/vet, guia removida, exclusão de tutor, harness de testes, docs) + LICENSE + SQL em `docs/sql/`. **Publicado** em https://ralph-zlt.github.io/Agendau_2/dayvet/ (run 43451618568, sucesso).
-> `teste` = `e7a57b6` (mesmo conteúdo + merge da main), ponto de partida do próximo ciclo.
+> Última atualização: 2026-11-23.
+> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `e5c2e16`; `origin/teste` = `ac8e0c6` (Fases D/E), PR #2 aberto e sem checks configurados. O commit está na branch de trabalho, não na produção. No Supabase remoto, migrations `0001..0006` estão aplicadas e a Edge Function administrativa foi publicada. Estático, unitários, regressões e E2E Chromium passaram; o smoke real de tutor também passou, mas os demais fluxos/perfis ainda precisam de smoke. Vercel está Ready/200, mas a URL pública continua servindo a demonstração da `main`. O dono deve revisar/mesclar o PR; depois, publicar pela trava `scripts/deploy-vercel.sh` e validar a URL.
 
 ## 0. Links e deploy (espelho fixo da main)
 
-- **Produção (espelho fixo da `main`): https://ralph-zlt.github.io/Agendau_2/dayvet/**
+- **GitHub Pages (espelho fixo da `main`): https://ralph-zlt.github.io/Agendau_2/dayvet/**
   - Workflow `.github/workflows/deploy-pages.yml` dispara **somente em `push` na `main`** (mais `workflow_dispatch` manual).
   - Artefato: `site/index.html` → `dist/index.html` (landing) + `dayvet/*` → `dist/dayvet/` (SPA).
   - **Regra: este link SEMPRE reflete a `main`. Nunca publicar a `teste` nele.**
 - **Teste:** validar na branch `teste` em ambiente local (`dayvet/index.html`) ou preview temporário da `teste`. Só mergear na `main` após validação do dono.
-- **Vercel: PAUSADO** por decisão do dono em 2026-11-13. A produção continua exclusivamente no GitHub Pages (§ links acima).
+- **Vercel:** https://agendau-2.vercel.app — deploy de produção inspecionado e Ready; `/dayvet/` responde 200, mas a tela ao vivo ainda declara “nada é salvo” e mostra dados fictícios. A integração D/E não está publicada. O deploy segue restrito à `main` por `scripts/deploy-vercel.sh`; a integração Git continua bloqueada.
 
 ---
 
@@ -36,13 +35,13 @@
 - [x] **15. Expirados em 3 faixas:** Últimos 7 dias, Este mês, depois um grupo por mês ("Agosto de 2026"...). Entregue na `main` (merge `fe9ba87`).
 - [x] **16. Dashboard do vet sem financeiro:** `vetId` nos agendamentos; vet não vê Faturamento/Receita — vê Próxima Consulta + barras por hora (consultas × vacinações de hoje, só dele); admin intacto. Entregue na `main` (merge `fe9ba87`).
 - [x] **17. Expirados colapsado + pesquisa mês/ano:** abre só Últimos 7 dias + "Carregar mais antigas" (este mês/meses ao expandir); selects mês/ano (`#pesquisa-mes-sel`, `#pesquisa-ano-sel`) filtram o histórico (funcionário também pesquisa — só leitura). Entregue na `main` (merge `fe9ba87`).
-- [x] **18. Vacinas = admin/vet; funcionário fora do clínico (decisão 2026-09-25):** `vacina_tipos_criar/editar/excluir` p/ admin+veterinário (vet ganha total em vacinação); funcionário perde `clinica_*` + `vacina_tipos_*` (sem aba Módulo Clínico; mantém agendamentos só-leitura, tutor/pet e tipos de raça). Entregue na `teste` (`44326bc`, aguarda validação do dono p/ merge).
+- [x] **18. Vacinas = admin/vet; funcionário fora do clínico (decisão 2026-09-25):** `vacina_tipos_criar/editar/excluir` p/ admin+veterinário (vet ganha total em vacinação); funcionário perde `clinica_*` + `vacina_tipos_*` (sem aba Módulo Clínico; mantém agendamentos só-leitura, tutor/pet e tipos de raça). Já está no baseline `origin/main` (`e5c2e16`).
 - [x] **19. Remover a guia de encaminhamento do produto (decisão do dono 2026-11-13):** atalho "Incluir Guia", opção do select, mock 403, branches de render/impressão, título da timeline e opção do relatório removidos; RF-10 marcado como **FORA DE ESCOPO** em `docs/requisitos-funcionais-dayvet.docx`. Justificativa: o dono não usa guia na operação da clínica; a emissão fica restrita a receita e registro de imunização.
 - [x] **20. Exclusão de tutor (soft delete + definitiva):** `arquivado` no tutor; `tutor_editar`/`tutor_arquivar`/`tutor_excluir` p/ **admin e funcionário** (decisão 2026-11-13); arquivar bloqueado com agendamento pendente/confirmado; exclusão definitiva só após arquivar e bloqueada se houver pets, agendamentos ou histórico clínico; tutor arquivado some dos selects e ganha "Mostrar arquivados"/"Restaurar".
 - [x] **21. Harness de testes do projeto:** `tests/estatico.mjs`, `tests/unit/regras.mjs`, `tests/e2e.mjs` (Playwright Chromium+Firefox, desktop e 390×844) + `tests/regressao/` numerada; screenshots em `/tmp/ai-evidence/`.
 - [x] **22. Documentação do ciclo:** ROADMAP/MAPA/AGENTS/DB/CHANGELOG sincronizados com a pausa de banco/Vercel e com os itens 19–21; `PROJETOS.md` recriado na raiz de `~/Público/Projetos`.
 
-**Aceite geral:** `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/e2e.mjs` verdes; teste manual na `teste` antes de qualquer novo merge; `docs/CHANGELOG.md` atualizado. Fluxo padrão: código na `teste` → validação do dono → merge na `main` (exceção desta vez: merge direto `teste`→`main` validado em teste manual).
+**Aceite geral:** `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/unit/persistencia.mjs` + `node tests/e2e.mjs` verdes; teste manual na `teste` antes de qualquer novo merge; `docs/CHANGELOG.md` atualizado. Fluxo padrão: código na `teste` → validação do dono → merge na `main` (exceção desta vez: merge direto `teste`→`main` validado em teste manual).
 
 ---
 
@@ -52,12 +51,12 @@
 - [x] **Login no modo claro (observação do dono, 2026-09-24):** entregue 2026-09-25 — `#login-cabecalho` com gradiente claro explícito; paw-print lima fixo `#ccff00` nos 2 temas.
 - [x] RF-02 restante: tel 11 dígitos + máx 10 pets por tutor — entregue 2026-09-25.
 - [x] RF-05: janela 07h–19h no agendamento — entregue 2026-09-25.
-- [ ] **RF-08 real (bloqueado pela Fase B):** CRMV do veterinário logado + assinatura vindos do banco. Prep entregue: `currentUser.crm` já é preenchido no login (hoje mock — Laís usa `CRMV-SP 00000`), com fallback no array `administradores`.
+- [x] **RF-08 real:** CRMV e dados do veterinário autenticado vêm de `public.usuarios`; `currentUser.crm` alimenta a assinatura clínica.
 - [x] **Corrigir: Admin não consegue excluir Tutor** — entregue no item 20 (13/11/2026): exclusão passou a existir no frontend (arquivar → excluir definitivo, sem depender de RLS porque não há banco ainda).
 - [x] **Remover "Incluir Guia" do sistema** — entregue no item 19 (13/11/2026): removida de frontend, mocks e relatórios; RF-10 marcado FORA DE ESCOPO no docx.
 - [ ] **Excluir Pet** — implementar exclusão de pet (soft delete via `deleted_at` na tabela `pets`), com confirmação e validação de dependências (agendamentos, vacinações, histórico clínico).
 - [ ] **Adicionar barra de pesquisa de Tutores** — implementar campo de busca (por nome/CPF/telefone) na listagem de tutores, com debounce e filtro em tempo real.
-- [ ] **Sanitizar `innerHTML` (XSS de protótipo):** nome/CPF/endereço de tutor, pet e detalhes clínicos entram em `innerHTML` sem escape em vários renders. Com dados mock o risco é local; ao ir para banco (pausado) vira XSS armazenado. Correção mínima: helper `escaparHtml()` aplicado nos renders e `onclick` com CPF via atributo `data-*`.
+- [ ] **Concluir auditoria de interpolação HTML:** `escaparHtml()` já protege conteúdo textual renderizado a partir dos dados; revisar todas as interpolações e argumentos de handlers inline para confirmar que os valores seguem escapados/limitados a IDs e CPFs válidos.
 
 ### 2.b Banco de dados — EM ANDAMENTO (autorizado pelo dono em 2026-11-13)
 
@@ -66,19 +65,28 @@
 > auth · D = ponte de dados · E = testes integrados + docs.
 > **Fase A concluída em 2026-11-13** (ver `docs/CHANGELOG.md`): migrations
 > `0001_schema`, `0002_seed`, `0003_rls` + `tests/db.mjs` (73 casos de RLS verdes).
-> **Fase B concluída em 2026-11-18**: banco na nuvem, RLS validada com tokens
-> reais e site publicado na Vercel. LGPD segue parada até ordem específica.
+> **Fase B concluída em 2026-11-18** e **Fase C concluída no baseline `e5c2e16`**.
+> A integração das tabelas e Storage foi implementada no worktree local; faltam
+> concluir a validação funcional por perfil/fluxo e executar a suíte E2E completa.
+> O banco foi validado em Postgres 17 na VPS; migrations `0001..0006` foram
+> confirmadas no projeto remoto, e a Edge Function `admin-criar-usuario` foi
+> implantada com JWT obrigatório. O smoke autenticado confirmou leitura,
+> cadastro/edição de tutor com CPF canônico e persistência após reload; o dado
+> sintético foi removido após o teste.
 
 - [x] **Fase A — SQL v2 consolidado e validado localmente** — single-clinic (sem `clinicas`/`clinica_id`), sem `vacinacoes`/`forma_farmaceutica`, sem `guia` no enum, `usuarios.id = auth.users.id`, `pet_id` nullable, `historico` editável por admin/vet. Validado em Postgres 17 descartável com matriz de permissões idêntica ao RBAC do `script.js`.
-- [x] **Fase B — Supabase no ar (concluída em 2026-11-18)** — org `dayvet-org` (`xgtbjxhdtjnohiurbqzu`) + projeto `agendau-2` (`dkdvhstjnverofgzwzne`) em `sa-east-1`, free; migrations `0001..0003` aplicadas; 3 perfis no Auth Admin com claims `authenticated` e linha em `public.usuarios`; RLS conferida na nuvem (7 tabelas, 29 policies, `anon` sem GRANT e 401, funcionário/vet 403 ao criar usuário, **vet não exclui tutor**); `dayvet/config.js` com URL + chave `anon`; `service_role` em `~/.supabase/agendau-keys.env` (600), fora do Git. **O front continua 100% mock.**
+- [x] **Fase B — Supabase no ar (concluída em 2026-11-18)** — org `dayvet-org` + projeto `agendau-2` em `sa-east-1`; migrations `0001..0003` e Auth/RLS foram aplicados/validados na nuvem conforme histórico do changelog.
 - [x] **Incidente 2026-11-23 — projeto pausado por inatividade** — `status: INACTIVE` e DNS `NXDOMAIN` (plano free pausa em ~7 dias sem atividade e remove a resolução). Restaurado via `POST /v1/projects/{ref}/restore` → `ACTIVE_HEALTHY`; banco íntegro (7 tabelas, 29 policies, 3 usuários) e chave `anon` legada ainda válida. Mitigação: `.github/workflows/supabase-keepalive.yml` (login + leitura real diária, abre issue se falhar).
 - [x] **Fase 0 — parar a falsa persistência (2026-11-23)** — `MODO_DADOS`/`confirmarEscrita()`: as 25 mensagens de escrita avisam "nada foi salvo no banco" e a faixa `#aviso-modo-demo` (app) + `#aviso-login-demo` (login) deixam o modo demonstração explícito. Regressão `04-aviso-modo-demo.mjs`.
 - [x] **Vercel reflete a `main` (2026-11-23)** — decisão do dono. `scripts/deploy-vercel.sh` agora aborta se `HEAD != origin/main` ou se `dayvet/`/`site/` estiverem sujos; publicação só a partir da `main`. Regra escrita no `AGENTS.md` do projeto.
-- [ ] **Fase C/D/E — integração real (aprovada em 2026-11-23)** — escopo: **núcleo (tutores, pets, agendamentos) + histórico + anexos**. Auth por usuário/CPF/e-mail via RPC `SECURITY DEFINER`; ponte de dados com UI otimista e **sem fallback silencioso**; migration `0004` para `documentos` + bucket privado no Storage; testes integrados (o de ouro: "desmarcar consulta → F5 → continua desmarcada").
+- [x] **Fase C — autenticação Supabase (baseline `e5c2e16`)** — login por usuário/CPF/e-mail via RPC `resolver_login` + `signInWithPassword`; perfil/RBAC em `public.usuarios`; recuperação de senha, sessão e troca obrigatória via Supabase Auth. O bypass de demonstração 1/2/3 permanece por decisão do dono.
+- [x] **Banco remoto e Edge Function (2026-11-23)** — migrations `0001..0006` confirmadas no projeto `agendau-2`; `tests/db.mjs` passou em Postgres 17 na VPS; `admin-criar-usuario` implantada com verificação JWT habilitada e chamada sem autenticação recusada (401).
+- [x] **Smoke real de tutores e CPF (2026-11-23)** — login admin e leitura pelo Supabase; cadastro com CPF sem máscara persistiu formatado, sobreviveu ao reload, edição para outro CPF sem máscara também persistiu após reload; CPF inválido foi rejeitado antes da escrita. Tutores sintéticos foram excluídos e conferidos ausentes após novo reload.
+- [ ] **Fases D/E — terminar validação funcional** — `MODO_DADOS='real'`; `persistencia.js` integra tutores, pets, agendamentos, catálogos, configuração, dados clínicos/anexos e usuários; Storage usa bucket privado. O smoke real de CPF cobre cadastro/edição/reload e limpeza. `tests/e2e.mjs todos` passou em Chromium, incluindo o caminho de edição, mas usa stubs e não substitui smokes autenticados dos demais fluxos/perfis. O teste de ouro continua: "desmarcar consulta → F5 → continua desmarcada".
 - [ ] **Integração Git da Vercel (bloqueada — depende do dono)** — todo push na `main` falha com "commit author doesn't have permission to create deployments". Falta adicionar a **Login Connection** do GitHub na conta Vercel (`vercel.com/accounts`). Enquanto isso, publicar com `./scripts/deploy-vercel.sh` (artefato pré-construído).
 
-- [ ] **Integração do banco de dados no Supabase (fases C–E)** — ponte de Auth, migração dos mocks e suíte integrada. **Bypass permanece para testes** (decisão do dono 2026-11-13): os botões de acesso rápido (`#acessos-teste`) passam a preencher as contas reais de teste em vez de `perfisTestes`; remoção definitiva só depois da homologação.
-- [ ] **Importação de dados legados** — scripts de migração dos mocks (`localStorage`/`mockData.js`) para tabelas Supabase (tutores, pets, agendamentos, vacinas, anexos, usuários, clínica).
+- [ ] **Concluir validação das Fases D/E** — revisar o diff completo e fazer smokes autenticados restantes por perfil/fluxo. E2E Chromium, migrations, banco Postgres 17 e Edge Function já foram validados; rodar Firefox se houver mudança de layout/tema. O deploy Vercel continua pendente e só pode ocorrer pelo fluxo da `main`.
+- [ ] **Importação de dados legados** — definir se há dados reais a importar. O caminho atual inicia sem pré-carregar os arrays de demonstração e lê os registros do Supabase.
 - [ ] **Escalar para multi-clinic (seguir "receita de bolo" em `docs/levantamento-bd.md`)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
 - [x] **Hospedagem no Vercel (parcial, 2026-11-18)** — projeto `agendau-2` criado, produção em `https://agendau-2.vercel.app` (alias estável) e `node tests/publicado.mjs` 15/15. Feito **sem** flags de feature e sem preview por PR, porque a integração Git está bloqueada. Pendente quando a conexão existir: variáveis por ambiente, preview automático em PRs e domínio customizado.
 - [ ] **Conformidade total com a LGPD (Lei 13.709/2018)** — mapeamento de dados pessoais/sensíveis, base legal por tratamento, consentimento granular (tutor/pet/agendamento), direitos do titular (acesso, retificação, exclusão, portabilidade), DPO/encarregado, registro de operações (ROPA), política de retenção/exclusão automática, DPIA para dados de saúde animal, cláusulas contratuais com Subprocessadores (Supabase, Vercel), incidente de segurança (plano de notificação 48h ANPD).
@@ -86,7 +94,7 @@
 ### 2.c Baixa prioridade (para não esquecer — sem data)
 
 - [x] **Simplificar SQL para single-clinic real** — entregue na Fase A (2026-11-13): `supabase/migrations/0001_schema.sql` não tem `clinicas` nem `clinica_id`; `docs/sql/` fica só como histórico. Validado por `node tests/db.mjs`.
-- [ ] Banco Supabase (schema, Auth+RLS, migração dos mocks), LGPD, remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`) — ver §2.b.
+- [ ] Validar/publicar as Fases D/E, concluir auditoria de interpolações HTML, planejar LGPD e remover bypass 1/2/3 (`perfisTestes`, `password_demo`, `mustChange:false`) antes da implantação — ver §2.b.
 
 ## 4. Histórico (detalhe em `docs/CHANGELOG.md`)
 
@@ -94,7 +102,7 @@
 
 ## 5. Regras
 
-- Validação (obrigatória antes de qualquer commit): `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/e2e.mjs` (Chromium; `node tests/e2e.mjs firefox` quando mexer em layout/tema). Screenshots em `/tmp/ai-evidence/`. Teste manual no navegador (logins 1/2/3, temas) continua obrigatório.
+- Validação (obrigatória antes de qualquer commit): `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/unit/persistencia.mjs` + `node tests/regressao/run.mjs` + `node tests/e2e.mjs` (Chromium; `node tests/e2e.mjs firefox` quando mexer em layout/tema). Screenshots em `/tmp/ai-evidence/`. Teste manual no navegador (logins 1/2/3, temas) continua obrigatório.
 - Teste de regressão: bug corrigido gera `tests/regressao/NN-<slug>.mjs` que falha sem o fix e passa com ele (suíte só cresce).
 - Docs: entrada no topo de `docs/CHANGELOG.md` a cada commit; `AGENTS.md` e `docs/MAPA_DO_SISTEMA.md` sincronizados.
 - Git: `main` estável (só dono mergeia; IA nunca pusha direto); `teste` = única branch de trabalho, cópia da `main` para os itens da §1. Produção = §0.

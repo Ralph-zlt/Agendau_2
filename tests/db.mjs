@@ -3,10 +3,10 @@
 // (container Docker) e roda a matriz de permissões (RLS).
 //
 // O QUE: prova, sem tocar na nuvem, que
-//   1. `supabase/migrations/0001..0003` aplicam em ordem com ON_ERROR_STOP;
+//   1. `supabase/migrations/0001..0006` aplicam em ordem com ON_ERROR_STOP;
 //   2. o seed é idempotente (roda 2× e não duplica catálogo);
 //   3. a matriz admin/vet/func × SELECT/INSERT/UPDATE/DELETE bate com o RBAC
-//      de `dayvet/script.js` (68 casos, incluindo anon e usuário inativo).
+//      de `dayvet/script.js`, inclusive anexos privados e Storage.
 //
 // PORQUÊ: erro de RLS só aparece com dados e identidade; revisar SQL no olho
 // não pega recursão de policy, GUC errado nem WITH CHECK frouxo.
@@ -109,6 +109,27 @@ try {
         erro(`matriz de RLS: ${falhaLinhas.length} falha(s) em ${total} casos`);
         falhaLinhas.forEach(l => console.error("     " + l.trim()));
     }
+
+    // 7. Acesso à tabela de documentos e ao bucket privado
+    const documentos = path.join(dirTests, "12_documentos_storage.sql");
+    sh("docker", ["cp", documentos, `${container}:/tmp/12_documentos_storage.sql`]);
+    const saidaDocumentos = psql(documentos);
+    const falhasDocumentos = saidaDocumentos.split("\n").filter(l => l.startsWith(" FALHA") || l.startsWith("FALHA"));
+    const totalDocumentos = (saidaDocumentos.match(/^\s*OK\s*\|/gm) || []).length;
+    if (falhasDocumentos.length === 0 && totalDocumentos >= 8) {
+        ok(`documentos/Storage: ${totalDocumentos} verificações, 0 falhas`);
+    } else {
+        erro(`documentos/Storage: ${falhasDocumentos.length} falha(s) em ${totalDocumentos} verificações`);
+        falhasDocumentos.forEach(l => console.error("     " + l.trim()));
+    }
+
+    // 8. Persistência e enforcement de horários configuráveis.
+    const horarios = path.join(dirTests, "13_configuracoes_horario.sql");
+    sh("docker", ["cp", horarios, `${container}:/tmp/13_configuracoes_horario.sql`]);
+    const saidaHorarios = psql(horarios);
+    const totalHorarios = (saidaHorarios.match(/^\s*OK\s*\|/gm) || []).length;
+    totalHorarios === 3 ? ok("horários, limite de pets e policies: 3 verificações, 0 falhas")
+        : erro(`horários, limite de pets e policies: ${totalHorarios} verificações (esperado 3)`);
 } catch (e) {
     erro(`execução abortada: ${e.message}`);
 } finally {

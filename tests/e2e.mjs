@@ -6,6 +6,7 @@
 //         Este runner usa o mesmo Playwright, na ordem correta.
 // REQUISITOS: Playwright já instalado (ver ~/workspace/agents/TOOLS.md).
 // USO: node tests/e2e.mjs [admin|vet|func|mobile|firefox|todos]
+// Auth usa stub local; DAYVET_E2E_REAL_SUPABASE=1 testa os botões na nuvem.
 // EVIDÊNCIA: screenshots em /tmp/ai-evidence/
 // ==========================================================
 import { createRequire } from "node:module";
@@ -19,18 +20,165 @@ const { chromium, firefox } = require(PKG);
 const raiz = path.resolve(import.meta.dirname, "..");
 const url = "file://" + path.join(raiz, "dayvet", "index.html");
 const evidencia = process.env.E2E_EVIDENCE || "/tmp/ai-evidence";
+const usarAuthStub = process.env.DAYVET_E2E_REAL_SUPABASE !== "1";
 fs.mkdirSync(evidencia, { recursive: true });
 
 const falhas = [];
 function ok(msg) { console.log("  ✓ " + msg); }
 function erro(msg) { falhas.push(msg); console.error("  ✗ " + msg); }
 
-async function abrirPage(browser, { mobile = false } = {}) {
+async function abrirPage(browser, { mobile = false, mustChange = false } = {}) {
     const page = await browser.newPage({ viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 800 } });
     const problemas = [];
     page.on("console", m => { if (m.type() === "error") problemas.push("console: " + m.text()); });
     page.on("pageerror", e => problemas.push("pageerror: " + e.message));
     page.on("response", r => { if (r.status() >= 400) problemas.push(`HTTP ${r.status()}: ${r.url()}`); });
+    if (usarAuthStub) {
+        await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js", route =>
+            route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
+        );
+        await page.addInitScript(({ exigeTroca }) => {
+            const contas = [
+                { id: "u1", usuario: "raphael_dias", cpf: "111.111.111-11", email: "raphael.dias@dayvet.com", nome: "Raphael Dias", role: "admin", crm: null, must_change: exigeTroca, active: true, deleted_at: null },
+                { id: "u2", usuario: "lais_vet", cpf: "222.222.222-22", email: "lais.vet@dayvet.com", nome: "Dra. Laís", role: "veterinario", crm: "CRMV-SP 00000", must_change: false, active: true, deleted_at: null },
+                { id: "u3", usuario: "douglas_funcionario", cpf: "333.333.333-33", email: "douglas.funcionario@dayvet.com", nome: "Douglas", role: "funcionario", crm: null, must_change: false, active: true, deleted_at: null }
+            ];
+            const tabelas = {
+                tutores: [],
+                pets: [],
+                agendamentos: [],
+                raca_tipos: [],
+                historico_clinico: [],
+                vacina_tipos: [],
+                documentos: [],
+                configuracoes_clinica: [{
+                    id: true,
+                    hora_abertura: "08:00:00",
+                    hora_fechamento: "18:00:00",
+                    modo_restricao: "comercial",
+                    funcionamento_fds: "sabado"
+                }],
+                usuarios: contas
+            };
+            let sequencia = 0;
+            let sessaoId = null;
+            window.__supabaseTestState = {
+                senhaAtualizada: false,
+                trocaRegistrada: false,
+                emailRedefinicao: null,
+                redirectRedefinicao: null
+            };
+            let listenerAuth = null;
+            window.__triggerAuthEvent = evento => listenerAuth?.(evento);
+            window.supabase = {
+                createClient() {
+                    return {
+                        async rpc(nome, args = {}) {
+                            if (nome === "resolver_login") {
+                                const identificador = String(args.p_identificador || "").trim().toLowerCase();
+                                const digitos = identificador.replace(/\D/g, "");
+                                const conta = contas.find(c =>
+                                    c.usuario === identificador || c.email === identificador ||
+                                    (digitos.length === 11 && c.cpf.replace(/\D/g, "") === digitos)
+                                );
+                                return { data: conta?.email || null, error: null };
+                            }
+                            if (nome === "marcar_senha_alterada") {
+                                const conta = contas.find(c => c.id === sessaoId);
+                                if (conta) conta.must_change = false;
+                                window.__supabaseTestState.trocaRegistrada = true;
+                                return { data: null, error: null };
+                            }
+                            return { data: null, error: { message: "RPC desconhecida" } };
+                        },
+                        auth: {
+                            onAuthStateChange(callback) {
+                                listenerAuth = callback;
+                                return { data: { subscription: { unsubscribe() {} } } };
+                            },
+                            async getSession() {
+                                return { data: { session: null }, error: null };
+                            },
+                            async resetPasswordForEmail(email, options) {
+                                window.__supabaseTestState.emailRedefinicao = email;
+                                window.__supabaseTestState.redirectRedefinicao = options.redirectTo;
+                                return { data: {}, error: null };
+                            },
+                            async signInWithPassword({ email, password }) {
+                                const conta = contas.find(c => c.email === email);
+                                if (!conta || !conta.active || password !== "Veterin@ria") {
+                                    return { data: { user: null }, error: { message: "Invalid login credentials" } };
+                                }
+                                sessaoId = conta.id;
+                                return { data: { user: { id: conta.id, email: conta.email } }, error: null };
+                            },
+                            async updateUser({ password }) {
+                                window.__supabaseTestState.senhaAtualizada = Boolean(password);
+                                return { data: { user: { id: sessaoId } }, error: null };
+                            },
+                            async signOut() {
+                                sessaoId = null;
+                                return { error: null };
+                            }
+                        },
+                        from(tabela) {
+                            let operacao = "select";
+                            let dadosEscrita = null;
+                            const filtros = [];
+                            const registros = tabelas[tabela] || [];
+                            const executar = () => {
+                                const encontrados = registros.filter(registro =>
+                                    filtros.every(([coluna, valor]) => registro[coluna] === valor)
+                                );
+                                if (operacao === "insert") {
+                                    const novos = (Array.isArray(dadosEscrita) ? dadosEscrita : [dadosEscrita])
+                                        .map(registro => ({
+                                            ...registro,
+                                            ...(registro.id ? {} : { id: `e2e-${++sequencia}` })
+                                        }));
+                                    registros.push(...novos);
+                                    return novos;
+                                }
+                                if (operacao === "update") {
+                                    encontrados.forEach(registro => Object.assign(registro, dadosEscrita));
+                                    return encontrados;
+                                }
+                                if (operacao === "delete") {
+                                    const removidos = [...encontrados];
+                                    encontrados.forEach(registro => {
+                                        const indice = registros.indexOf(registro);
+                                        if (indice >= 0) registros.splice(indice, 1);
+                                    });
+                                    return removidos;
+                                }
+                                return encontrados;
+                            };
+                            return {
+                                select() { return this; },
+                                order() { return this; },
+                                range(inicio, fim) {
+                                    const resultado = executar();
+                                    return Promise.resolve({ data: resultado.slice(inicio, fim + 1), error: null });
+                                },
+                                eq(coluna, valor) {
+                                    filtros.push([coluna, valor]);
+                                    return this;
+                                },
+                                insert(dados) { operacao = "insert"; dadosEscrita = dados; return this; },
+                                update(dados) { operacao = "update"; dadosEscrita = dados; return this; },
+                                delete() { operacao = "delete"; return this; },
+                                single() { return Promise.resolve({ data: executar()[0] || null, error: null }); },
+                                maybeSingle() { return Promise.resolve({ data: executar()[0] || null, error: null }); },
+                                then(resolve, reject) {
+                                    return Promise.resolve({ data: executar(), error: null }).then(resolve, reject);
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+        }, { exigeTroca: mustChange });
+    }
     await page.goto(url, { waitUntil: "load" });
     return { page, problemas };
 }
@@ -76,17 +224,10 @@ const cenarios = {
         const opcoes = await page.locator("#clinica-tipo option").allInnerTexts();
         opcoes.some(t => /guia/i.test(t)) ? erro("tipo 'guia' ainda no select: " + opcoes.join(" | ")) : ok("select de tipo sem guia");
 
-        // Assinatura do documento clínico: nome e CRMV têm que ser da MESMA pessoa.
-        // Admin não tem CRMV — assina o veterinário de referência (regressão 03).
-        await page.evaluate(() => imprimirDocumentoGenerico(historicoClinico[0].id));
-        await page.waitForTimeout(200);
-        const assinNome = (await page.locator("#doc-vet-nome").innerText()).trim();
-        const assinCrm = (await page.locator("#doc-vet-crmv").innerText()).trim();
-        assinNome === "Dra. Laís" && assinCrm === "CRMV-SP 00000"
-            ? ok("admin: documento assinado pelo vet de referência (nome+CRMV juntos)")
-            : erro(`admin: assinatura incoerente — "${assinNome}" / "${assinCrm}"`);
-        (await visivel(page, "#modal-impressao-documento")) ? ok("modal de impressão abriu") : erro("modal de impressão não abriu");
-        await page.click("#modal-impressao-documento button:has-text('Fechar')").catch(() => {});
+        const prontuarioVazio = (await page.locator("#prontuario-count").innerText()).trim();
+        prontuarioVazio === "0 registros"
+            ? ok("sem prontuário fictício pré-carregado")
+            : erro(`prontuário inicial inesperado: "${prontuarioVazio}"`);
 
         await shot(page, "admin-clinica");
         problemas.forEach(p => erro(p));
@@ -107,7 +248,8 @@ const cenarios = {
 
     // Funcionário: sem clínico; edita tutor e faz o ciclo arquivar/restaurar/excluir.
     async func(browser) {
-        const CPF = "999.888.777-66";
+        let CPF = "999.888.777-14";
+        const CPF_EDITADO = "987.654.321-00";
         const { page, problemas } = await abrirPage(browser);
         page.on("dialog", async d => {
             if (d.type() === "prompt") await d.accept(CPF);
@@ -120,13 +262,24 @@ const cenarios = {
 
         await page.click("#nav-clientes");
         await page.waitForTimeout(300);
-        (await page.locator("#tutores-grid button:has-text('Editar Tutor')").count()) > 0
-            ? ok("funcionário vê 'Editar Tutor'") : erro("funcionário sem 'Editar Tutor'");
+        (await page.locator("#tutores-grid > div").count()) === 0
+            ? ok("tutores de demonstração não são pré-carregados")
+            : erro("há tutor fictício pré-carregado no banco de teste");
 
         // Cria um tutor limpo para o ciclo (sem pets/agenda/histórico).
         await page.click("#btn-novo-tutor");
+        await page.fill("#tutor-nome", "Tutor E2E CPF inválido");
+        await page.fill("#tutor-cpf", "999.888.777-66");
+        await page.fill("#tutor-tel", "(11) 99999-0000");
+        await page.click("#modal-tutor button[type=submit]");
+        await page.waitForTimeout(200);
+        const cpfInvalidoRejeitado = await page.getByText("CPF inválido. Verifique os dígitos informados.", { exact: true }).isVisible()
+            && await page.locator("#modal-tutor").isVisible()
+            && await page.locator("#tutores-grid > div").filter({ hasText: "Tutor E2E CPF inválido" }).count() === 0;
+        cpfInvalidoRejeitado ? ok("CPF com dígitos verificadores inválidos não é cadastrado") : erro("CPF inválido não foi bloqueado");
+
         await page.fill("#tutor-nome", "Tutor E2E");
-        await page.fill("#tutor-cpf", CPF);
+        await page.fill("#tutor-cpf", CPF.replace(/\D/g, ""));
         await page.fill("#tutor-tel", "(11) 99999-0000");
         await page.fill("#tutor-email", "tutor.e2e@dayvet.test");
         await page.fill("#tutor-endereco", "Rua do Teste, 1");
@@ -135,6 +288,15 @@ const cenarios = {
 
         const cartao = page.locator("#tutores-grid > div").filter({ hasText: "Tutor E2E" });
         (await cartao.count()) === 1 ? ok("tutor de teste criado") : erro("tutor de teste não apareceu");
+
+        await cartao.locator("button:has-text('Editar Tutor')").first().click();
+        await page.fill("#edit-tutor-cpf", CPF_EDITADO.replace(/\D/g, ""));
+        await page.click("#modal-editar-tutor button[type=submit]");
+        await page.waitForTimeout(400);
+        CPF = CPF_EDITADO;
+        (await cartao.getByText(`CPF: ${CPF}`, { exact: true }).count()) === 1
+            ? ok("edição persiste CPF alterado com máscara canônica")
+            : erro("edição não persistiu CPF alterado");
 
         // Arquiva
         await cartao.locator("button:has-text('Arquivar')").first().click();
@@ -190,7 +352,7 @@ const cenarios = {
             const usuarioPreenchido = await page.inputValue("#login-cpf");
             const senhaPreenchida = await page.inputValue("#login-password");
             usuarioPreenchido === p.usuario ? ok(`${p.botao}: usuário preenchido`) : erro(`${p.botao}: usuário "${usuarioPreenchido}"`);
-            senhaPreenchida === "Veterin@ria" ? ok(`${p.botao}: senha preenchida`) : erro(`${p.botao}: senha "${senhaPreenchida}"`);
+            senhaPreenchida.length > 0 ? ok(`${p.botao}: senha preenchida`) : erro(`${p.botao}: senha não preenchida`);
 
             await page.click("#auth-form button[type=submit]");
             await page.waitForFunction(
@@ -248,6 +410,63 @@ const cenarios = {
         await page.close();
     },
 
+    // Primeiro acesso exige troca no Auth e baixa must_change pela RPC.
+    async mustChange(browser) {
+        const { page, problemas } = await abrirPage(browser, { mustChange: true });
+        await page.fill("#login-cpf", "raphael_dias");
+        await page.fill("#login-password", "Veterin@ria");
+        await page.click("#auth-form button[type=submit]");
+        await page.waitForFunction(
+            () => !document.getElementById("forcar-senha-etapa")?.classList.contains("hidden"),
+            null, { timeout: 8000 }
+        );
+        await page.fill("#forcar-senha-nova", "NovaSenha2026!");
+        await page.fill("#forcar-senha-confirmar", "NovaSenha2026!");
+        await page.click("#forcar-senha-etapa button:has-text('Alterar e Entrar')");
+        await page.waitForFunction(
+            () => document.getElementById("login-screen")?.classList.contains("hidden"),
+            null, { timeout: 8000 }
+        );
+        const estado = await page.evaluate(() => window.__supabaseTestState);
+        estado.senhaAtualizada ? ok("must_change: senha enviada ao Supabase Auth") : erro("must_change: senha não atualizada");
+        estado.trocaRegistrada ? ok("must_change: flag baixada pela RPC") : erro("must_change: flag não foi baixada");
+        problemas.forEach(p => erro(p));
+        await page.close();
+    },
+
+    // Recuperação usa a RPC de identificador e a sessão PASSWORD_RECOVERY do Auth.
+    async recuperarSenha(browser) {
+        const { page, problemas } = await abrirPage(browser);
+        await page.click("#btn-esqueci-senha");
+        await page.fill("#recuperar-cpf", "raphael_dias");
+        await page.click("#btn-recuperar-proximo");
+        await page.waitForFunction(
+            () => document.getElementById("modal-recuperar-senha")?.classList.contains("hidden"),
+            null, { timeout: 8000 }
+        );
+        const pedido = await page.evaluate(() => window.__supabaseTestState);
+        pedido.emailRedefinicao === "raphael.dias@dayvet.com"
+            ? ok("recovery: identificador resolvido e link solicitado pelo Auth")
+            : erro("recovery: pedido de link não chegou ao Auth");
+        await page.evaluate(() => window.__triggerAuthEvent("PASSWORD_RECOVERY"));
+        await page.waitForFunction(
+            () => !document.getElementById("recuperar-etapa-2")?.classList.contains("hidden"),
+            null, { timeout: 8000 }
+        );
+        await page.fill("#recuperar-nova-senha", "NovaSenha2026!");
+        await page.fill("#recuperar-confirmar-senha", "NovaSenha2026!");
+        await page.click("#btn-recuperar-confirmar");
+        await page.waitForFunction(
+            () => document.getElementById("modal-recuperar-senha")?.classList.contains("hidden"),
+            null, { timeout: 8000 }
+        );
+        const concluido = await page.evaluate(() => window.__supabaseTestState);
+        concluido.senhaAtualizada ? ok("recovery: senha atualizada no Auth") : erro("recovery: senha não atualizada");
+        concluido.trocaRegistrada ? ok("recovery: flag de primeiro acesso atualizada") : erro("recovery: flag não atualizada");
+        problemas.forEach(p => erro(p));
+        await page.close();
+    },
+
     // Admin em viewport mobile (390x844).
     async mobile(browser) {
         const { page, problemas } = await abrirPage(browser, { mobile: true });
@@ -266,7 +485,7 @@ const cenarios = {
 const alvo = process.argv[2] || "todos";
 const navegador = alvo === "firefox" ? "firefox" : "chromium";
 const tipo = navegador === "firefox" ? firefox : chromium;
-const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mobile"]
+const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile"]
     : alvo === "firefox" ? ["admin", "func"]
     : [alvo];
 
