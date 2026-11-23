@@ -9,12 +9,12 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
-## 2026-11-23 · (teste; sem publicação) — Alinhando KPIs e histórico ao período
+## 2026-11-23 · (main `cceb6af`; Vercel Ready `FAPWsv6YUDr6v7B9HWQo9hxH5Bbo`) — Alinhando KPIs e histórico ao período
 **O que:** contagem e taxa de agendamentos usam o mesmo intervalo mensal/semanal/anual do faturamento; pets e tutores ficam identificados como totais gerais. O histórico abre filtrado no mês atual e reage às mudanças de mês/ano; "Limpar" deixa ambos os seletores em "Todos".
 **Por quê:** evitar divergência entre valor, quantidade e histórico quando o usuário seleciona um período.
 **Onde:** `dayvet/index.html`, `dayvet/script.js`, `tests/e2e.mjs`, `tests/regressao/06-login-curto-dashboard-mes.mjs`, `tests/regressao/07-consistencia-dashboard-historico.mjs`.
 **Decisões mantidas:** percentual continua excluindo cancelados do denominador; status concluído em data futura não é bloqueado; registros QA existentes não foram alterados.
-**Validação:** `node --check`, estático 12/12, unitários 42/42, persistência 9/9 e regressões 7/7 passaram; E2E Chromium completo e Firefox (admin/funcionário) passaram. Smoke no browser integrado com fixture em memória confirmou mês atual (1 atendimento/0%), próximo mês (3/100%/R$ 235,00), filtros históricos (1 de 3 e 2 de 3) e limpeza. `tests/db.mjs` foi pulado por Docker indisponível. Sem merge ou deploy; produção permanece na `main` `0902ec5`.
+**Validação:** estático 12/12, regras 42/42, persistência 9/9, regressões 7/7, E2E Chromium completo, Firefox (admin/funcionário) e `tests/db.mjs` em Postgres 17 passaram. Smoke local conferiu KPIs mensal/semanal/anual e o filtro/limpeza do histórico. Commit `cceb6af` publicado na `main`; `scripts/deploy-vercel.sh` gerou o deployment `FAPWsv6YUDr6v7B9HWQo9hxH5Bbo`, Ready, com 7 rotas HTTP 200; `tests/publicado.mjs` passou 13/13 em https://agendau-2.vercel.app/dayvet/. Nenhuma migration, configuração ou dado QA do Supabase foi alterado.
 
 ## 2026-11-23 · (produção `main` 0902ec5; Vercel Ready) — Login rolável e faturamento por mês selecionado
 **O que:** a tela de login permite rolagem vertical quando o cartão ultrapassa a altura da janela. O dashboard mensal ganhou seletor de mês/ano para consultar valores de agendamentos futuros; semanal/anual permanecem. A regra continua somando somente agendamentos confirmados/concluídos, não pagamentos recebidos.

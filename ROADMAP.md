@@ -3,7 +3,7 @@
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
 > Última atualização: 2026-11-23.
-> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `0902ec5` (PR #3 mesclada); `origin/teste` = `96aeeb8`. A integração está publicada na Vercel; o teste de produção confirmou modo real, Auth/RBAC dos 3 perfis e persistência de tutor após reload. Migrations `0001..0006` estão aplicadas e `admin-criar-usuario` está implantada. Estático, unitários, regressões, E2E Chromium/Firefox, Postgres 17 e smoke publicado passaram. Ainda faltam smokes reais dos demais fluxos/perfis (pets, agenda, clínico, anexos e configuração).
+> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `cceb6af`; `origin/teste` = `6cd5c06`. A produção Vercel usa o Supabase real; migrations `0001..0006` e `admin-criar-usuario` estão publicados. Estático, unitários, regressões, E2E Chromium/Firefox, Postgres 17 e smoke publicado 13/13 passaram. Ainda faltam smokes reais dos demais fluxos/perfis (pets, agenda, clínico, anexos e configuração).
 
 ## 0. Links e deploy (espelho fixo da main)
 
@@ -11,8 +11,8 @@
   - Workflow `.github/workflows/deploy-pages.yml` dispara **somente em `push` na `main`** (mais `workflow_dispatch` manual).
   - Artefato: `site/index.html` → `dist/index.html` (landing) + `dayvet/*` → `dist/dayvet/` (SPA).
   - **Regra: este link SEMPRE reflete a `main`. Nunca publicar a `teste` nele.**
-- **Teste:** validar na branch `teste` em ambiente local (`dayvet/index.html`) ou preview temporário da `teste`. Só mergear na `main` após validação do dono.
-- **Vercel:** https://agendau-2.vercel.app — deploy da `main` `e3edffe` Ready; o alias existente serve o frontend em modo Supabase real. Assets respondem 200; `tests/publicado.mjs` confirmou Auth/RBAC e a gravação real de tutor foi validada no navegador. A integração Git continua bloqueada, então novas publicações usam `scripts/deploy-vercel.sh` depois do merge na `main`.
+- **Fluxo atual (decisão do dono em 23/11/2026):** trabalhar diretamente na `main` para acelerar o projeto; não usar `teste` durante essa orientação.
+- **Vercel:** https://agendau-2.vercel.app — deployment `FAPWsv6YUDr6v7B9HWQo9hxH5Bbo` da `main` `cceb6af` Ready; 7 caminhos HTTP 200 e `tests/publicado.mjs` 13/13. A integração Git continua bloqueada, então publicações usam `scripts/deploy-vercel.sh`.
 
 ---
 
@@ -41,7 +41,7 @@
 - [x] **21. Harness de testes do projeto:** `tests/estatico.mjs`, `tests/unit/regras.mjs`, `tests/e2e.mjs` (Playwright Chromium+Firefox, desktop e 390×844) + `tests/regressao/` numerada; screenshots em `/tmp/ai-evidence/`.
 - [x] **22. Documentação do ciclo:** ROADMAP/MAPA/AGENTS/DB/CHANGELOG sincronizados com a pausa de banco/Vercel e com os itens 19–21; `PROJETOS.md` recriado na raiz de `~/Público/Projetos`.
 
-**Aceite geral:** `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/unit/persistencia.mjs` + `node tests/e2e.mjs` verdes; teste manual na `teste` antes de qualquer novo merge; `docs/CHANGELOG.md` atualizado. Fluxo padrão: código na `teste` → validação do dono → merge na `main` (exceção desta vez: merge direto `teste`→`main` validado em teste manual).
+**Aceite geral:** `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/unit/persistencia.mjs` + `node tests/regressao/run.mjs` + `node tests/e2e.mjs` verdes; `node tests/db.mjs` quando Docker/Postgres 17 estiver disponível; `docs/CHANGELOG.md` atualizado. Sob a decisão atual do dono, validar, commitar e publicar diretamente na `main`.
 
 ---
 
@@ -84,7 +84,7 @@
 - [x] **Banco remoto e Edge Function (2026-11-23)** — migrations `0001..0006` confirmadas no projeto `agendau-2`; `tests/db.mjs` passou em Postgres 17 na VPS; `admin-criar-usuario` implantada com verificação JWT habilitada e chamada sem autenticação recusada (401).
 - [x] **Smoke real de dados QA (2026-11-23)** — login Auth real e gravação pela aplicação/RLS de 2 tutores, 3 pets, 4 agendamentos e 2 registros clínicos sintéticos, identificados com `TESTE`; persistência e vínculos confirmados após reload. Cadastro/edição com CPF canônico e rejeição de CPF inválido também foram verificados.
 - [x] **Correções de login e dashboard (2026-11-23, PR #3 / main `0902ec5`)** — permite rolagem do login em janelas baixas; seleciona mês para consultar agendamentos confirmados/concluídos. Deploy Vercel Ready; smoke publicado 13/13, login Auth em 613×304 e R$ 330,00 no mês 12/2026 verificados na produção. Valores não representam pagamentos recebidos.
-- [ ] **Consistência de KPIs e histórico (validada na `teste`, ainda não publicada)** — a implementação alinha contagem/taxa ao período semanal/mensal/anual, identifica pets/tutores como totais gerais, abre o histórico no mês atual e aplica alterações de mês/ano imediatamente. Estático, unitários, persistência, regressões, E2E Chromium completo e Firefox (admin/funcionário) passaram. `tests/db.mjs` segue pulado por Docker indisponível. Preserva a regra da taxa (cancelados fora do denominador), status concluído futuro e dados QA. Próximo passo: publicar a branch `teste`, obter merge do dono na `main` e então implantar na Vercel.
+- [x] **Consistência de KPIs e histórico (main `cceb6af`, 2026-11-23)** — contagem/taxa usam o mesmo intervalo semanal/mensal/anual do faturamento; pets/tutores identificados como totais gerais; histórico abre no mês atual, reage a mês/ano e Limpar mostra todos. Preserva cancelados fora do denominador, status concluídos futuros e dados QA. E2E Chromium/Firefox, Postgres 17 e smoke publicado 13/13 passaram; Vercel Ready `FAPWsv6YUDr6v7B9HWQo9hxH5Bbo`.
 - [ ] **Fases D/E — completar validação funcional** — a integração está publicada em modo `MODO_DADOS='real'`; `persistencia.js` integra tutores, pets, agendamentos, catálogos, configuração, dados clínicos/anexos e usuários; Storage usa bucket privado. Smoke real do tutor passou em Vercel: cadastro/edição, reload, CPF inválido rejeitado e exclusão limpa. E2E Chromium passou com stubs; ainda faltam smokes autenticados reais dos demais fluxos/perfis. O teste de ouro continua: "desmarcar consulta → F5 → continua desmarcada".
 - [ ] **Integração Git da Vercel (bloqueada — depende do dono)** — todo push na `main` falha com "commit author doesn't have permission to create deployments". Falta adicionar a **Login Connection** do GitHub na conta Vercel (`vercel.com/accounts`). Enquanto isso, publicar com `./scripts/deploy-vercel.sh` (artefato pré-construído).
 
@@ -108,6 +108,6 @@
 - Validação (obrigatória antes de qualquer commit): `node tests/estatico.mjs` + `node tests/unit/regras.mjs` + `node tests/unit/persistencia.mjs` + `node tests/regressao/run.mjs` + `node tests/e2e.mjs` (Chromium; `node tests/e2e.mjs firefox` quando mexer em layout/tema). Screenshots em `/tmp/ai-evidence/`. Teste manual no navegador (logins 1/2/3, temas) continua obrigatório.
 - Teste de regressão: bug corrigido gera `tests/regressao/NN-<slug>.mjs` que falha sem o fix e passa com ele (suíte só cresce).
 - Docs: entrada no topo de `docs/CHANGELOG.md` a cada commit; `AGENTS.md` e `docs/MAPA_DO_SISTEMA.md` sincronizados.
-- Git: `main` estável (só dono mergeia; IA nunca pusha direto); `teste` = única branch de trabalho, cópia da `main` para os itens da §1. Produção = §0.
+- Git: decisão temporária do dono (23/11/2026): trabalhar e publicar diretamente na `main`; não fazer alterações na `teste` durante essa orientação. Preservar alterações preexistentes e nunca versionar `local/` ou `opencode.json`.
 - Código: pt-BR, seções numeradas, `TODO [INTEGRAÇÃO SUPABASE]` nos pontos de banco. Não versionar `local/` e `opencode.json`.
 - Leitura antes de editar: `AGENTS.md` → `docs/MAPA_DO_SISTEMA.md` → `docs/CHANGELOG.md` → este roadmap.

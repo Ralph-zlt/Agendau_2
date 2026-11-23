@@ -34,7 +34,7 @@ abortar() {
     echo "ABORTADO: $1" >&2
     echo "  HEAD local:    $(git -C "$RAIZ" rev-parse --short HEAD) ($(git -C "$RAIZ" branch --show-current))" >&2
     echo "  origin/main:   $(git -C "$RAIZ" rev-parse --short origin/main)" >&2
-    echo "  Fluxo correto: commitar na 'teste' → merge --ff-only na 'main' → push → rodar este script." >&2
+    echo "  Fluxo correto: validar/commitar na 'main' → push origin main → rodar este script." >&2
     exit 1
 }
 

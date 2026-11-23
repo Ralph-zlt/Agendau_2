@@ -22,18 +22,19 @@ pendências e próximo agente. As exigências acadêmicas do arquivo de requisit
 ou da professora têm prioridade sobre convenções genéricas.
 
 ## Branches (obrigatório)
-- `main` = estável, só o dono valida e mergeia. IA NUNCA commita/pusha direto na `main`.
-- `teste` = única branch de trabalho da IA. Todo código novo vai para `teste`.
+- `main` = branch de produção. Decisão do dono em 2026-11-23: para acelerar o projeto, trabalhar diretamente na `main` quando essa for a instrução explícita; não abrir PR nem trabalhar em `teste` durante essa orientação.
+- Sem pedido explícito para publicar diretamente: preservar a política de revisão acordada pelo dono, não presumir autorização para push.
 - PROIBIDO criar `teste/*`, `test/*`, `feature/*` ou qualquer outra branch sem autorização explícita do dono.
-- Antes de codar: `git fetch origin` + conferir `git branch -r` — se já existe `teste`, usar ela.
+- Antes de codar: `git fetch origin` e conferir `git status`, `git branch -r` e o HEAD remoto; preservar alterações alheias.
 
 ## Deploy (Vercel) — reflete a `main`, sempre
 
 - A Vercel publica **apenas** o que está na `main`. O caminho é `./scripts/deploy-vercel.sh`,
   que **aborta** se `HEAD != origin/main` ou se `dayvet/`/`site/` tiverem alteração não
   commitada. Publicar de branch de trabalho é proibido.
-- Fluxo completo: commitar na `teste` → `git checkout main && git merge --ff-only origin/teste`
-  → `git push origin main` → `./scripts/deploy-vercel.sh` → `node tests/publicado.mjs <url>`.
+- Fluxo autorizado pelo dono em 2026-11-23: validar e commitar na `main` → `git push origin main`
+  → `./scripts/deploy-vercel.sh` → `node tests/publicado.mjs <url>`. Usar worktree isolado
+  se o checkout canônico estiver sujo.
 - O GitHub Pages publica sozinho no push da `main` (workflow `deploy-pages`); a Vercel não,
   porque a integração Git dela está bloqueada ("commit author doesn't have permission").
 - Quando a integração Git da Vercel for religada, o push na `main` passa a publicar sozinho e
@@ -41,8 +42,7 @@ ou da professora têm prioridade sobre convenções genéricas.
 
 ## Onde está o código
 - O produto fica em **`dayvet/`**: `index.html` (estrutura), `styles.css` (estilos), `script.js` (lógica). Nada fora dessa pasta é o produto.
-- SPA + Supabase: a integração real de dados/Storage está publicada na Vercel pela `main` (`0902ec5`), com `MODO_DADOS='real'` e sem fallback silencioso. Migrations `0001..0006` passaram em Postgres 17 e estão no projeto remoto; `admin-criar-usuario` está implantada com JWT obrigatório. Smoke autenticado confirmou CRUD e persistência após reload de tutor, pet, agendamento e documento clínico. Há dados sintéticos de QA persistentes na produção, todos identificados com `TESTE`: 2 tutores, 3 pets, 4 agendamentos e 2 registros clínicos; não remover sem ordem explícita. As correções de rolagem do login e filtro mensal estão publicadas e verificadas na Vercel; valores do painel continuam representando agendamentos, não pagamentos. Nunca ler nem publicar `service_role`, senhas ou tokens.
-- Correção local na branch `teste` (não publicada): contagem/taxa do dashboard acompanham o período semanal/mensal/anual; o histórico inicia no mês atual e aplica alterações de mês/ano imediatamente. Não altera os registros QA nem bloqueia conclusão com data futura.
+- SPA + Supabase: a integração real de dados/Storage está publicada na Vercel pela `main` (`cceb6af`), com `MODO_DADOS='real'` e sem fallback silencioso. Migrations `0001..0006` passaram em Postgres 17 e estão no projeto remoto; `admin-criar-usuario` está implantada com JWT obrigatório. Smoke autenticado confirmou CRUD e persistência após reload de tutor, pet, agendamento e documento clínico. Há dados sintéticos de QA persistentes na produção, todos identificados com `TESTE`: 2 tutores, 3 pets, 4 agendamentos e 2 registros clínicos; não remover sem ordem explícita. Login, dashboard por período e histórico mensal estão publicados e validados; valores do painel continuam representando agendamentos, não pagamentos. Nunca ler nem publicar `service_role`, senhas ou tokens.
 
 ## Não versionar
 - `local/` (relatórios pessoais de metodologia/commit) e `opencode.json` (config local da ferramenta).
