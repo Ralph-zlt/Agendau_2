@@ -42,6 +42,7 @@ ou da professora têm prioridade sobre convenções genéricas.
 ## Onde está o código
 - O produto fica em **`dayvet/`**: `index.html` (estrutura), `styles.css` (estilos), `script.js` (lógica). Nada fora dessa pasta é o produto.
 - SPA + Supabase: a integração real de dados/Storage está publicada na Vercel pela `main` (`0902ec5`), com `MODO_DADOS='real'` e sem fallback silencioso. Migrations `0001..0006` passaram em Postgres 17 e estão no projeto remoto; `admin-criar-usuario` está implantada com JWT obrigatório. Smoke autenticado confirmou CRUD e persistência após reload de tutor, pet, agendamento e documento clínico. Há dados sintéticos de QA persistentes na produção, todos identificados com `TESTE`: 2 tutores, 3 pets, 4 agendamentos e 2 registros clínicos; não remover sem ordem explícita. As correções de rolagem do login e filtro mensal estão publicadas e verificadas na Vercel; valores do painel continuam representando agendamentos, não pagamentos. Nunca ler nem publicar `service_role`, senhas ou tokens.
+- Correção local na branch `teste` (não publicada): contagem/taxa do dashboard acompanham o período semanal/mensal/anual; o histórico inicia no mês atual e aplica alterações de mês/ano imediatamente. Não altera os registros QA nem bloqueia conclusão com data futura.
 
 ## Não versionar
 - `local/` (relatórios pessoais de metodologia/commit) e `opencode.json` (config local da ferramenta).

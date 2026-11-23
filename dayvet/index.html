@@ -284,7 +284,7 @@
                             <span id="dash-titulo">Resumo Financeiro e Operacional</span>
                             <span class="text-xs font-bold bg-brand-lime/10 text-brand-lime border border-brand-lime/20 px-2.5 py-0.5 rounded-full">Ao Vivo</span>
                         </h3>
-                        <p id="dash-subtitulo" class="text-xs text-slate-400">Dados de atendimentos e cadastros carregados do banco. Valores são de agendamentos, não pagamentos.</p>
+                        <p id="dash-subtitulo" class="text-xs text-slate-400">Atendimentos e valores usam o período selecionado. Pets e tutores: totais gerais (tutores ativos). Valores são de agendamentos, não pagamentos.</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                         <button id="btn-gerar-relatorios-dashboard" onclick="abrirModalGerarRelatorios()" class="px-4 py-2.5 bg-gradient-to-r from-brand-purple to-brand-blue hover:opacity-90 font-bold text-xs text-white rounded-xl shadow-md flex items-center gap-2">
@@ -325,13 +325,13 @@
                         </div>
                         <div id="kpi-agendamentos-count" class="text-2xl font-black text-white">0 Atendimentos</div>
                         <span id="kpi-agendamentos-nota" class="text-[11px] text-brand-pink font-bold flex items-center gap-1">
-                            0% confirmados/concluídos
+                            0% confirmados/concluídos no período
                         </span>
                     </div>
 
                     <div id="card-pacientes" class="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-2 relative overflow-hidden">
                         <div class="flex items-center justify-between text-slate-400">
-                            <span class="text-xs font-bold uppercase tracking-wider">Pacientes</span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Cadastros (total geral)</span>
                             <i data-lucide="paw-print" class="w-5 h-5 text-brand-blue"></i>
                         </div>
                         <div id="kpi-pacientes-count" class="text-2xl font-black text-white">0 Pets</div>
@@ -448,9 +448,8 @@
                             <span>Expirados — histórico</span>
                         </h4>
                         <div class="flex items-center gap-2">
-                            <select id="pesquisa-mes-sel" title="Escolher mês" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-3 py-2 rounded-xl focus:outline-none"></select>
-                            <select id="pesquisa-ano-sel" title="Escolher ano" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-3 py-2 rounded-xl focus:outline-none"></select>
-                            <button id="btn-pesquisar-mes" onclick="pesquisarMesExpirados()" class="px-3 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl">Buscar</button>
+                            <select id="pesquisa-mes-sel" title="Escolher mês" aria-label="Filtrar histórico por mês" onchange="pesquisarMesExpirados()" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-3 py-2 rounded-xl focus:outline-none"></select>
+                            <select id="pesquisa-ano-sel" title="Escolher ano" aria-label="Filtrar histórico por ano" onchange="pesquisarMesExpirados()" class="bg-slate-900 border border-slate-800 text-xs font-bold text-slate-200 px-3 py-2 rounded-xl focus:outline-none"></select>
                             <button id="btn-limpar-pesquisa-mes" onclick="limparPesquisaMesExpirados()" class="hidden px-3 py-2 bg-slate-900 text-xs font-bold text-slate-300 rounded-xl">Limpar</button>
                             <span id="expirados-counter" class="text-xs text-slate-400 font-bold">Exibindo 0 no histórico</span>
                         </div>

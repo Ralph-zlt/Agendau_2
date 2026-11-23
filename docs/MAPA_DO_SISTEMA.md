@@ -4,6 +4,7 @@
 > Última revisão: 23/11/2026 · `origin/main`=`0902ec5`. A integração de dados está publicada na Vercel em modo Supabase real; migrations `0001..0006` estão aplicadas e `admin-criar-usuario` implantada.
 > Smoke real confirmou Auth/RBAC, persistência após reload para tutor, pet, agendamento e documento clínico. Dados sintéticos de QA permanecem na produção (2 tutores, 3 pets, 4 agendamentos, 2 registros clínicos; identificados com `TESTE`, não remover). As correções de rolagem do login e filtro mensal foram mescladas e publicadas; validação completa inclui Postgres 17, E2E Chromium/Firefox e smoke publicado 13/13. Detalhes em `ROADMAP.md` §2.b e no topo do `CHANGELOG.md`.
 > Atenção: números de linha são referências — confirme antes de editar.
+> A correção de contagem/taxa por período e filtro imediato do histórico está validada na branch `teste`, mas ainda não publicada.
 
 ## 0. Links e deploy (espelho fixo da main)
 
@@ -25,7 +26,7 @@
 |---|---|---|
 | `dayvet/index.html` | Estrutura/marcação (SPA) | <head> com config Tailwind + cores de marca; tela de login; header; nav de tabs; seções `<section id="tab-...">`; modais `#modal-*`; CDNs |
 | `dayvet/styles.css` | Estilo (seções) | Base, scrollbar, neon, glass, impressão, **sistemas de tema escuro/claro** |
-| `dayvet/script.js` | Lógica (seções 0–13) | Seção 0: cliente Supabase, modo real, carregamento, sessão/Auth e escaping HTML; depois RBAC, renderização e CRUD de agenda, tutores/pets, clínica, relatórios, usuários, gráficos e tema. CPF de tutor passa por `validarCPF()` e `RegrasLogin.formatarCpf()` antes da gravação |
+| `dayvet/script.js` | Lógica (seções 0–13) | Seção 0: cliente Supabase, modo real, carregamento, sessão/Auth e escaping HTML; depois RBAC, renderização e CRUD de agenda, tutores/pets, clínica, relatórios, usuários, gráficos e tema. Histórico inicia no mês atual, reage aos selects e pode ser limpo para todos os períodos. CPF de tutor passa por `validarCPF()` e `RegrasLogin.formatarCpf()` antes da gravação |
 | `dayvet/persistencia.js` | Adaptadores Supabase | Leitura paginada, mapeamento do schema v2, filtros de carregamento por perfil e serialização de tutores/pets/agendamentos/histórico |
 | `dayvet/config.js` | Config pública do Supabase | `supabaseUrl` + chave `anon`/publishable; carregado pelo `index.html`. A `service_role` nunca entra aqui |
 | `supabase/migrations/` | Schema, seed, RLS, Auth e expansões (6 migrations locais) | `0001..0006` confirmadas no projeto Supabase remoto |
@@ -88,7 +89,7 @@
 | `#login-screen` | ~72 | Tela de login (neon no escuro; clara sem neon no modo claro — Fase 5 + follow-up §2 2026-09-25: card branco, `#login-cabecalho` com gradiente claro explícito e título de alto contraste, paw-print lima fixo `#ccff00` nos 2 temas, contorno `var(--borda)` + sombra); permite rolagem vertical se o cartão exceder a janela |
 | `#modal-tipos-vacina` | clínico (admin/vet) | CRUD de tipos de vacina via card `#tipos-vacina-card-func` na `tab-clinica`; form com modo Adicionar vs Salvar alterações (`modoFormTipoVacina`); selects `#agend-vacina-tipo`/`#clinica-vacina-tipo` dinâmicos (itens 7/18: funcionário sem acesso) |
 | `#racas-card-gerenciar` / `#modal-tipos-raca` | clientes (admin/func) | CRUD de tipos de raça por espécie (`racasPorEspecie`, RBAC `raca_tipos_*`, modo Adicionar vs Salvar alterações); selects `#pet-raca`/`#edit-pet-raca` dinâmicos (item 11) |
-| `#periodo-faturamento` / `#mes-faturamento` | dashboard | Filtro semanal/anual e mensal por mês escolhido do gráfico + KPI (`atualizarPeriodoFaturamento`); valores de agendamentos confirmados/concluídos, não pagamentos; ocultos p/ vet |
+| `#periodo-faturamento` / `#mes-faturamento` | dashboard | Filtro semanal/anual e mensal por mês escolhido; faturamento, contagem e taxa usam o mesmo intervalo; pets/tutores são totais gerais (tutores ativos); valores são de agendamentos confirmados/concluídos, não pagamentos |
 | `#bloco-vet` | dashboard | Só veterinário: Próxima Consulta (`renderizarProximaConsulta`, filtro `vetId`) + `#consultasChart` (barras/hora hoje); financeiro oculto (`atualizarDashboardPorPerfil`, item 16) |
 | `#anexos-card` / `#lista-anexos` | clínico | Upload de documentos; temas via vars (`styles.css` §7 + §9 explícito) — legível no claro (ROADMAP §1 item 8) |
 | `#btn-mostrar-arquivados` | Tutores & Pets | Alterna tutores arquivados na lista (`alternarTutoresArquivados`); card arquivado ganha selo e ações Restaurar/Excluir definitivo |

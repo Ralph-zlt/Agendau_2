@@ -27,7 +27,7 @@ const falhas = [];
 function ok(msg) { console.log("  ✓ " + msg); }
 function erro(msg) { falhas.push(msg); console.error("  ✗ " + msg); }
 
-async function abrirPage(browser, { mobile = false, mustChange = false } = {}) {
+async function abrirPage(browser, { mobile = false, mustChange = false, agendamentos = [] } = {}) {
     const page = await browser.newPage({ viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 800 } });
     const problemas = [];
     page.on("console", m => { if (m.type() === "error") problemas.push("console: " + m.text()); });
@@ -37,7 +37,7 @@ async function abrirPage(browser, { mobile = false, mustChange = false } = {}) {
         await page.route("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js", route =>
             route.fulfill({ status: 200, contentType: "application/javascript", body: "" })
         );
-        await page.addInitScript(({ exigeTroca }) => {
+        await page.addInitScript(({ exigeTroca, agendamentosIniciais }) => {
             const contas = [
                 { id: "u1", usuario: "raphael_dias", cpf: "111.111.111-11", email: "raphael.dias@dayvet.com", nome: "Raphael Dias", role: "admin", crm: null, must_change: exigeTroca, active: true, deleted_at: null },
                 { id: "u2", usuario: "lais_vet", cpf: "222.222.222-22", email: "lais.vet@dayvet.com", nome: "Dra. Laís", role: "veterinario", crm: "CRMV-SP 00000", must_change: false, active: true, deleted_at: null },
@@ -46,7 +46,7 @@ async function abrirPage(browser, { mobile = false, mustChange = false } = {}) {
             const tabelas = {
                 tutores: [],
                 pets: [],
-                agendamentos: [],
+                agendamentos: agendamentosIniciais,
                 raca_tipos: [{ id: "raca-e2e-srd", especie: "Canino", nome: "SRD" }],
                 historico_clinico: [],
                 vacina_tipos: [],
@@ -177,7 +177,7 @@ async function abrirPage(browser, { mobile = false, mustChange = false } = {}) {
                     };
                 }
             };
-        }, { exigeTroca: mustChange });
+        }, { exigeTroca: mustChange, agendamentosIniciais: agendamentos });
     }
     await page.goto(url, { waitUntil: "load" });
     return { page, problemas };
@@ -587,6 +587,106 @@ const cenarios = {
 
         problemas.forEach(p => erro(p));
         await page.close();
+    },
+
+    // Contagem, taxa e histórico acompanham o período selecionado.
+    async periodoHistorico(browser) {
+        const agora = new Date();
+        const dataMesAtual = new Date(agora.getFullYear(), agora.getMonth(), Math.max(1, agora.getDate() - 1));
+        const inicioProximoMes = new Date(agora.getFullYear(), agora.getMonth() + 1, 1);
+        const dataConcluida = new Date(inicioProximoMes.getFullYear(), inicioProximoMes.getMonth(), 3);
+        const dataCancelada = new Date(inicioProximoMes.getFullYear(), inicioProximoMes.getMonth(), 4);
+        const dataConfirmada = new Date(inicioProximoMes.getFullYear(), inicioProximoMes.getMonth(), 5);
+        const iso = data => `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}-${String(data.getDate()).padStart(2, "0")}`;
+        const mesProximo = `${inicioProximoMes.getFullYear()}-${String(inicioProximoMes.getMonth() + 1).padStart(2, "0")}`;
+        const base = { tutor_cpf: "111.111.111-11", pet_id: "pet-e2e", vet_id: "u2", hora: "10:00:00" };
+        const dados = [
+            { ...base, id: "cancelado-atual", servico: "Cancelado no mês atual", data: iso(dataMesAtual), valor: 120, status: "cancelado" },
+            { ...base, id: "concluido-proximo", servico: "Concluído no próximo mês", data: iso(dataConcluida), valor: 150, status: "concluido" },
+            { ...base, id: "cancelado-proximo", servico: "Cancelado no próximo mês", data: iso(dataCancelada), valor: 10, status: "cancelado" },
+            { ...base, id: "confirmado-proximo", servico: "Confirmado no próximo mês", data: iso(dataConfirmada), valor: 85, status: "confirmado" }
+        ];
+        const { page, problemas } = await abrirPage(browser, { agendamentos: dados });
+        await login(page, "1");
+
+        await page.waitForFunction(
+            () => document.getElementById("kpi-agendamentos-count")?.textContent === "1 Atendimentos",
+            null, { timeout: 5000 }
+        );
+        (await page.locator("#kpi-agendamentos-nota").innerText()).includes("0% confirmados/concluídos no período")
+            ? ok("taxa do dashboard usa somente o mês atual selecionado")
+            : erro("taxa do dashboard não acompanha o mês atual");
+
+        await page.locator("#mes-faturamento").fill(mesProximo);
+        await page.waitForFunction(
+            () => document.getElementById("kpi-agendamentos-count")?.textContent === "3 Atendimentos"
+                && document.getElementById("kpi-faturamento")?.textContent === "R$ 235,00",
+            null, { timeout: 5000 }
+        );
+        (await page.locator("#kpi-agendamentos-nota").innerText()).includes("100% confirmados/concluídos no período")
+            ? ok("contagem e taxa acompanham o mesmo mês do faturamento")
+            : erro("contagem/taxa não acompanham o mês do faturamento");
+
+        const conferirPeriodo = async (periodo, inicio, fim, nome) => {
+            const inicioPeriodo = iso(inicio);
+            const fimPeriodo = iso(fim);
+            const noPeriodo = dados.filter(item => item.data >= inicioPeriodo && item.data < fimPeriodo);
+            const naoCancelados = noPeriodo.filter(item => item.status !== "cancelado");
+            const taxa = naoCancelados.length
+                ? Math.round(naoCancelados.filter(item => item.status === "confirmado" || item.status === "concluido").length / naoCancelados.length * 100)
+                : 0;
+            await page.selectOption("#periodo-faturamento", periodo);
+            await page.waitForFunction(
+                ({ quantidade, percentual }) =>
+                    document.getElementById("kpi-agendamentos-count")?.textContent === `${quantidade} Atendimentos`
+                    && document.getElementById("kpi-agendamentos-nota")?.textContent.includes(`${percentual}%`),
+                { quantidade: noPeriodo.length, percentual: taxa },
+                { timeout: 5000 }
+            );
+            ok(`contagem/taxa acompanham o período ${nome}`);
+        };
+        const inicioAno = new Date(agora.getFullYear(), 0, 1);
+        const inicioSemana = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        inicioSemana.setDate(inicioSemana.getDate() - ((inicioSemana.getDay() + 6) % 7));
+        const fimSemana = new Date(inicioSemana);
+        fimSemana.setDate(fimSemana.getDate() + 7);
+        await conferirPeriodo("anual", inicioAno, new Date(agora.getFullYear() + 1, 0, 1), "anual");
+        await conferirPeriodo("semanal", inicioSemana, fimSemana, "semanal");
+
+        await page.click("#nav-agendamentos");
+        await page.waitForFunction(
+            () => document.getElementById("expirados-counter")?.textContent.includes("Exibindo 1 de 3"),
+            null, { timeout: 5000 }
+        );
+        let historico = await page.locator("#expirados-table-body").innerText();
+        historico.includes("Cancelado no mês atual") && !historico.includes("Concluído no próximo mês")
+            ? ok("histórico abre com o mês atual já filtrado")
+            : erro("filtro inicial do histórico não corresponde ao mês atual");
+
+        await page.locator("#pesquisa-mes-sel").selectOption(mesProximo.slice(5));
+        await page.locator("#pesquisa-ano-sel").selectOption(mesProximo.slice(0, 4));
+        await page.waitForFunction(
+            () => document.getElementById("expirados-counter")?.textContent.includes("Exibindo 2 de 3"),
+            null, { timeout: 5000 }
+        );
+        historico = await page.locator("#expirados-table-body").innerText();
+        historico.includes("Concluído no próximo mês") && historico.includes("Cancelado no próximo mês")
+            && !historico.includes("Cancelado no mês atual")
+            ? ok("alterar mês e ano aplica o filtro do histórico imediatamente")
+            : erro("alterar mês/ano não filtrou o histórico automaticamente");
+
+        await page.click("#btn-limpar-pesquisa-mes");
+        await page.waitForFunction(
+            () => document.getElementById("expirados-counter")?.textContent.includes("Exibindo 3 no histórico"),
+            null, { timeout: 5000 }
+        );
+        (await page.locator("#pesquisa-mes-sel").inputValue()) === ""
+            && (await page.locator("#pesquisa-ano-sel").inputValue()) === ""
+            ? ok("limpar o filtro deixa mês/ano explicitamente em todos")
+            : erro("limpar o filtro não reseta os seletores");
+
+        problemas.forEach(p => erro(p));
+        await page.close();
     }
 };
 
@@ -596,7 +696,7 @@ const cenarios = {
 const alvo = process.argv[2] || "todos";
 const navegador = alvo === "firefox" ? "firefox" : "chromium";
 const tipo = navegador === "firefox" ? firefox : chromium;
-const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile", "loginAlturaCurta", "financeMonth"]
+const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile", "loginAlturaCurta", "financeMonth", "periodoHistorico"]
     : alvo === "firefox" ? ["admin", "func"]
     : [alvo];
 

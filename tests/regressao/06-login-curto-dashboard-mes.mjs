@@ -22,7 +22,7 @@ check("dashboard oferece mês de referência acessível",
     /<option value="mensal">Período: Mês selecionado<\/option>/.test(html)
     && /<input type="month" id="mes-faturamento" aria-label="Mês de referência dos atendimentos"/.test(html));
 check("cálculo mensal usa o ano e mês escolhidos",
-    /function obterDadosFaturamento\(periodo\)[\s\S]*?const campoMes = document\.getElementById\('mes-faturamento'\);[\s\S]*?inicioPeriodo = new Date\(anoSelecionado, numeroMes - 1, 1\)[\s\S]*?fimPeriodo = new Date\(anoSelecionado, numeroMes, 1\)/.test(js));
+    /function obterIntervaloFaturamento\(periodo\)[\s\S]*?const campoMes = document\.getElementById\('mes-faturamento'\);[\s\S]*?inicioPeriodo = new Date\(anoSelecionado, numeroMes - 1, 1\)[\s\S]*?fimPeriodo = new Date\(anoSelecionado, numeroMes, 1\)/.test(js));
 check("filtro mensal acompanha mudanças e fica oculto para veterinário",
     /function atualizarPeriodoFaturamento\(\)[\s\S]*?campoMes\.classList\.toggle\('hidden', periodo !== 'mensal'\)/.test(js)
     && /function atualizarDashboardPorPerfil\(\)[\s\S]*?toggleEl\('mes-faturamento', !ehVet/.test(js));

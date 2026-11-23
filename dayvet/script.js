@@ -812,6 +812,8 @@ function inicializarPesquisaMes() {
     const selM = document.getElementById('pesquisa-mes-sel');
     const selA = document.getElementById('pesquisa-ano-sel');
     if (!selM || !selA || selM.options.length) return;
+    selM.innerHTML = '<option value="">Todos os meses</option>';
+    selA.innerHTML = '<option value="">Todos os anos</option>';
     MESES_PT.forEach((m, i) => {
         selM.innerHTML += `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`;
     });
@@ -819,8 +821,10 @@ function inicializarPesquisaMes() {
     for (let a = anoAtual - 3; a <= anoAtual + 1; a++) {
         selA.innerHTML += `<option value="${a}">${a}</option>`;
     }
-    selM.value = String(new Date().getMonth() + 1).padStart(2, '0');
+    const mesAtual = String(new Date().getMonth() + 1).padStart(2, '0');
+    selM.value = mesAtual;
     selA.value = String(anoAtual);
+    pesquisaMesExpirados = `${anoAtual}-${mesAtual}`;
 }
 function pesquisarMesExpirados() {
     const mes = document.getElementById('pesquisa-mes-sel')?.value || '';
@@ -830,15 +834,11 @@ function pesquisarMesExpirados() {
 }
 function limparPesquisaMesExpirados() {
     pesquisaMesExpirados = '';
-    inicializarPesquisaMesReset();
-    renderizarAgendamentos();
-}
-function inicializarPesquisaMesReset() {
     const selM = document.getElementById('pesquisa-mes-sel');
     const selA = document.getElementById('pesquisa-ano-sel');
-    if (!selM || !selA) return;
-    selM.value = String(new Date().getMonth() + 1).padStart(2, '0');
-    selA.value = String(new Date().getFullYear());
+    if (selM) selM.value = '';
+    if (selA) selA.value = '';
+    renderizarAgendamentos();
 }
 
 // O QUE: Linha da tabela de agendamentos (usada nas duas seções: Ativos e Expirados).
@@ -2268,12 +2268,17 @@ function atualizarKpisDashboard() {
     const notaAgendamentos = document.getElementById('kpi-agendamentos-nota');
     const quantidadePets = document.getElementById('kpi-pacientes-count');
     const quantidadeTutores = document.getElementById('kpi-tutores-count');
-    const naoCancelados = agendamentos.filter(a => a.status !== 'cancelado');
+    const periodo = document.getElementById('periodo-faturamento')?.value || 'mensal';
+    const { inicioPeriodo, fimPeriodo } = obterIntervaloFaturamento(periodo);
+    const inicioISO = dataLocalISO(inicioPeriodo);
+    const fimISO = dataLocalISO(fimPeriodo);
+    const agendamentosPeriodo = agendamentos.filter(a => a.data >= inicioISO && a.data < fimISO);
+    const naoCancelados = agendamentosPeriodo.filter(a => a.status !== 'cancelado');
     const confirmados = naoCancelados.filter(a => a.status === 'confirmado' || a.status === 'concluido').length;
     const taxa = naoCancelados.length ? Math.round(confirmados / naoCancelados.length * 100) : 0;
 
-    if (quantidadeAgendamentos) quantidadeAgendamentos.textContent = `${agendamentos.length} Atendimentos`;
-    if (notaAgendamentos) notaAgendamentos.textContent = `${taxa}% confirmados/concluídos`;
+    if (quantidadeAgendamentos) quantidadeAgendamentos.textContent = `${agendamentosPeriodo.length} Atendimentos`;
+    if (notaAgendamentos) notaAgendamentos.textContent = `${taxa}% confirmados/concluídos no período`;
     if (quantidadePets) quantidadePets.textContent = `${pets.length} Pets`;
     if (quantidadeTutores) quantidadeTutores.textContent =
         `${tutores.filter(t => !t.arquivado).length} Tutores ativos`;
@@ -3037,7 +3042,7 @@ function somarAtendimentosNoPeriodo(inicio, fim) {
         .reduce((total, a) => total + Number(a.valor || 0), 0);
 }
 
-function obterDadosFaturamento(periodo) {
+function obterIntervaloFaturamento(periodo) {
     const hoje = new Date();
     const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     const campoMes = document.getElementById('mes-faturamento');
@@ -3079,6 +3084,12 @@ function obterDadosFaturamento(periodo) {
         rotulos = Array.from({ length: quantidade }, (_, dia) => String(dia + 1));
     }
 
+    return { inicioPeriodo, fimPeriodo, inicioAnterior, fimAnterior, quantidade, rotulos };
+}
+
+function obterDadosFaturamento(periodo) {
+    const { inicioPeriodo, fimPeriodo, inicioAnterior, fimAnterior, quantidade, rotulos } =
+        obterIntervaloFaturamento(periodo);
     const valores = Array(quantidade).fill(0);
     agendamentos.forEach(agendamento => {
         if (agendamento.status !== 'confirmado' && agendamento.status !== 'concluido') return;
@@ -3120,9 +3131,11 @@ function atualizarPeriodoFaturamento() {
         financeChartRef.update();
     } else {
         inicializarGraficos();
+        atualizarKpisDashboard();
         return;
     }
     atualizarKpiFaturamento(periodo);
+    atualizarKpisDashboard();
     lucide.createIcons();
 }
 
@@ -3137,7 +3150,7 @@ function atualizarDashboardPorPerfil() {
     document.getElementById('dash-titulo').innerText = ehVet ? 'Minha Agenda do Dia' : 'Resumo de Atendimentos';
     document.getElementById('dash-subtitulo').innerText = ehVet
         ? 'Próxima consulta e movimento de hoje.'
-        : 'Dados carregados do banco. Valores representam agendamentos, não pagamentos.';
+        : 'Atendimentos e valores usam o período selecionado. Pets e tutores: totais gerais (tutores ativos). Valores são de agendamentos, não pagamentos.';
     toggleEl('card-faturamento', !ehVet);
     toggleEl('periodo-faturamento', !ehVet);
     toggleEl('mes-faturamento', !ehVet && (document.getElementById('periodo-faturamento')?.value || 'mensal') === 'mensal');
