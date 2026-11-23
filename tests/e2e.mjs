@@ -784,6 +784,9 @@ const cenarios = {
             : erro("conclusão não foi refletida no histórico");
 
         await page.click("#nav-dashboard");
+        (await page.locator("#dash-subtitulo").innerText()).includes("data agendada")
+            ? ok("dashboard esclarece que os valores seguem a data agendada")
+            : erro("dashboard não informa a data usada para agrupar os valores");
         await page.locator("#mes-faturamento").fill(mes);
         await page.waitForFunction(
             () => document.getElementById("kpi-faturamento")?.textContent === "R$ 85,00"

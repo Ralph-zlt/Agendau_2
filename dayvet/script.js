@@ -3106,7 +3106,7 @@ function atualizarDashboardPorPerfil() {
     document.getElementById('dash-titulo').innerText = ehVet ? 'Minha Agenda do Dia' : 'Resumo de Atendimentos';
     document.getElementById('dash-subtitulo').innerText = ehVet
         ? 'Próxima consulta e movimento de hoje.'
-        : 'Atendimentos e valores usam o período selecionado. Pets e tutores: totais gerais (tutores ativos). Valores são de agendamentos, não pagamentos.';
+        : 'Atendimentos e valores usam o período selecionado. Valores são agrupados pela data agendada, não pela data de conclusão nem por pagamentos. Pets e tutores: totais gerais (tutores ativos).';
     toggleEl('card-faturamento', !ehVet);
     toggleEl('periodo-faturamento', !ehVet);
     toggleEl('mes-faturamento', !ehVet && (document.getElementById('periodo-faturamento')?.value || 'mensal') === 'mensal');
