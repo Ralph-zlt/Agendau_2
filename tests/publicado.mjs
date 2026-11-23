@@ -9,12 +9,16 @@
 // EVIDÊNCIA: prints em /tmp/ai-evidence/publicado-*.png
 // ==========================================================
 import { createRequire } from "node:module";
+import fs from "node:fs";
+import path from "node:path";
 
 const require = createRequire(import.meta.url);
 const PKG = process.env.PLAYWRIGHT_PKG || "/home/ubuntu/.local/share/ai-tools/e2e/node_modules/playwright";
 const { chromium } = require(PKG);
 
 const URL = process.argv[2] || "https://ralph-zlt.github.io/Agendau_2/dayvet/";
+const evidencia = process.env.E2E_EVIDENCE || "/tmp/ai-evidence";
+fs.mkdirSync(evidencia, { recursive: true });
 
 const ok = [];
 const falhas = [];
@@ -73,35 +77,39 @@ const casos = [
     { botao: "Funcionário", nome: "Douglas", nav: "#nav-clinica", visivel: false }
 ];
 for (const perfil of casos) {
-    const p = await ctx.newPage();
+    const perfilCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const p = await perfilCtx.newPage();
     const nome = await entra(p, perfil);
     check(`login "${perfil.botao}" → ${perfil.nome}`, nome === perfil.nome, `mostrou "${nome}"`);
     check(`RBAC "${perfil.botao}"`,
         await p.locator(perfil.nav).isVisible() === perfil.visivel,
         `visibilidade de ${perfil.nav} incompatível`);
-    await p.close();
+    await perfilCtx.close();
 }
 
 // 3. Senha errada não entra
-const pErr = await ctx.newPage();
+const erroCtx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+const pErr = await erroCtx.newPage();
 await pErr.goto(URL, { waitUntil: "domcontentloaded" });
 await pErr.fill("#login-cpf", "raphael_dias");
 await pErr.fill("#login-password", "senha-errada");
 await pErr.click("#auth-form button[type=submit]");
 await pErr.waitForTimeout(800);
 check("senha errada mantém na tela de login", await pErr.locator("#login-screen").isVisible());
-await pErr.close();
+await erroCtx.close();
 
 check("sem erro de console, página ou HTTP ≥400", problemas.length === 0, problemas.join(" | "));
 
 // 5. Mobile sem overflow horizontal
-const m = await ctx.newPage();
+const mobileCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const m = await mobileCtx.newPage();
 await m.setViewportSize({ width: 390, height: 844 });
 await m.goto(URL, { waitUntil: "load" });
 const overflow = await m.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 check("mobile 390px sem overflow", overflow <= 1, `overflow ${overflow}px`);
-await m.screenshot({ path: "/tmp/ai-evidence/publicado-mobile.png" });
+await m.screenshot({ path: path.join(evidencia, "publicado-mobile.png") });
 
+await mobileCtx.close();
 await browser.close();
 
 console.log(ok.map(x => "  ✓ " + x).join("\n"));

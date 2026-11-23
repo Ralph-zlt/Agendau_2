@@ -2998,6 +2998,8 @@ function inicializarGraficos() {
     if (ctx1) {
         if (financeChartRef) financeChartRef.destroy();
         const periodo = document.getElementById('periodo-faturamento')?.value || 'mensal';
+        const campoMes = document.getElementById('mes-faturamento');
+        if (campoMes) campoMes.classList.toggle('hidden', periodo !== 'mensal');
         const dados = obterDadosFaturamento(periodo);
         financeChartRef = new Chart(ctx1, {
             type: 'line',
@@ -3038,6 +3040,11 @@ function somarAtendimentosNoPeriodo(inicio, fim) {
 function obterDadosFaturamento(periodo) {
     const hoje = new Date();
     const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const campoMes = document.getElementById('mes-faturamento');
+    const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+    const mesInformado = campoMes?.value || '';
+    const mesSelecionado = /^\d{4}-(0[1-9]|1[0-2])$/.test(mesInformado) ? mesInformado : mesAtual;
+    if (campoMes && campoMes.value !== mesSelecionado) campoMes.value = mesSelecionado;
     let inicioPeriodo;
     let fimPeriodo;
     let inicioAnterior;
@@ -3063,11 +3070,12 @@ function obterDadosFaturamento(periodo) {
         quantidade = 12;
         rotulos = MESES_PT.map(mes => mes.slice(0, 3));
     } else {
-        inicioPeriodo = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-        fimPeriodo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
-        inicioAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        const [anoSelecionado, numeroMes] = mesSelecionado.split('-').map(Number);
+        inicioPeriodo = new Date(anoSelecionado, numeroMes - 1, 1);
+        fimPeriodo = new Date(anoSelecionado, numeroMes, 1);
+        inicioAnterior = new Date(anoSelecionado, numeroMes - 2, 1);
         fimAnterior = inicioPeriodo;
-        quantidade = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+        quantidade = new Date(anoSelecionado, numeroMes, 0).getDate();
         rotulos = Array.from({ length: quantidade }, (_, dia) => String(dia + 1));
     }
 
@@ -3103,6 +3111,8 @@ function atualizarKpiFaturamento(periodo) {
 // O QUE: Troca o período do gráfico + KPI de faturamento do dashboard.
 function atualizarPeriodoFaturamento() {
     const periodo = document.getElementById('periodo-faturamento')?.value || 'mensal';
+    const campoMes = document.getElementById('mes-faturamento');
+    if (campoMes) campoMes.classList.toggle('hidden', periodo !== 'mensal');
     const dados = obterDadosFaturamento(periodo);
     if (financeChartRef) {
         financeChartRef.data.labels = dados.labels;
@@ -3130,6 +3140,7 @@ function atualizarDashboardPorPerfil() {
         : 'Dados carregados do banco. Valores representam agendamentos, não pagamentos.';
     toggleEl('card-faturamento', !ehVet);
     toggleEl('periodo-faturamento', !ehVet);
+    toggleEl('mes-faturamento', !ehVet && (document.getElementById('periodo-faturamento')?.value || 'mensal') === 'mensal');
     toggleEl('grafico-receita-card', !ehVet);
     toggleEl('bloco-vet', ehVet);
     if (ehVet) {

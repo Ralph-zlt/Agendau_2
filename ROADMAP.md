@@ -3,7 +3,7 @@
 > Próximos passos do que vamos fazer. Não é documento de requisitos —
 > fonte de RFs/RNFs: `docs/requisitos-funcionais-dayvet.docx`.
 > Última atualização: 2026-11-23.
-> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `e5c2e16`; `origin/teste` = `ac8e0c6` (Fases D/E), PR #2 aberto e sem checks configurados. O commit está na branch de trabalho, não na produção. No Supabase remoto, migrations `0001..0006` estão aplicadas e a Edge Function administrativa foi publicada. Estático, unitários, regressões e E2E Chromium passaram; o smoke real de tutor também passou, mas os demais fluxos/perfis ainda precisam de smoke. Vercel está Ready/200, mas a URL pública continua servindo a demonstração da `main`. O dono deve revisar/mesclar o PR; depois, publicar pela trava `scripts/deploy-vercel.sh` e validar a URL.
+> Estado após `git fetch origin` em 23/11/2026: `origin/main` = `e3edffe` (merge do PR #2); `origin/teste` = `256ec43`. A integração está publicada na Vercel; o teste de produção confirmou modo real, Auth/RBAC dos 3 perfis e persistência de tutor após reload. Migrations `0001..0006` estão aplicadas e `admin-criar-usuario` está implantada. Estático, unitários, regressões, E2E Chromium e verificação publicada passaram. Ainda faltam smokes reais dos demais fluxos/perfis (pets, agenda, clínico, anexos e configuração).
 
 ## 0. Links e deploy (espelho fixo da main)
 
@@ -12,7 +12,7 @@
   - Artefato: `site/index.html` → `dist/index.html` (landing) + `dayvet/*` → `dist/dayvet/` (SPA).
   - **Regra: este link SEMPRE reflete a `main`. Nunca publicar a `teste` nele.**
 - **Teste:** validar na branch `teste` em ambiente local (`dayvet/index.html`) ou preview temporário da `teste`. Só mergear na `main` após validação do dono.
-- **Vercel:** https://agendau-2.vercel.app — deploy de produção inspecionado e Ready; `/dayvet/` responde 200, mas a tela ao vivo ainda declara “nada é salvo” e mostra dados fictícios. A integração D/E não está publicada. O deploy segue restrito à `main` por `scripts/deploy-vercel.sh`; a integração Git continua bloqueada.
+- **Vercel:** https://agendau-2.vercel.app — deploy da `main` `e3edffe` Ready; o alias existente serve o frontend em modo Supabase real. Assets respondem 200; `tests/publicado.mjs` confirmou Auth/RBAC e a gravação real de tutor foi validada no navegador. A integração Git continua bloqueada, então novas publicações usam `scripts/deploy-vercel.sh` depois do merge na `main`.
 
 ---
 
@@ -66,13 +66,14 @@
 > **Fase A concluída em 2026-11-13** (ver `docs/CHANGELOG.md`): migrations
 > `0001_schema`, `0002_seed`, `0003_rls` + `tests/db.mjs` (73 casos de RLS verdes).
 > **Fase B concluída em 2026-11-18** e **Fase C concluída no baseline `e5c2e16`**.
-> A integração das tabelas e Storage foi implementada no worktree local; faltam
-> concluir a validação funcional por perfil/fluxo e executar a suíte E2E completa.
+> A integração de tabelas e Storage foi mesclada na `main` e publicada na Vercel
+> em 2026-11-23. Restam smokes autenticados reais dos demais fluxos/perfis.
 > O banco foi validado em Postgres 17 na VPS; migrations `0001..0006` foram
 > confirmadas no projeto remoto, e a Edge Function `admin-criar-usuario` foi
-> implantada com JWT obrigatório. O smoke autenticado confirmou leitura,
-> cadastro/edição de tutor com CPF canônico e persistência após reload; o dado
-> sintético foi removido após o teste.
+> implantada com JWT obrigatório. Smokes autenticados confirmaram CRUD e
+> persistência após reload de tutor, pet, agendamento e documento clínico.
+> Dados sintéticos de QA permanecem na produção por decisão do dono: 2 tutores,
+> 3 pets, 4 agendamentos e 2 registros clínicos, todos marcados `TESTE`.
 
 - [x] **Fase A — SQL v2 consolidado e validado localmente** — single-clinic (sem `clinicas`/`clinica_id`), sem `vacinacoes`/`forma_farmaceutica`, sem `guia` no enum, `usuarios.id = auth.users.id`, `pet_id` nullable, `historico` editável por admin/vet. Validado em Postgres 17 descartável com matriz de permissões idêntica ao RBAC do `script.js`.
 - [x] **Fase B — Supabase no ar (concluída em 2026-11-18)** — org `dayvet-org` + projeto `agendau-2` em `sa-east-1`; migrations `0001..0003` e Auth/RLS foram aplicados/validados na nuvem conforme histórico do changelog.
@@ -81,11 +82,12 @@
 - [x] **Vercel reflete a `main` (2026-11-23)** — decisão do dono. `scripts/deploy-vercel.sh` agora aborta se `HEAD != origin/main` ou se `dayvet/`/`site/` estiverem sujos; publicação só a partir da `main`. Regra escrita no `AGENTS.md` do projeto.
 - [x] **Fase C — autenticação Supabase (baseline `e5c2e16`)** — login por usuário/CPF/e-mail via RPC `resolver_login` + `signInWithPassword`; perfil/RBAC em `public.usuarios`; recuperação de senha, sessão e troca obrigatória via Supabase Auth. O bypass de demonstração 1/2/3 permanece por decisão do dono.
 - [x] **Banco remoto e Edge Function (2026-11-23)** — migrations `0001..0006` confirmadas no projeto `agendau-2`; `tests/db.mjs` passou em Postgres 17 na VPS; `admin-criar-usuario` implantada com verificação JWT habilitada e chamada sem autenticação recusada (401).
-- [x] **Smoke real de tutores e CPF (2026-11-23)** — login admin e leitura pelo Supabase; cadastro com CPF sem máscara persistiu formatado, sobreviveu ao reload, edição para outro CPF sem máscara também persistiu após reload; CPF inválido foi rejeitado antes da escrita. Tutores sintéticos foram excluídos e conferidos ausentes após novo reload.
-- [ ] **Fases D/E — terminar validação funcional** — `MODO_DADOS='real'`; `persistencia.js` integra tutores, pets, agendamentos, catálogos, configuração, dados clínicos/anexos e usuários; Storage usa bucket privado. O smoke real de CPF cobre cadastro/edição/reload e limpeza. `tests/e2e.mjs todos` passou em Chromium, incluindo o caminho de edição, mas usa stubs e não substitui smokes autenticados dos demais fluxos/perfis. O teste de ouro continua: "desmarcar consulta → F5 → continua desmarcada".
+- [x] **Smoke real de dados QA (2026-11-23)** — login Auth real e gravação pela aplicação/RLS de 2 tutores, 3 pets, 4 agendamentos e 2 registros clínicos sintéticos, identificados com `TESTE`; persistência e vínculos confirmados após reload. Cadastro/edição com CPF canônico e rejeição de CPF inválido também foram verificados.
+- [ ] **Correções de login e dashboard (2026-11-23, branch `teste`, validadas e não publicadas)** — permite rolagem do login em janelas baixas; seleciona mês para consultar agendamentos confirmados/concluídos. Valores não representam pagamentos recebidos. Estático, unitários, regressões, E2E Chromium/Firefox e `tests/db.mjs` com Postgres 17 passaram; aguardam revisão/merge do dono antes da publicação.
+- [ ] **Fases D/E — completar validação funcional** — a integração está publicada em modo `MODO_DADOS='real'`; `persistencia.js` integra tutores, pets, agendamentos, catálogos, configuração, dados clínicos/anexos e usuários; Storage usa bucket privado. Smoke real do tutor passou em Vercel: cadastro/edição, reload, CPF inválido rejeitado e exclusão limpa. E2E Chromium passou com stubs; ainda faltam smokes autenticados reais dos demais fluxos/perfis. O teste de ouro continua: "desmarcar consulta → F5 → continua desmarcada".
 - [ ] **Integração Git da Vercel (bloqueada — depende do dono)** — todo push na `main` falha com "commit author doesn't have permission to create deployments". Falta adicionar a **Login Connection** do GitHub na conta Vercel (`vercel.com/accounts`). Enquanto isso, publicar com `./scripts/deploy-vercel.sh` (artefato pré-construído).
 
-- [ ] **Concluir validação das Fases D/E** — revisar o diff completo e fazer smokes autenticados restantes por perfil/fluxo. E2E Chromium, migrations, banco Postgres 17 e Edge Function já foram validados; rodar Firefox se houver mudança de layout/tema. O deploy Vercel continua pendente e só pode ocorrer pelo fluxo da `main`.
+- [ ] **Concluir validação das Fases D/E** — fazer smokes autenticados restantes por perfil/fluxo. E2E Chromium, migrations, banco Postgres 17, Edge Function e deploy Vercel já foram validados; rodar Firefox se houver mudança de layout/tema.
 - [ ] **Importação de dados legados** — definir se há dados reais a importar. O caminho atual inicia sem pré-carregar os arrays de demonstração e lê os registros do Supabase.
 - [ ] **Escalar para multi-clinic (seguir "receita de bolo" em `docs/levantamento-bd.md`)** — ativar RLS, configurar middleware/JWT para filtrar por `clinica_id`, e ajustar APIs.
 - [x] **Hospedagem no Vercel (parcial, 2026-11-18)** — projeto `agendau-2` criado, produção em `https://agendau-2.vercel.app` (alias estável) e `node tests/publicado.mjs` 15/15. Feito **sem** flags de feature e sem preview por PR, porque a integração Git está bloqueada. Pendente quando a conexão existir: variáveis por ambiente, preview automático em PRs e domínio customizado.

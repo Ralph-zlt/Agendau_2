@@ -47,7 +47,7 @@ async function abrirPage(browser, { mobile = false, mustChange = false } = {}) {
                 tutores: [],
                 pets: [],
                 agendamentos: [],
-                raca_tipos: [],
+                raca_tipos: [{ id: "raca-e2e-srd", especie: "Canino", nome: "SRD" }],
                 historico_clinico: [],
                 vacina_tipos: [],
                 documentos: [],
@@ -476,6 +476,117 @@ const cenarios = {
         overflow ? erro("overflow horizontal no mobile") : ok("sem overflow horizontal no mobile");
         problemas.forEach(p => erro(p));
         await page.close();
+    },
+
+    // Login em janela baixa: o cartão deve rolar e o envio continuar clicável.
+    async loginAlturaCurta(browser) {
+        const { page, problemas } = await abrirPage(browser);
+        await page.setViewportSize({ width: 613, height: 304 });
+        const rolagem = await page.locator("#login-screen").evaluate(el => ({
+            disponivel: el.scrollHeight > el.clientHeight,
+            overflowY: getComputedStyle(el).overflowY
+        }));
+        rolagem.disponivel && rolagem.overflowY === "auto"
+            ? ok("tela de login permite rolagem vertical em janela baixa")
+            : erro("tela de login continua cortada em janela baixa");
+        await page.locator("#acessos-teste button").filter({ hasText: "Admin" }).click();
+        await page.click("#auth-form button[type=submit]");
+        await page.waitForFunction(
+            () => document.getElementById("login-screen")?.classList.contains("hidden"),
+            null, { timeout: 8000 }
+        );
+        (await page.locator("#header-user-role").innerText()).includes("Administrador")
+            ? ok("botão de acesso autentica em janela baixa")
+            : erro("login não concluiu em janela baixa");
+        problemas.forEach(p => erro(p));
+        await page.close();
+    },
+
+    // O painel mensal deve incluir agendamentos do mês futuro selecionado.
+    async financeMonth(browser) {
+        const { page, problemas } = await abrirPage(browser);
+        await login(page, "1");
+        const periodo = await page.evaluate(() => {
+            const data = new Date();
+            data.setDate(1);
+            data.setMonth(data.getMonth() + 1);
+            while (data.getDay() === 0 || data.getDay() === 6) data.setDate(data.getDate() + 1);
+            const mes = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, "0")}`;
+            const dia = String(data.getDate()).padStart(2, "0");
+            return { mes, data: `${mes}-${dia}` };
+        });
+
+        await page.click("#nav-clientes");
+        await page.click("#btn-novo-tutor");
+        await page.fill("#tutor-nome", "Tutor E2E Financeiro");
+        await page.fill("#tutor-cpf", "98765432100");
+        await page.fill("#tutor-tel", "11999990000");
+        await page.fill("#tutor-email", "financeiro.e2e@dayvet.test");
+        await page.fill("#tutor-endereco", "Rua E2E, 1");
+        await page.click("#modal-tutor button[type=submit]");
+        await page.getByText("Tutor cadastrado", { exact: true }).waitFor({ timeout: 5000 });
+
+        await page.click("#btn-novo-pet");
+        await page.locator("#pet-tutor-select").selectOption("987.654.321-00");
+        await page.fill("#pet-nome", "Pet E2E Financeiro");
+        await page.locator("#pet-especie").selectOption("Canino");
+        await page.locator("#pet-sexo").selectOption("Macho");
+        await page.fill("#pet-comportamento", "Teste de dashboard");
+        await page.fill("#pet-alergias", "Não informado — teste");
+        await page.click("#modal-pet button[type=submit]");
+        try {
+            await page.getByText("Pet cadastrado", { exact: true }).waitFor({ timeout: 5000 });
+        } catch {
+            const toast = (await page.locator("#toast-container").innerText()).trim();
+            const modal = (await page.locator("#modal-pet").innerText()).trim();
+            const campos = await page.locator("#modal-pet form select").evaluateAll(selects =>
+                selects.map(select => ({
+                    id: select.id,
+                    value: select.value,
+                    valid: select.validity.valid,
+                    options: [...select.options].map(option => option.value)
+                }))
+            );
+            throw new Error(`cadastro do pet não confirmou; toast="${toast}"; campos=${JSON.stringify(campos)}; modal="${modal}"`);
+        }
+
+        await page.click("#nav-agendamentos");
+        await page.click("#btn-agendar-consulta");
+        await page.locator("#agend-tutor-select").selectOption("987.654.321-00");
+        await page.locator("#agend-pet-select").selectOption({ index: 0 });
+        await page.fill("#agend-tipo", "Consulta E2E Financeiro");
+        await page.fill("#agend-data", periodo.data);
+        await page.fill("#agend-hora", "10:00");
+        await page.fill("#agend-valor", "123.45");
+        await page.click("#modal-agendamento button[type=submit]");
+        await page.getByText("Agendamento criado", { exact: true }).waitFor({ timeout: 5000 });
+
+        await page.click("#nav-dashboard");
+        const seletorMes = page.locator("#mes-faturamento");
+        await seletorMes.fill(periodo.mes);
+        await page.waitForFunction(
+            () => document.getElementById("kpi-faturamento")?.textContent === "R$ 123,45",
+            null, { timeout: 5000 }
+        );
+        (await seletorMes.isVisible())
+            ? ok("valor confirmado aparece no mês escolhido")
+            : erro("seletor de mês não está visível para admin");
+        (await page.locator("#kpi-faturamento").innerText()) === "R$ 123,45"
+            ? ok("dashboard inclui o valor do agendamento futuro")
+            : erro("dashboard não somou o agendamento futuro");
+
+        await page.selectOption("#periodo-faturamento", "anual");
+        await page.waitForFunction(
+            () => document.getElementById("kpi-faturamento")?.textContent === "R$ 123,45",
+            null, { timeout: 5000 }
+        );
+        await page.selectOption("#periodo-faturamento", "mensal");
+        (await page.locator("#mes-faturamento").isVisible())
+            ? ok("seletor de mês volta ao alternar para o período mensal")
+            : erro("seletor de mês não voltou no período mensal");
+
+        problemas.forEach(p => erro(p));
+        await page.close();
     }
 };
 
@@ -485,7 +596,7 @@ const cenarios = {
 const alvo = process.argv[2] || "todos";
 const navegador = alvo === "firefox" ? "firefox" : "chromium";
 const tipo = navegador === "firefox" ? firefox : chromium;
-const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile"]
+const lista = alvo === "todos" ? ["admin", "vet", "func", "acessos", "identificadores", "mustChange", "recuperarSenha", "mobile", "loginAlturaCurta", "financeMonth"]
     : alvo === "firefox" ? ["admin", "func"]
     : [alvo];
 
