@@ -23,6 +23,33 @@ set -euo pipefail
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SAIDA="/tmp/dayvet-vercel-build"
 
+# ---------------------------------------------------------------------------
+# TRAVA: a Vercel publica SEMPRE o que está na `main`.
+# Como a integração Git está bloqueada, este script é o único caminho de
+# publicação — então ele mesmo garante que o artefato publicado é a `main`
+# (e não trabalho solto de branch). Sem isso, a Vercel vira uma cópia
+# paralela do repositório e o que está no ar deixa de ser auditável.
+# ---------------------------------------------------------------------------
+abortar() {
+    echo "ABORTADO: $1" >&2
+    echo "  HEAD local:    $(git -C "$RAIZ" rev-parse --short HEAD) ($(git -C "$RAIZ" branch --show-current))" >&2
+    echo "  origin/main:   $(git -C "$RAIZ" rev-parse --short origin/main)" >&2
+    echo "  Fluxo correto: commitar na 'teste' → merge --ff-only na 'main' → push → rodar este script." >&2
+    exit 1
+}
+
+git -C "$RAIZ" fetch origin --quiet
+
+if [ "$(git -C "$RAIZ" rev-parse HEAD)" != "$(git -C "$RAIZ" rev-parse origin/main)" ]; then
+    abortar "o HEAD não é o origin/main. A Vercel só recebe o que está na main."
+fi
+
+if ! git -C "$RAIZ" diff --quiet -- dayvet site; then
+    abortar "há alteração não commitada em dayvet/ ou site/ — o que subiria não seria a main."
+fi
+
+echo "→ publicando a main ($(git -C "$RAIZ" rev-parse --short HEAD))"
+
 echo "→ montando artefato em $SAIDA"
 rm -rf "$SAIDA"
 mkdir -p "$SAIDA/dayvet"
