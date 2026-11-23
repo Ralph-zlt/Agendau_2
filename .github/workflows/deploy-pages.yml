@@ -26,7 +26,7 @@ jobs:
           rm -rf dist
           mkdir -p dist/dayvet
           cp site/index.html dist/index.html
-          cp dayvet/index.html dayvet/styles.css dayvet/regras.js dayvet/script.js dayvet/config.js dist/dayvet/
+          cp dayvet/index.html dayvet/styles.css dayvet/regras.js dayvet/persistencia.js dayvet/script.js dayvet/config.js dist/dayvet/
           touch dist/.nojekyll
 
       - name: Publicar artefato

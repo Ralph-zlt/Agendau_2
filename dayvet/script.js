@@ -1,9 +1,6 @@
 // ==========================================================
 // DAYVET-GESTÃO — script.js
-// Backend futuro (decisão 2026-09-22): SQL via Supabase
-// (Postgres + Auth + RLS) — projeto ainda NÃO criado.
-// Hoje: mocks em memória. Bypass 1/2/3 intencional p/ teste
-// do usuário final (protótipo sem dados reais).
+// Autenticação e persistência integradas ao Supabase.
 // Mapa de seções: [1] Mock DB · [2] Permissões RBAC ·
 // [3] Autenticação/Login · [4] Toasts · [5] Navegação/Tabs ·
 // [6] Agendamentos · [7] Tutores & Pets · [8] Clínico ·
@@ -12,20 +9,142 @@
 // ==========================================================
 
 // ==========================================================
-// SEÇÃO 0: MODO DE DADOS (Fase 0 — 2026-11-23)
+// SEÇÃO 0: SUPABASE E PERSISTÊNCIA
 // ==========================================================
-// 'mock' = dados em memória (hoje). 'real' = Supabase (Fases C/D).
-// Enquanto for 'mock', toda escrita avisa que NÃO foi salva e o topo do
-// app mostra a faixa de demonstração (#aviso-modo-demo). Nenhum fallback
-// silencioso: quando o banco entrar, erro de rede aparece como erro.
-const MODO_DADOS = 'mock';
+const MODO_DADOS = 'real';
+const MODO_AUTENTICACAO = 'supabase';
+let clienteSupabaseAuth = null;
+let idsVacinaPorNome = {};
+let idsRacaPorChave = {};
+
+function obterClienteSupabaseAuth() {
+    if (clienteSupabaseAuth) return clienteSupabaseAuth;
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error('Biblioteca Supabase indisponível.');
+    }
+    if (!window.DAYVET_CONFIG?.supabaseUrl || !window.DAYVET_CONFIG?.supabaseAnonKey) {
+        throw new Error('Configuração pública do Supabase indisponível.');
+    }
+    clienteSupabaseAuth = window.supabase.createClient(
+        window.DAYVET_CONFIG.supabaseUrl,
+        window.DAYVET_CONFIG.supabaseAnonKey
+    );
+    clienteSupabaseAuth.auth.onAuthStateChange(evento => {
+        if (evento === 'PASSWORD_RECOVERY') abrirEtapaRedefinirSenha();
+    });
+    return clienteSupabaseAuth;
+}
+
+function substituirArray(estado, novos) {
+    estado.splice(0, estado.length, ...novos);
+}
+
+function escaparHtml(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[caractere]);
+}
+
+function aplicarDadosSupabase(dados, usuarioAtual) {
+    tutores = dados.tutores;
+    pets = dados.pets;
+    agendamentos = dados.agendamentos;
+    historicoClinico = dados.historico;
+    anexosClinicos = dados.documentos;
+    usuarios = dados.usuarios;
+
+    substituirArray(tiposVacina, dados.vacinas.map(tipo => tipo.nome));
+    idsVacinaPorNome = Object.fromEntries(dados.vacinas.map(tipo => [tipo.nome, tipo.id]));
+
+    Object.keys(racasPorEspecie).forEach(especie => { racasPorEspecie[especie] = []; });
+    idsRacaPorChave = {};
+    dados.racas.forEach(tipo => {
+        racasPorEspecie[tipo.especie] ||= [];
+        racasPorEspecie[tipo.especie].push(tipo.nome);
+        idsRacaPorChave[`${tipo.especie}|${tipo.nome}`] = tipo.id;
+    });
+
+    const veterinariosAtivos = usuarios
+        .filter(usuario => usuario.role === 'veterinario' && usuario.active)
+        .map(usuario => ({ ...usuario, profissao: usuario.role }));
+    if (usuarioAtual?.role === 'veterinario' &&
+        !veterinariosAtivos.some(usuario => usuario.id === usuarioAtual.id)) {
+        veterinariosAtivos.push({ ...usuarioAtual, profissao: usuarioAtual.role });
+    }
+    substituirArray(administradores, veterinariosAtivos);
+
+    configuracaoClinica = dados.configuracao;
+    configRestricao = configuracaoClinica.modoRestricao;
+    aplicarConfiguracaoHoraria();
+    renderizarAgendamentos();
+    renderizarTutores();
+    renderizarHistoricoClinico();
+    renderizarAnexos();
+    renderizarUsuarios();
+    popularPetsDropdowns();
+    renderizarTiposVacina();
+    renderizarTiposRaca();
+}
+
+async function carregarDadosAutenticados(usuario) {
+    const cliente = obterClienteSupabaseAuth();
+    if (!window.DayVetPersistencia) throw new Error('Adaptadores de persistência não foram carregados.');
+    const dados = await window.DayVetPersistencia.carregarDados(cliente, usuario.role);
+    aplicarDadosSupabase(dados, usuario);
+}
+
+function limparDadosAutenticados() {
+    tutores = [];
+    pets = [];
+    agendamentos = [];
+    historicoClinico = [];
+    anexosClinicos = [];
+    usuarios = [];
+    configuracaoClinica = {
+        horaAbertura: '08:00',
+        horaFechamento: '18:00',
+        modoRestricao: 'comercial',
+        funcionamentoFds: 'sabado'
+    };
+    configRestricao = configuracaoClinica.modoRestricao;
+    aplicarConfiguracaoHoraria();
+    substituirArray(tiposVacina, []);
+    substituirArray(administradores, []);
+    idsVacinaPorNome = {};
+    idsRacaPorChave = {};
+    Object.keys(racasPorEspecie).forEach(especie => { racasPorEspecie[especie] = []; });
+    renderizarAgendamentos();
+    renderizarTutores();
+    renderizarHistoricoClinico();
+    renderizarAnexos();
+    renderizarUsuarios();
+}
 
 function confirmarEscrita(mensagem) {
-    if (MODO_DADOS === 'real') {
-        showToast(mensagem);
-        return;
+    showToast(mensagem);
+}
+
+function notificarFalhaPersistencia(acao, erro) {
+    console.error(`Falha ao ${acao} no Supabase.`, erro);
+    showToast(`Não foi possível ${acao}. A alteração não foi confirmada.`, 'error');
+}
+
+async function executarMutacaoSupabase(acao, operacao) {
+    try {
+        const resultado = await operacao();
+        if (resultado?.error) {
+            notificarFalhaPersistencia(acao, resultado.error);
+            return { ok: false, data: null };
+        }
+        return { ok: true, data: resultado?.data ?? null };
+    } catch (erro) {
+        notificarFalhaPersistencia(acao, erro);
+        return { ok: false, data: null };
     }
-    showToast(mensagem + ' — apenas nesta tela: nada foi salvo no banco.', 'aviso');
 }
 
 function aplicarAvisoModoDados() {
@@ -38,119 +157,42 @@ function aplicarAvisoModoDados() {
 }
 
 // ==========================================================
-// SEÇÃO 1: DADOS MOCK (simula banco de dados em memória)
+// SEÇÃO 1: ESTADO CARREGADO DO SUPABASE (sem registros de demonstração)
 // ==========================================================
 
-// TODO [INTEGRAÇÃO SUPABASE]:
-// Tabela `administradores` — dados do profissional responsável
-// pela clínica (CRMV, validade). Relacionado à tabela `users`
-// via id. Futuramente: GET /api/profissional/:id
-// TODO [INTEGRAÇÃO SUPABASE]:
-// Tabela `tutores` — CHAVE PRIMÁRIA = `cpf` (decisão 2026-09-22: o tutor
-// registrado é identificado pelo CPF em todo o sistema, inclusive no
-// módulo clínico). Futuramente: tabela `tutores` com PK em `cpf`.
-// via id. Futuramente: GET /api/profissional/:id
-let administradores = [
-    { id: "u2", nome: "Dra. Laís", cpf: "222.222.222-22", profissao: "veterinario", crm: "CRMV-SP 00000", crmValidade: "2029-12-31", senha: "Veterin@ria" }
-];
+let administradores = [];
+let tutores = [];
+let pets = [];
 
-let tutores = [
-    { nome: "Douglas Silva Ferreira", tel: "(11) 98765-4321", cpf: "111.222.333-44", email: "douglas.ferreira@dayvetgestao.com", endereco: "Rua do Pet, 120 - Pilar do Sul", senha: "123" },
-    { nome: "Laís Vieira de Oliveira", tel: "(11) 97777-8888", cpf: "222.333.444-55", email: "lais.oliveira@dayvetgestao.com", endereco: "Av. Veterinária, 350 - Pilar do Sul", senha: "123" }
-];
-
-let pets = [
-    { id: "101", tutorCpf: "111.222.333-44", nome: "Rex", especie: "Canino", raca: "Golden Retriever", sexo: "Macho", peso: 32.5, comportamento: "Dócil e sociável.", alergias: "Nenhuma registrada." },
-    { id: "102", tutorCpf: "222.333.444-55", nome: "Mingau", especie: "Felino", raca: "Persa", sexo: "Fêmea", peso: 4.2, comportamento: "Muito dócil e preguiçoso.", alergias: "Sensibilidade a certos medicamentos." }
-];
-
-// O QUE: Catálogos do cadastro de pets (ROADMAP §1 item 10).
-// PORQUÊ: Espécie, raça e sexo como listas de seleção; peso em kg (opcional).
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `pets` com `especie` (enum),
-//   `raca` (varchar), `sexo` (enum Macho/Fêmea), `peso` (decimal NULL).
 const ESPECIES_PET = ["Canino", "Felino", "Equino", "Bovino", "Suíno", "Ovino", "Outro"];
 const SEXOS_PET = ["Macho", "Fêmea"];
-// O QUE: Catálogo de raças por espécie — gerenciado por funcionário/admin (como tipos de vacina).
-// PORQUÊ: Raça como lista de seleção no cadastro/edição de pet.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `raca_tipos` (id, especie, nome, ativo).
-let racasPorEspecie = {
-    "Canino": ["Labrador Retriever", "Golden Retriever", "Poodle", "Bulldog", "Pastor Alemão", "SRD", "Outra"],
-    "Felino": ["Persa", "Siamês", "Maine Coon", "SRD", "Outra"],
-    "Equino": ["Quarto de Milha", "Mangalarga", "Árabe", "Puro-Sangue Inglês", "Outra"],
-    "Bovino": ["Nelore", "Gir", "Holandesa", "Angus", "Outra"],
-    "Suíno": ["Large White", "Landrace", "Duroc", "Outra"],
-    "Ovino": ["Santa Inês", "Dorper", "Suffolk", "Outra"],
-    "Outro": ["Outra"]
-};
-// Compat: código antigo lia RACAS_POR_ESPECIE fixo — agora é mutável via racasPorEspecie.
+let racasPorEspecie = Object.fromEntries(ESPECIES_PET.map(especie => [especie, []]));
 const RACAS_POR_ESPECIE = racasPorEspecie;
 
-// O QUE: Data ISO deslocada N dias a partir de hoje (mocks sempre com exemplos ativos + expirados).
 function isoDeslocado(dias) {
     const d = new Date();
     d.setDate(d.getDate() + dias);
     return d.toISOString().slice(0, 10);
 }
 
-// O QUE: Vínculo do agendamento com o veterinário (dashboard do vet filtra por vetId).
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: coluna `vetId` FK → `users(id)` em `agendamentos`.
-let agendamentos = [
-    { id: "201", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Consulta Veterinária", data: isoDeslocado(1), hora: "09:30", valor: 150.00, status: "confirmado" },
-    { id: "202", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Exame Clínico", data: isoDeslocado(0), hora: "14:00", valor: 90.00, status: "confirmado" },
-    { id: "203", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Vacinação", vacinaTipo: "Antirrábica", data: isoDeslocado(2), hora: "10:00", valor: 110.00, status: "confirmado" },
-    { id: "204", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Consulta Veterinária", data: isoDeslocado(3), hora: "11:00", valor: 150.00, status: "pendente" },
-    { id: "205", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Consulta Veterinária", data: isoDeslocado(-2), hora: "09:00", valor: 150.00, status: "cancelado" },
-    { id: "206", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Vacinação", vacinaTipo: "V10", data: isoDeslocado(-1), hora: "15:00", valor: 120.00, status: "concluido" },
-    { id: "207", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Exame Clínico", data: isoDeslocado(-20), hora: "10:30", valor: 90.00, status: "concluido" },
-    { id: "208", petId: "102", tutorCpf: "222.333.444-55", vetId: "u2", servico: "Consulta Veterinária", data: "2026-03-10", hora: "09:00", valor: 150.00, status: "concluido" },
-    { id: "209", petId: "101", tutorCpf: "111.222.333-44", vetId: "u2", servico: "Vacinação", vacinaTipo: "V8", data: "2026-03-18", hora: "11:00", valor: 110.00, status: "cancelado" }
-];
+let agendamentos = [];
 
-// O QUE: Catálogo de tipos de vacina (select) — gerenciado pelo funcionário (ROADMAP §1 item 7).
-// PORQUÊ: Vacinação deve informar o tipo (agendamento + clínico + relatórios); funcionário faz CRUD, vet/admin só listam.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `vacina_tipos` (id, nome, ativo) + coluna
-//   `vacinaTipo` em `agendamentos` e `historico_clinico`.
-let tiposVacina = ["Antirrábica", "V8", "V10", "V12", "Tríplice Felina", "Quádrupla Felina", "Giárdia", "Tosse dos Canis", "Leishmaniose", "Outra"];
-// Compat: código antigo lia TIPOS_VACINA fixo — agora é mutável via tiposVacina.
+let tiposVacina = [];
 const TIPOS_VACINA = tiposVacina;
 
-let historicoClinico = [
-    { id: "402", petId: "102", tutorCpf: "222.333.444-55", tipo: "receita", data: "2026-05-12", detalhe: "PRESCRIÇÃO: Dipirona Gotas (1 gota por kg a cada 12 horas por 3 dias)." }
-];
-
-// O QUE: Anexos do módulo clínico (exames, documentos) — protótipo em memória.
-// PORQUÊ: Área de upload junto ao criar (Receita/Vacina); some ao recarregar.
-// DEMO (mock): Guarda só metadados (nome/tipo/tamanho/data/vínculos).
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (storage + tabela documentos):
-//   POST /api/documentos (multipart) → Supabase Storage; metadados em
-//   `documentos {id, petId, tutorCpf, clinicoId, nome, tipo, tamanho, url}`.
+let historicoClinico = [];
 let anexosClinicos = [];
 
-// O QUE: Estoque mock de usuários com campos estendidos para auth empresarial.
-// PORQUÊ: Simula tabela `users` com autenticação por CPF/e-mail + senha,
-//   flag mustChange para troca forçada e controle de ativação.
-// DEMO (mock): Senhas salvas em plaintext em password_demo (nunca logadas).
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
-//   CREATE TABLE users (id UUID PK, nome VARCHAR, cpf VARCHAR UNIQUE,
-//   email VARCHAR UNIQUE, role VARCHAR, password_hash VARCHAR,
-//   mustChange BOOLEAN DEFAULT true, active BOOLEAN DEFAULT true,
-//   criadoPor UUID FK, criadoEm TIMESTAMP);
-//   Senhas armazenadas com bcrypt; LGPD exige minimização de dados.
-let usuariosMock = [
-    { id: 'u1', username: 'raphael_dias', nome: 'Raphael Dias', cpf: '111.111.111-11', email: 'raphael.dias@dayvet.com', role: 'admin', password_demo: 'Veterin@ria', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
-    // mustChange: true — primeiro acesso obrigatório: usuários criados pelo sistema devem
-    // definir senha forte (8+ chars, 1 maiúscula, 1 número, 1 especial) antes de entrar.
-    // DEMO (mock): flag reseta a cada F5 pois não há banco. Comportamento esperado e documentado.
-    // TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users): mustChange persistido no banco; após troca → false permanente.
-    // CONTAS TESTE 1/2/3: bypass troca p/ prototipação — REMOVER EM PRODUÇÃO
-    // TODO [SECURITY]: remover bypass demo antes da produção
-    { id: 'u2', username: 'lais_vet', nome: 'Dra. Laís', cpf: '222.222.222-22', email: 'lais.vet@dayvet.com', role: 'veterinario', crm: 'CRMV-SP 00000', password_demo: 'Veterin@ria', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' },
-    { id: 'u3', username: 'douglas_funcionario', nome: 'Douglas', cpf: '333.333.333-33', email: 'douglas.funcionario@dayvet.com', role: 'funcionario', password_demo: 'Veterin@ria', mustChange: false, active: true, criadoPor: 'sistema', criadoEm: '2026-01-01' }
-];
-
-let currentUser = { id: "u1", username: "raphael_dias", nome: "Raphael Dias", role: "admin", profissao: "admin" };
-let currentRole = 'admin';
+let usuarios = [];
+let currentUser = null;
+let currentRole = '';
 let configRestricao = "comercial";
+let configuracaoClinica = {
+    horaAbertura: '08:00',
+    horaFechamento: '18:00',
+    modoRestricao: 'comercial',
+    funcionamentoFds: 'sabado'
+};
 let filtroAgendamentosStatus = "todos";
 // O QUE: Flag de remarcação (volta como pendente) + estado do histórico de Expirados.
 // PORQUÊ: Expirados abre colapsado (só Últimos 7 dias); pesquisa por mês/ano filtra o histórico.
@@ -202,25 +244,14 @@ function temPermissao(acao) {
 }
 
 // ==========================================================
-// SEÇÃO 3: AUTENTICAÇÃO E LOGIN (identificação por CPF)
+// SEÇÃO 3: AUTENTICAÇÃO E LOGIN (usuário, CPF ou e-mail)
 // ==========================================================
 
-// TODO [INTEGRAÇÃO SUPABASE]:
-// O mapeamento CPF -> role será feito pelo backend.
-// Fluxo esperado:
-//   1. Usuário informa CPF + senha no formulário.
-//   2. Frontend envia POST /api/login { cpf, senha }.
-//   3. Backend valida credenciais, retorna { user: { id, nome, role, profissao } }.
-//   4. Frontend chama realizarLogin(userObj, userObj.role).
-//   5. Para sessões futuras: GET /api/me com Bearer token.
+// Auth Supabase: RPC resolve usuário/CPF/e-mail; perfil e RBAC vêm de public.usuarios.
 
-// O QUE: Mapa de atalhos demo (CPF curto → objeto de login).
+// O QUE: Mapa de atalhos de demonstração (identificador curto → perfil).
 // PORQUÊ: Permite login rápido digitando 1, 2 ou 3 (atalho de teste).
-// DEMO (mock): Atalhos bypassam validação de senha para conveniência do demo.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
-//   Não será necessário no backend — o login real busca por CPF/email
-//   na tabela `users` e valida bcrypt. Este mapa é exclusivo do protótipo.
-// TODO [SECURITY]: remover bypass demo antes da produção
+// Atalho autorizado para testes: usa a credencial real da respectiva conta de teste.
 const perfisTestes = {
     "1":   { id: "u1", username: "raphael_dias", nome: "Raphael Dias", role: "admin", profissao: "admin", password_demo: "Veterin@ria" },
     "111": { id: "u1", username: "raphael_dias", nome: "Raphael Dias", role: "admin", profissao: "admin", password_demo: "Veterin@ria" },
@@ -230,66 +261,149 @@ const perfisTestes = {
     "333": { id: "u3", username: "douglas_funcionario", nome: "Douglas", role: "funcionario", profissao: "funcionario", password_demo: "Veterin@ria" }
 };
 
-// O QUE: Handler de login — aceita usuário, CPF (atalho demo 1/2/3) ou e-mail + senha.
-// PORQUÊ: Fluxo unificado: atalhos demo bypassam senha para teste rápido;
-//   login real busca em usuariosMock por usuário/CPF/e-mail, valida password_demo.
-//   Erro único "Credenciais inválidas" para não revelar existência de contas.
-// DEMO (mock): Senhas são password_demo em texto plano; no backend seria bcrypt.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
-//   POST /api/login { identifier, senha } → backend busca users WHERE cpf=?
-//   ou email=?, valida com bcrypt.compare(), retorna JWT + mustChange flag.
-//   Rate-limit por IP/CPF para brute-force. LGPD: log de tentativas sem
-//   expor dados pessoais em logs de erro.
-function handleAuthSubmit(e) {
-    if (e) e.preventDefault();
-    const input = document.getElementById('login-cpf').value.trim();
-    const senha = document.getElementById('login-password').value;
+// O QUE: Autentica identificador pela RPC, carrega perfil e dados via RLS.
+let autenticacaoEmAndamento = false;
 
-    // Atalho demo: digitar 1/111/2/222/3/333 faz login rápido (bypassa senha)
-    const demoUser = perfisTestes[input];
-    if (demoUser) {
-        const mockEntry = usuariosMock.find(u => u.id === demoUser.id);
-        // Verifica se a conta está ativa (mesmo para atalhos demo)
-        if (mockEntry && !mockEntry.active) {
-            showToast("Credenciais inválidas", "error");
-            return;
-        }
-        // Se mustChange está ativo, força troca de senha antes de entrar
-        if (mockEntry && mockEntry.mustChange) {
-            showToast("Você deve alterar sua senha antes de prosseguir.", "error");
-            abrirModalForcarTrocaSenha(mockEntry);
-            return;
-        }
-        realizarLogin(demoUser, demoUser.role);
+function mostrarErroCredenciais() {
+    showToast("Credenciais inválidas", "error");
+}
+
+async function autenticarUsuarioSupabase(identificador, senha) {
+    const cliente = obterClienteSupabaseAuth();
+    const { data: email, error: erroResolver } = await cliente.rpc('resolver_login', {
+        p_identificador: identificador
+    });
+    if (erroResolver) {
+        console.error("Falha ao resolver identificador de login.", erroResolver);
+        showToast("Não foi possível validar o login. Tente novamente.", "error");
+        return;
+    }
+    if (typeof email !== 'string' || !email) {
+        mostrarErroCredenciais();
         return;
     }
 
-    // Login real: usuário (`raphael_dias`), CPF (com ou sem máscara) ou e-mail.
-    // A comparação normalizada vive em `regras.js` (RegrasLogin), testada em node.
-    const user = RegrasLogin.encontraUsuario(usuariosMock, input);
-
-    // Validação: erro único sem revelar se usuário existe, senha errada ou inativo
-    if (!user || user.password_demo !== senha || !user.active) {
-        showToast("Credenciais inválidas", "error");
+    const { data: authData, error: erroAuth } = await cliente.auth.signInWithPassword({ email, password: senha });
+    if (erroAuth || !authData?.user) {
+        mostrarErroCredenciais();
         return;
     }
 
-    // Se mustChange, redireciona para troca obrigatória de senha
-    if (user.mustChange) {
-        showToast("Você deve alterar sua senha antes de prosseguir.", "error");
-        abrirModalForcarTrocaSenha(user);
+    const { data: perfil, error: erroPerfil } = await cliente
+        .from('usuarios')
+        .select('id, usuario, nome, role, crm, must_change, active, deleted_at')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+
+    if (erroPerfil || !perfil) {
+        const { error: erroSaida } = await cliente.auth.signOut();
+        if (erroSaida) {
+            console.error("Falha ao encerrar sessão sem perfil autorizado.", erroSaida);
+        }
+        console.error("Falha ao carregar o perfil autenticado.", erroPerfil);
+        showToast("Não foi possível carregar o perfil do usuário.", "error");
+        return;
+    }
+    if (!perfil.active || perfil.deleted_at || !Object.prototype.hasOwnProperty.call(PERMISSOES, perfil.role)) {
+        const { error: erroSaida } = await cliente.auth.signOut();
+        if (erroSaida) {
+            console.error("Falha ao encerrar sessão de conta sem acesso.", erroSaida);
+        }
+        mostrarErroCredenciais();
         return;
     }
 
     const userObj = {
-        id: user.id,
-        username: user.username || '',
-        nome: user.nome,
-        role: user.role,
-        profissao: user.role,
-        crm: user.crm || ''
+        id: authData.user.id,
+        username: perfil.usuario || '',
+        nome: perfil.nome,
+        role: perfil.role,
+        profissao: perfil.role,
+        crm: perfil.crm || ''
     };
-    realizarLogin(userObj, user.role);
+    if (perfil.must_change) {
+        abrirModalForcarTrocaSenha(userObj);
+        return;
+    }
+    try {
+        await carregarDadosAutenticados(userObj);
+    } catch (erro) {
+        const { error: erroSaida } = await cliente.auth.signOut();
+        if (erroSaida) console.error("Falha ao encerrar sessão sem dados carregados.", erroSaida);
+        console.error("Falha ao carregar os dados da clínica.", erro);
+        showToast("Não foi possível carregar os dados do sistema. A sessão foi encerrada.", "error");
+        return;
+    }
+    realizarLogin(userObj, perfil.role);
+}
+
+async function handleAuthSubmit(e) {
+    if (e) e.preventDefault();
+    let input = document.getElementById('login-cpf').value.trim();
+    let senha = document.getElementById('login-password').value;
+
+    // O atalho numérico continua disponível, mas autentica a conta real no Supabase.
+    const demoUser = perfisTestes[input];
+    if (demoUser) {
+        input = ACESSOS_TESTE[demoUser.role].usuario;
+        senha = demoUser.password_demo;
+    }
+
+    if (MODO_AUTENTICACAO !== 'supabase' || autenticacaoEmAndamento) return;
+    autenticacaoEmAndamento = true;
+    const botao = document.querySelector('#auth-form button[type="submit"]');
+    if (botao) botao.disabled = true;
+    try {
+        await autenticarUsuarioSupabase(input, senha);
+    } catch (erro) {
+        console.error("Falha de comunicação com o Supabase Auth.", erro);
+        showToast("Não foi possível conectar ao serviço de autenticação.", "error");
+    } finally {
+        autenticacaoEmAndamento = false;
+        if (botao) botao.disabled = false;
+    }
+}
+
+async function restaurarSessaoSupabase() {
+    let cliente;
+    try {
+        cliente = obterClienteSupabaseAuth();
+        const { data: sessaoData, error: erroSessao } = await cliente.auth.getSession();
+        if (erroSessao) throw erroSessao;
+        const usuarioAuth = sessaoData?.session?.user;
+        if (!usuarioAuth) return;
+
+        const { data: perfil, error: erroPerfil } = await cliente
+            .from('usuarios')
+            .select('id, usuario, nome, role, crm, must_change, active, deleted_at')
+            .eq('id', usuarioAuth.id)
+            .maybeSingle();
+        if (erroPerfil) throw erroPerfil;
+        if (!perfil || !perfil.active || perfil.deleted_at ||
+            !Object.prototype.hasOwnProperty.call(PERMISSOES, perfil.role)) {
+            await cliente.auth.signOut();
+            mostrarErroCredenciais();
+            return;
+        }
+
+        const userObj = {
+            id: usuarioAuth.id,
+            username: perfil.usuario || '',
+            nome: perfil.nome,
+            role: perfil.role,
+            profissao: perfil.role,
+            crm: perfil.crm || ''
+        };
+        if (perfil.must_change) {
+            abrirModalForcarTrocaSenha(userObj);
+            return;
+        }
+        await carregarDadosAutenticados(userObj);
+        realizarLogin(userObj, perfil.role);
+    } catch (erro) {
+        console.error("Falha ao restaurar sessão Supabase.", erro);
+        showToast("Não foi possível restaurar a sessão e carregar os dados.", "error");
+    }
 }
 
 function formatarCargo(role) {
@@ -317,11 +431,9 @@ const ACESSOS_TEMPORARIOS = [
 
 const CPF_DEMO_POR_ROLE = { admin: '1', veterinario: '2', funcionario: '3' };
 
-// O QUE: Credenciais reais (mock) dos 3 perfis, usadas pelos botões de teste.
+// O QUE: Identificadores e senhas das 3 contas de teste, usados pelos botões.
 // PORQUÊ: Pedido do dono (2026-11-13): manter o bypass para testes, mas por botão
-//   visível que preenche CPF + senha — em vez de exigir digitar 1/2/3.
-// DEMO (mock): mesmos valores de `usuariosMock` (password_demo). Ao ligar o Supabase,
-//   basta apontar aqui as contas de teste reais — o botão deixa de ser bypass.
+//   visível que preenche usuário + senha; o envio passa pelo Supabase Auth.
 // TODO [SECURITY]: remover o bloco de acesso rápido antes da produção.
 const ACESSOS_TESTE = {
     admin:       { rotulo: 'Admin',       usuario: 'raphael_dias',        cpf: '111.111.111-11', senha: 'Veterin@ria' },
@@ -329,11 +441,10 @@ const ACESSOS_TESTE = {
     funcionario: { rotulo: 'Funcionário', usuario: 'douglas_funcionario', cpf: '333.333.333-33', senha: 'Veterin@ria' }
 };
 
-// O QUE: Preenche CPF + senha do perfil clicado (não envia o formulário).
+// O QUE: Preenche usuário + senha do perfil clicado (não envia o formulário).
 // PORQUÊ: Teste rápido e transparente — o usuário vê as credenciais usadas e
-//   confirma em "Acessar o Painel". Diferente do atalho 1/2/3, aqui o login
-//   passa pelo caminho real (`usuariosMock`, depois Auth) em vez do bypass.
-// DEMO (mock): valores de ACESSOS_TESTE; sem rede.
+//   confirma em "Acessar o Painel". Diferente do atalho 1/2/3, autentica
+//   as contas de teste reais pelo Supabase Auth.
 function preencherAcessoTeste(role) {
     const acesso = ACESSOS_TESTE[role];
     if (!acesso) return;
@@ -456,7 +567,24 @@ function realizarLogin(userObj, role) {
     switchTab(role === 'funcionario' ? 'agendamentos' : 'dashboard');
 }
 
-function handleLogout() {
+async function handleLogout() {
+    if (MODO_AUTENTICACAO === 'supabase') {
+        try {
+            const { error } = await obterClienteSupabaseAuth().auth.signOut();
+            if (error) {
+                console.error("Falha ao encerrar sessão no Supabase Auth.", error);
+                showToast("Não foi possível encerrar a sessão. Tente novamente.", "error");
+                return;
+            }
+        } catch (erro) {
+            console.error("Falha de comunicação ao encerrar a sessão.", erro);
+            showToast("Não foi possível encerrar a sessão. Tente novamente.", "error");
+            return;
+        }
+    }
+    currentUser = null;
+    currentRole = '';
+    limparDadosAutenticados();
     document.getElementById('login-screen').classList.remove('hidden');
     showToast("Você saiu do sistema.");
 }
@@ -483,7 +611,7 @@ function showToast(mensagem, tipo) {
     }
 
     toast.className = "flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl pointer-events-auto transition-all duration-300 transform translate-y-5 opacity-0 " + bgClass;
-    toast.innerHTML = icon + " <span class='text-xs font-semibold'>" + mensagem + "</span>";
+    toast.innerHTML = icon + " <span class='text-xs font-semibold'>" + escaparHtml(mensagem) + "</span>";
     container.appendChild(toast);
     lucide.createIcons();
     setTimeout(() => toast.classList.remove('translate-y-5', 'opacity-0'), 10);
@@ -607,8 +735,10 @@ function switchTab(tabId) {
 }
 
 function alterarRestricaoHoraria() {
-    configRestricao = document.getElementById('config-horario').value;
-    showToast("Modo de Restrição: " + (configRestricao === 'comercial' ? 'Horário Comercial' : 'Livre 24h'));
+    const modo = document.getElementById('config-horario').value;
+    atualizarConfiguracaoClinica({ modo_restricao: modo }, "atualizar a restrição horária").then(ok => {
+        if (ok) confirmarEscrita("Restrição horária atualizada");
+    });
 }
 
 // ==========================================================
@@ -665,6 +795,9 @@ function renderizarAgendamentos() {
     const btnLimpar = document.getElementById('btn-limpar-pesquisa-mes');
     if (btnLimpar) btnLimpar.classList.toggle('hidden', !pesquisaMesExpirados);
     lucide.createIcons();
+    atualizarKpisDashboard();
+    if (financeChartRef) atualizarPeriodoFaturamento();
+    if (consultasChartRef && currentRole === 'veterinario') inicializarConsultasChart();
 }
 
 // O QUE: Expande/recolhe o histórico de Expirados.
@@ -765,13 +898,13 @@ function linhaAgendamento(a, expirado) {
     return `
         <tr class='hover:bg-slate-900/60 transition-all border-b border-slate-800/50'>
             <td class='py-4 px-6'>
-                <div class='font-bold text-slate-200'>${pet ? pet.nome : 'N/A'}</div>
-                <div class='text-xs text-slate-500'>${tutor ? tutor.nome : 'N/A'}</div>
+                <div class='font-bold text-slate-200'>${escaparHtml(pet ? pet.nome : 'N/A')}</div>
+                <div class='text-xs text-slate-500'>${escaparHtml(tutor ? tutor.nome : 'N/A')}</div>
             </td>
-            <td class='py-4 px-6 text-slate-300 font-semibold'>${a.servico}${/vacin/i.test(a.servico) && a.vacinaTipo ? ' — ' + a.vacinaTipo : ''}</td>
+            <td class='py-4 px-6 text-slate-300 font-semibold'>${escaparHtml(a.servico)}${/vacin/i.test(a.servico) && a.vacinaTipo ? ' — ' + escaparHtml(a.vacinaTipo) : ''}</td>
             <td class='py-4 px-6 text-slate-300'>
-                <div>${a.data}</div>
-                <div class='text-xs text-brand-pink font-bold'>${a.hora}</div>
+                <div>${escaparHtml(a.data)}</div>
+                <div class='text-xs text-brand-pink font-bold'>${escaparHtml(a.hora)}</div>
             </td>
             <td class='py-4 px-6 font-bold text-slate-200'>
                 <span>R$ ${a.valor.toFixed(2)}</span>
@@ -829,7 +962,7 @@ function popularVacinaTiposAg(selecionado) {
     if (!select) return;
     select.innerHTML = '<option value="">Selecione o tipo...</option>';
     tiposVacina.forEach(t => {
-        select.innerHTML += `<option value="${t}"${t === selecionado ? ' selected' : ''}>${t}</option>`;
+        select.innerHTML += `<option value="${escaparHtml(t)}"${t === selecionado ? ' selected' : ''}>${escaparHtml(t)}</option>`;
     });
 }
 
@@ -876,20 +1009,27 @@ function abrirModalRegistrarValor(id, valorAtual) {
 }
 function fecharModalRegistrarValor() { document.getElementById('modal-registrar-valor').classList.add('hidden'); }
 
-function salvarRegistroValor(e) {
+async function salvarRegistroValor(e) {
     e.preventDefault();
     const id = document.getElementById('valor-agend-id').value;
     const novoValor = parseFloat(document.getElementById('valor-agend-input').value);
     const ag = agendamentos.find(a => a.id === id);
-    if (ag) {
-        ag.valor = novoValor;
-        renderizarAgendamentos();
-        confirmarEscrita("Valor do agendamento registrado/atualizado");
+    if (!ag || !Number.isFinite(novoValor) || novoValor < 0) {
+        showToast("Informe um valor válido para o agendamento.", "error");
+        return;
     }
+    const resultado = await executarMutacaoSupabase("registrar o valor", () =>
+        obterClienteSupabaseAuth().from('agendamentos')
+            .update({ valor: novoValor }).eq('id', id).select('id, valor').single()
+    );
+    if (!resultado.ok) return;
+    ag.valor = Number(resultado.data.valor);
+    renderizarAgendamentos();
     fecharModalRegistrarValor();
+    confirmarEscrita("Valor do agendamento registrado/atualizado");
 }
 
-function alterarStatusAgendamento(id, status) {
+async function alterarStatusAgendamento(id, status) {
     const item = agendamentos.find(a => a.id === id);
     if (!item) return;
     const ehVacinacao = /vacin/i.test(item.servico || '');
@@ -900,11 +1040,14 @@ function alterarStatusAgendamento(id, status) {
         showToast("Acesso restrito: perfil somente leitura em agendamentos.", "error");
         return;
     }
-    if (item) {
-        item.status = status;
-        renderizarAgendamentos();
-        confirmarEscrita("Agendamento atualizado");
-    }
+    const resultado = await executarMutacaoSupabase("atualizar o agendamento", () =>
+        obterClienteSupabaseAuth().from('agendamentos')
+            .update({ status }).eq('id', id).select('id, status').single()
+    );
+    if (!resultado.ok) return;
+    item.status = resultado.data.status;
+    renderizarAgendamentos();
+    confirmarEscrita("Agendamento atualizado");
 }
 
 function filtrarAgendamentos(status) {
@@ -968,7 +1111,7 @@ function preencherSelectTutores(select, placeholder) {
         return ativos;
     }
     select.innerHTML = placeholder ? `<option value="">${placeholder}</option>` : '';
-    ativos.forEach(t => select.innerHTML += `<option value="${t.cpf}">${t.nome} (CPF ${t.cpf})</option>`);
+    ativos.forEach(t => select.innerHTML += `<option value="${escaparHtml(t.cpf)}">${escaparHtml(t.nome)} (CPF ${escaparHtml(t.cpf)})</option>`);
     return ativos;
 }
 
@@ -1003,11 +1146,11 @@ function popularPetsDoTutor() {
     const selectP = document.getElementById('agend-pet-select');
     selectP.innerHTML = '';
     pets.filter(p => p.tutorCpf === tutorCpf).forEach(p => {
-        selectP.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+        selectP.innerHTML += `<option value="${escaparHtml(p.id)}">${escaparHtml(p.nome)}</option>`;
     });
 }
 
-function salvarAgendamento(e) {
+async function salvarAgendamento(e) {
     e.preventDefault();
     const editId = document.getElementById('edit-agend-id').value;
     const tutorCpf = document.getElementById('agend-tutor-select').value;
@@ -1024,10 +1167,8 @@ function salvarAgendamento(e) {
     const valor = parseFloat(document.getElementById('agend-valor').value);
     const data = document.getElementById('agend-data').value;
     const hora = document.getElementById('agend-hora').value;
-    // RF-05: agendamentos somente na janela 07h–19h.
-    // TODO [INTEGRAÇÃO SUPABASE]: CHECK (hora BETWEEN '07:00' AND '19:00') no backend.
-    if (!hora || hora < "07:00" || hora > "19:00") {
-        showToast("Agendamento fora da janela de atendimento (07h–19h).", "error");
+    if (!horarioAgendamentoPermitido(data, hora)) {
+        showToast("O horário selecionado está fora do funcionamento configurado da clínica.", "error");
         return;
     }
     let vacinaTipo = document.getElementById('agend-vacina-tipo').value || '';
@@ -1035,46 +1176,85 @@ function salvarAgendamento(e) {
         showToast("Informe o tipo de vacinação.", "error");
         return;
     }
-    // Quick-add: se tipo "Outro" + novo nome informado, adiciona ao catálogo (atalho opcional — vazio mantém "Outro").
-    // Catálogo de vacinas é do admin/vet; o de raças, do admin/funcionário.
-    // TODO [INTEGRAÇÃO SUPABASE]: INSERT em `vacina_tipos` com auditoria de quem sugeriu.
+    // Quick-add: cria o tipo no catálogo antes de salvar a vacinação.
     if (ehVacinacao && vacinaTipo === 'Outro') {
         const novo = (document.getElementById('agend-vacina-novo-nome').value || '').trim();
         if (novo) {
             if (temPermissao('vacina_tipos_criar') || currentRole === 'veterinario') {
                 if (!tiposVacina.some(t => t.toLowerCase() === novo.toLowerCase())) {
-                    tiposVacina.push(novo);
-                    confirmarEscrita(`Tipo "${novo}" adicionado ao catálogo`);
+                    const cadastroTipo = await executarMutacaoSupabase("adicionar o tipo de vacina", () =>
+                        obterClienteSupabaseAuth().from('vacina_tipos')
+                            .insert({ nome: novo }).select('id, nome').single()
+                    );
+                    if (!cadastroTipo.ok) return;
+                    tiposVacina.push(cadastroTipo.data.nome);
+                    idsVacinaPorNome[cadastroTipo.data.nome] = String(cadastroTipo.data.id);
                 }
                 vacinaTipo = novo;
             }
         }
     }
 
+    if (!tutorCpf || !Number.isFinite(valor) || valor < 0) {
+        showToast("Informe um tutor e um valor válido.", "error");
+        return;
+    }
+    if (petId && !pets.some(p => p.id === petId && p.tutorCpf === tutorCpf)) {
+        showToast("O pet selecionado não pertence ao tutor informado.", "error");
+        return;
+    }
+
     if (editId) {
         const ag = agendamentos.find(a => a.id === editId);
-        if (ag) {
-            ag.tutorCpf = tutorCpf;
-            ag.petId = petId;
-            ag.servico = servico;
-            ag.vacinaTipo = ehVacinacao ? vacinaTipo : '';
-            ag.valor = valor;
-            ag.data = data;
-            ag.hora = hora;
-            if (remarcandoAgendamento) {
-                if (data < hojeISO()) {
-                    showToast("Escolha uma data futura para remarcar.", "error");
-                    return;
-                }
-                ag.status = 'pendente';
-            }
+        if (!ag) {
+            showToast("O agendamento não foi encontrado. Atualize a tela e tente novamente.", "error");
+            return;
         }
+        if (remarcandoAgendamento && data < hojeISO()) {
+            showToast("Escolha uma data futura para remarcar.", "error");
+            return;
+        }
+        const atualizado = {
+            ...ag,
+            tutorCpf,
+            petId,
+            servico,
+            vacinaTipo: ehVacinacao ? vacinaTipo : '',
+            valor,
+            data,
+            hora,
+            status: remarcandoAgendamento ? 'pendente' : ag.status
+        };
+        const resultado = await executarMutacaoSupabase("atualizar o agendamento", () =>
+            obterClienteSupabaseAuth().from('agendamentos')
+                .update(window.DayVetPersistencia.paraAgendamento(atualizado))
+                .eq('id', editId).select('*').single()
+        );
+        if (!resultado.ok) return;
+        Object.assign(ag, window.DayVetPersistencia.mapearAgendamento(resultado.data));
         confirmarEscrita(remarcandoAgendamento ? "Agendamento remarcado" : "Agendamento atualizado");
-        remarcandoAgendamento = false;
     } else {
-        agendamentos.unshift({ id: Date.now().toString(), tutorCpf, petId, servico, vacinaTipo: ehVacinacao ? vacinaTipo : '', valor, data, hora, status: "confirmado", vetId: (currentUser && currentUser.id) || '' });
+        const novoAgendamento = {
+            tutorCpf,
+            petId,
+            servico,
+            vacinaTipo: ehVacinacao ? vacinaTipo : '',
+            valor,
+            data,
+            hora,
+            status: "confirmado",
+            vetId: currentUser.id
+        };
+        const resultado = await executarMutacaoSupabase("criar o agendamento", () =>
+            obterClienteSupabaseAuth().from('agendamentos')
+                .insert(window.DayVetPersistencia.paraAgendamento(novoAgendamento, currentUser.id))
+                .select('*').single()
+        );
+        if (!resultado.ok) return;
+        agendamentos.unshift(window.DayVetPersistencia.mapearAgendamento(resultado.data));
         confirmarEscrita("Agendamento criado");
     }
+    remarcandoAgendamento = false;
     fecharModalAgendamento();
     renderizarAgendamentos();
 }
@@ -1089,6 +1269,7 @@ let mostrarTutoresArquivados = false;
 function renderizarTutores() {
     const grid = document.getElementById('tutores-grid');
     if (!grid) return;
+    atualizarKpisDashboard();
     grid.innerHTML = '';
 
     const arquivados = tutores.filter(t => RegrasTutor.tutorArquivado(t)).length;
@@ -1132,13 +1313,13 @@ function renderizarTutores() {
             petsHTML += `
                 <div class='bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2'>
                     <div class='flex justify-between items-center'>
-                        <span class='text-[10px] font-black uppercase text-brand-lime'>${p.especie}</span>
+                        <span class='text-[10px] font-black uppercase text-brand-lime'>${escaparHtml(p.especie)}</span>
                         ${btnEditarPet}
                     </div>
                     <h5 class='font-bold text-slate-100 text-sm flex items-center gap-1.5'>
-                        <i data-lucide='paw-print' class='w-4 h-4 text-brand-lime'></i> ${p.nome}
+                        <i data-lucide='paw-print' class='w-4 h-4 text-brand-lime'></i> ${escaparHtml(p.nome)}
                     </h5>
-                    <p class='text-xs text-slate-400 font-semibold'>${p.raca}${p.sexo ? ' · ' + p.sexo : ''}${p.peso ? ' · ' + p.peso + ' kg' : ''}</p>
+                    <p class='text-xs text-slate-400 font-semibold'>${escaparHtml(p.raca)}${p.sexo ? ' · ' + escaparHtml(p.sexo) : ''}${p.peso ? ' · ' + escaparHtml(p.peso) + ' kg' : ''}</p>
                 </div>
             `;
         });
@@ -1147,11 +1328,11 @@ function renderizarTutores() {
             <div class='bg-slate-950 rounded-2xl border ${arquivado ? 'border-amber-500/30 opacity-80' : 'border-slate-850'} p-5 flex flex-col md:flex-row gap-4'>
                 <div class='md:w-1/3 space-y-2 border-b md:border-b-0 md:border-r border-slate-800 pb-4 md:pb-0 md:pr-4'>
                     <div class='flex items-center justify-between gap-2'>
-                        <h4 class='font-bold text-slate-100 text-base flex items-center gap-2'>${t.nome} ${seloArquivado}</h4>
+                        <h4 class='font-bold text-slate-100 text-base flex items-center gap-2'>${escaparHtml(t.nome)} ${seloArquivado}</h4>
                     </div>
-                    <p class='text-xs text-slate-400'>CPF: ${t.cpf}</p>
-                    <p class='text-xs text-slate-400'>Tel: ${t.tel}</p>
-                    <p class='text-xs text-slate-400'>${t.endereco}</p>
+                    <p class='text-xs text-slate-400'>CPF: ${escaparHtml(t.cpf)}</p>
+                    <p class='text-xs text-slate-400'>Tel: ${escaparHtml(t.tel)}</p>
+                    <p class='text-xs text-slate-400'>${escaparHtml(t.endereco)}</p>
                     <div class='flex flex-wrap items-center gap-3 pt-1'>${btnEditarTutor}${btnArquivar}${btnRestaurar}${btnExcluirTutor}</div>
                 </div>
                 <div class='md:w-2/3 space-y-2'>
@@ -1175,29 +1356,39 @@ function alternarTutoresArquivados() {
 // O QUE: Arquiva o tutor — sai de agendamentos e novos vínculos, mantém histórico.
 // PORQUÊ: exclusão definitiva perderia pets/agenda/prontuário (LGPD/retenção).
 // REGRAS: RegrasTutor.podeArquivarTutor (sem agendamento pendente/confirmado).
-function arquivarTutor(cpf) {
+async function arquivarTutor(cpf) {
     if (!temPermissao('tutor_arquivar')) { showToast("Acesso restrito.", "error"); return; }
     const tutor = tutores.find(t => t.cpf === cpf);
     const regra = RegrasTutor.podeArquivarTutor(tutor, agendamentos);
     if (!regra.ok) { showToast(regra.motivo, "error"); return; }
     if (!confirm(`Arquivar ${tutor.nome}?\n\nO tutor deixa de aparecer em novos agendamentos e vínculos; o histórico é mantido.`)) return;
-    tutor.arquivado = true;
+    const resultado = await executarMutacaoSupabase("arquivar o tutor", () =>
+        obterClienteSupabaseAuth().from('tutores')
+            .update({ arquivado: true }).eq('cpf', cpf).select('*').single()
+    );
+    if (!resultado.ok) return;
+    Object.assign(tutor, window.DayVetPersistencia.mapearTutor(resultado.data));
     renderizarTutores();
     confirmarEscrita("Tutor arquivado");
 }
 
-function restaurarTutor(cpf) {
+async function restaurarTutor(cpf) {
     if (!temPermissao('tutor_arquivar')) { showToast("Acesso restrito.", "error"); return; }
     const tutor = tutores.find(t => t.cpf === cpf);
     if (!tutor) return;
-    tutor.arquivado = false;
+    const resultado = await executarMutacaoSupabase("restaurar o tutor", () =>
+        obterClienteSupabaseAuth().from('tutores')
+            .update({ arquivado: false }).eq('cpf', cpf).select('*').single()
+    );
+    if (!resultado.ok) return;
+    Object.assign(tutor, window.DayVetPersistencia.mapearTutor(resultado.data));
     renderizarTutores();
     confirmarEscrita("Tutor restaurado");
 }
 
 // O QUE: Exclusão definitiva (irreversível) — arquivado e sem vínculos.
 // SEGURANÇA: confirmação digitando o CPF, além do confirm().
-function excluirTutorDefinitivo(cpf) {
+async function excluirTutorDefinitivo(cpf) {
     if (!temPermissao('tutor_excluir')) { showToast("Acesso restrito.", "error"); return; }
     const tutor = tutores.find(t => t.cpf === cpf);
     const regra = RegrasTutor.podeExcluirTutor(tutor, { pets, agendamentos, historico: historicoClinico });
@@ -1205,6 +1396,11 @@ function excluirTutorDefinitivo(cpf) {
     if (!confirm(`EXCLUIR DEFINITIVAMENTE ${tutor.nome}?\n\nEsta ação não pode ser desfeita.`)) return;
     const digitado = prompt(`Para confirmar, digite o CPF do tutor:\n${tutor.cpf}`);
     if ((digitado || "").trim() !== tutor.cpf) { showToast("Exclusão cancelada: CPF não confere.", "error"); return; }
+    const resultado = await executarMutacaoSupabase("excluir o tutor", () =>
+        obterClienteSupabaseAuth().from('tutores')
+            .delete().eq('cpf', tutor.cpf).select('cpf').single()
+    );
+    if (!resultado.ok) return;
     tutores = tutores.filter(t => t.cpf !== tutor.cpf);
     renderizarTutores();
     confirmarEscrita("Tutor excluído definitivamente");
@@ -1215,20 +1411,24 @@ function fecharModalTutor() { document.getElementById('modal-tutor').classList.a
 
 // O QUE: Valida telefone com 11 dígitos (RF-02: DDD + 9 dígitos do celular).
 // PORQUÊ: RF-02 restante — garante cadastro com celular válido (só dígitos contam).
-// TODO [INTEGRAÇÃO SUPABASE]: mesma regra no backend (CHECK length(regexp_replace(tel,'\D','','g'))=11).
 function telefoneTem11Digitos(tel) {
     return (String(tel || '').replace(/\D/g, '')).length === 11;
 }
 
-function salvarTutor(e) {
+async function salvarTutor(e) {
     e.preventDefault();
     const nome = document.getElementById('tutor-nome').value;
-    const cpf = document.getElementById('tutor-cpf').value;
+    const cpfInformado = document.getElementById('tutor-cpf').value;
     const tel = document.getElementById('tutor-tel').value;
     const email = document.getElementById('tutor-email').value;
     const endereco = document.getElementById('tutor-endereco').value;
 
-    if (tutores.some(t => t.cpf === cpf)) {
+    if (!validarCPF(cpfInformado)) {
+        showToast("CPF inválido. Verifique os dígitos informados.", "error");
+        return;
+    }
+    const cpf = RegrasLogin.formatarCpf(cpfInformado);
+    if (tutores.some(t => RegrasLogin.somenteDigitos(t.cpf) === RegrasLogin.somenteDigitos(cpf))) {
         showToast("CPF já cadastrado para outro tutor.", "error");
         return;
     }
@@ -1237,7 +1437,14 @@ function salvarTutor(e) {
         return;
     }
 
-    tutores.push({ nome, cpf, tel, email, endereco });
+    const novoTutor = { nome, cpf, tel, email, endereco, arquivado: false };
+    const resultado = await executarMutacaoSupabase("cadastrar o tutor", () =>
+        obterClienteSupabaseAuth().from('tutores')
+            .insert(window.DayVetPersistencia.paraTutor(novoTutor, currentUser.id))
+            .select('*').single()
+    );
+    if (!resultado.ok) return;
+    tutores.push(window.DayVetPersistencia.mapearTutor(resultado.data));
     fecharModalTutor();
     renderizarTutores();
     confirmarEscrita("Tutor cadastrado");
@@ -1256,33 +1463,54 @@ function abrirModalEditarTutor(tutorCpf) {
 }
 function fecharModalEditarTutor() { document.getElementById('modal-editar-tutor').classList.add('hidden'); }
 
-function salvarEdicaoTutor(e) {
+async function salvarEdicaoTutor(e) {
     e.preventDefault();
     const cpfAntigo = document.getElementById('edit-tutor-id').value;
     const tutor = tutores.find(t => t.cpf === cpfAntigo);
     if (tutor) {
-        const cpfNovo = document.getElementById('edit-tutor-cpf').value;
+        const cpfInformado = document.getElementById('edit-tutor-cpf').value;
         const telNovo = document.getElementById('edit-tutor-tel').value;
+        if (!validarCPF(cpfInformado)) {
+            showToast("CPF inválido. Verifique os dígitos informados.", "error");
+            return;
+        }
+        const cpfNovo = RegrasLogin.formatarCpf(cpfInformado);
         if (!telefoneTem11Digitos(telNovo)) {
             showToast("Telefone deve ter 11 dígitos (DDD + número do celular).", "error");
             return;
         }
-        // CPF é a chave primária: se alterado, propaga para pets, agendamentos e histórico clínico
         if (cpfNovo !== cpfAntigo) {
-            if (tutores.some(t => t.cpf === cpfNovo)) {
+            if (tutores.some(t => t.cpf !== cpfAntigo
+                && RegrasLogin.somenteDigitos(t.cpf) === RegrasLogin.somenteDigitos(cpfNovo))) {
                 showToast("CPF já cadastrado para outro tutor.", "error");
                 return;
             }
+        }
+        const atualizado = {
+            ...tutor,
+            nome: document.getElementById('edit-tutor-nome').value,
+            cpf: cpfNovo,
+            tel: telNovo,
+            email: document.getElementById('edit-tutor-email').value,
+            endereco: document.getElementById('edit-tutor-endereco').value
+        };
+        const resultado = await executarMutacaoSupabase("atualizar o tutor", () =>
+            obterClienteSupabaseAuth().from('tutores')
+                .update(window.DayVetPersistencia.paraTutor(atualizado))
+                .eq('cpf', cpfAntigo).select('*').single()
+        );
+        if (!resultado.ok) return;
+        Object.assign(tutor, window.DayVetPersistencia.mapearTutor(resultado.data));
+        if (cpfNovo !== cpfAntigo) {
             pets.forEach(p => { if (p.tutorCpf === cpfAntigo) p.tutorCpf = cpfNovo; });
             agendamentos.forEach(a => { if (a.tutorCpf === cpfAntigo) a.tutorCpf = cpfNovo; });
             historicoClinico.forEach(h => { if (h.tutorCpf === cpfAntigo) h.tutorCpf = cpfNovo; });
+            anexosClinicos.forEach(a => { if (a.tutorCpf === cpfAntigo) a.tutorCpf = cpfNovo; });
         }
-        tutor.nome = document.getElementById('edit-tutor-nome').value;
-        tutor.cpf = cpfNovo;
-        tutor.tel = telNovo;
-        tutor.email = document.getElementById('edit-tutor-email').value;
-        tutor.endereco = document.getElementById('edit-tutor-endereco').value;
         renderizarTutores();
+        renderizarAgendamentos();
+        renderizarHistoricoClinico();
+        renderizarAnexos();
         confirmarEscrita("Cadastro do tutor alterado");
     }
     fecharModalEditarTutor();
@@ -1305,11 +1533,11 @@ function popularRacasPet(prefixo, selecionada) {
     const racas = racasPorEspecie[selEsp.value] || ["Outra"];
     selRaca.innerHTML = '';
     racas.forEach(r => {
-        selRaca.innerHTML += `<option value="${r}"${r === selecionada ? ' selected' : ''}>${r}</option>`;
+        selRaca.innerHTML += `<option value="${escaparHtml(r)}"${r === selecionada ? ' selected' : ''}>${escaparHtml(r)}</option>`;
     });
 }
 
-function salvarPet(e) {
+async function salvarPet(e) {
     e.preventDefault();
     const tutorCpf = document.getElementById('pet-tutor-select').value;
     const nome = document.getElementById('pet-nome').value;
@@ -1327,13 +1555,19 @@ function salvarPet(e) {
         if (!(peso > 0)) { showToast("Peso deve ser maior que zero.", "error"); return; }
     }
 
-    // RF-02 restante: máximo 10 pets por tutor.
-    // TODO [INTEGRAÇÃO SUPABASE]: CHECK (SELECT count(*) FROM pets WHERE tutor_cpf=...) ou regra no backend.
+    // O trigger do banco também aplica o limite para escritas concorrentes.
     if (pets.filter(p => p.tutorCpf === tutorCpf).length >= 10) {
         showToast("Limite de 10 pets por tutor atingido.", "error");
         return;
     }
-    pets.push({ id: Date.now().toString(), tutorCpf, nome, especie, raca, sexo, peso, comportamento, alergias });
+    const novoPet = { tutorCpf, nome, especie, raca, sexo, peso, comportamento, alergias };
+    const resultado = await executarMutacaoSupabase("cadastrar o pet", () =>
+        obterClienteSupabaseAuth().from('pets')
+            .insert(window.DayVetPersistencia.paraPet(novoPet, currentUser.id))
+            .select('*').single()
+    );
+    if (!resultado.ok) return;
+    pets.push(window.DayVetPersistencia.mapearPet(resultado.data));
     fecharModalPet();
     renderizarTutores();
     confirmarEscrita("Pet cadastrado");
@@ -1354,24 +1588,32 @@ function abrirModalEditarPet(petId) {
 }
 function fecharModalEditarPet() { document.getElementById('modal-editar-pet').classList.add('hidden'); }
 
-function salvarEdicaoPet(e) {
+async function salvarEdicaoPet(e) {
     e.preventDefault();
     const petId = document.getElementById('edit-pet-id').value;
     const pet = pets.find(p => p.id === petId);
     if (pet) {
-        pet.nome = document.getElementById('edit-pet-nome').value;
-        pet.especie = document.getElementById('edit-pet-especie').value;
-        pet.raca = document.getElementById('edit-pet-raca').value;
-        pet.sexo = document.getElementById('edit-pet-sexo').value;
+        const atualizado = { ...pet };
+        atualizado.nome = document.getElementById('edit-pet-nome').value;
+        atualizado.especie = document.getElementById('edit-pet-especie').value;
+        atualizado.raca = document.getElementById('edit-pet-raca').value;
+        atualizado.sexo = document.getElementById('edit-pet-sexo').value;
         const pesoRaw = (document.getElementById('edit-pet-peso').value || '').trim();
-        if (pesoRaw === '') { pet.peso = ''; }
+        if (pesoRaw === '') { atualizado.peso = ''; }
         else {
             const peso = parseFloat(pesoRaw.replace(',', '.'));
             if (!(peso > 0)) { showToast("Peso deve ser maior que zero.", "error"); return; }
-            pet.peso = peso;
+            atualizado.peso = peso;
         }
-        pet.comportamento = document.getElementById('edit-pet-comportamento').value;
-        pet.alergias = document.getElementById('edit-pet-alergias').value;
+        atualizado.comportamento = document.getElementById('edit-pet-comportamento').value;
+        atualizado.alergias = document.getElementById('edit-pet-alergias').value;
+        const resultado = await executarMutacaoSupabase("atualizar o pet", () =>
+            obterClienteSupabaseAuth().from('pets')
+                .update(window.DayVetPersistencia.paraPet(atualizado))
+                .eq('id', petId).select('*').single()
+        );
+        if (!resultado.ok) return;
+        Object.assign(pet, window.DayVetPersistencia.mapearPet(resultado.data));
         renderizarTutores();
         popularPetsDropdowns();
         confirmarEscrita("Cadastro do pet alterado");
@@ -1398,7 +1640,7 @@ function renderizarHistoricoClinico() {
 
         const btnImprimir = temPermissao('clinica_imprimir')
             ? `<button onclick="imprimirDocumentoGenerico('${h.id}')" class='text-[11px] text-brand-blue font-bold flex items-center gap-1 hover:underline'>
-                        <i data-lucide='printer' class='w-3 h-3'></i> Imprimir ${docLabel}
+                        <i data-lucide='printer' class='w-3 h-3'></i> Imprimir ${escaparHtml(docLabel)}
                     </button>` : `<span></span>`;
         const btnEditar = temPermissao('clinica_editar')
             ? `<button onclick="editarDocumentoClinico('${h.id}')" class='text-[11px] text-brand-lime font-bold hover:underline'>Editar</button>` : '';
@@ -1408,10 +1650,10 @@ function renderizarHistoricoClinico() {
         container.innerHTML += `
             <div class='bg-slate-900/80 p-4 rounded-xl border border-slate-800 space-y-2'>
                 <div class='flex items-center justify-between'>
-                    <span class='text-xs font-bold ${tipoTagColor} uppercase'>${docLabel} - ${pet ? pet.nome : 'N/A'}${tutor ? ' · ' + tutor.nome : ''}</span>
-                    <span class='text-xs text-slate-400'>${h.data}</span>
+                    <span class='text-xs font-bold ${tipoTagColor} uppercase'>${escaparHtml(docLabel)} - ${escaparHtml(pet ? pet.nome : 'N/A')}${tutor ? ' · ' + escaparHtml(tutor.nome) : ''}</span>
+                    <span class='text-xs text-slate-400'>${escaparHtml(h.data)}</span>
                 </div>
-                <p class='text-xs text-slate-200 leading-relaxed whitespace-pre-line'>${h.detalhe}</p>
+                <p class='text-xs text-slate-200 leading-relaxed whitespace-pre-line'>${escaparHtml(h.detalhe)}</p>
                 <div class='flex items-center justify-between pt-1 border-t border-slate-800/60'>
                     ${btnImprimir}
                     <div class='flex items-center gap-2'>
@@ -1450,13 +1692,13 @@ function popularVacinaTiposClinica(selecionado) {
     if (!select) return;
     select.innerHTML = '<option value="">Selecione o tipo...</option>';
     tiposVacina.forEach(t => {
-        select.innerHTML += `<option value="${t}"${t === selecionado ? ' selected' : ''}>${t}</option>`;
+        select.innerHTML += `<option value="${escaparHtml(t)}"${t === selecionado ? ' selected' : ''}>${escaparHtml(t)}</option>`;
     });
 }
 
 // O QUE: CRUD de tipos de vacina — admin e veterinário.
 // PORQUÊ: Reaproveita nome/estética do "Módulo clínico" em visão restrita (funcionário sem acesso).
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `vacina_tipos` (id, nome, ativo).
+// Catálogo persistido em `vacina_tipos`.
 function renderizarTiposVacina() {
     const lista = document.getElementById('lista-tipos-vacina');
     if (!lista) return;
@@ -1468,7 +1710,7 @@ function renderizarTiposVacina() {
     tiposVacina.forEach((t, idx) => {
         lista.innerHTML += `
             <div class='flex items-center justify-between gap-2 bg-slate-900/80 px-3.5 py-2.5 rounded-xl border border-slate-800'>
-                <span class='text-xs font-bold text-slate-200'>${t}</span>
+                <span class='text-xs font-bold text-slate-200'>${escaparHtml(t)}</span>
                 <div class='flex items-center gap-2 shrink-0'>
                     ${temPermissao('vacina_tipos_editar') ? `<button onclick="editarTipoVacinaPrompt(${idx})" class='text-[11px] text-brand-blue font-bold hover:underline'>Editar</button>` : ''}
                     ${temPermissao('vacina_tipos_excluir') ? `<button onclick="excluirTipoVacina(${idx})" class='text-[11px] text-rose-400 font-bold hover:underline'>Excluir</button>` : ''}
@@ -1504,7 +1746,7 @@ function cancelarEdicaoTipoVacina() {
     modoFormTipoVacina(false);
 }
 
-function salvarTipoVacina(e) {
+async function salvarTipoVacina(e) {
     e.preventDefault();
     if (!temPermissao('vacina_tipos_criar') && !temPermissao('vacina_tipos_editar')) {
         showToast("Acesso restrito: perfil sem permissão para salvar tipos.", "error");
@@ -1516,13 +1758,29 @@ function salvarTipoVacina(e) {
     if (idxRaw === '') {
         if (!temPermissao('vacina_tipos_criar')) { showToast("Acesso restrito: sem permissão para criar.", "error"); return; }
         if (tiposVacina.some(t => t.toLowerCase() === nome.toLowerCase())) { showToast("Tipo já cadastrado.", "error"); return; }
-        tiposVacina.push(nome);
+        const resultado = await executarMutacaoSupabase("cadastrar o tipo de vacina", () =>
+            obterClienteSupabaseAuth().from('vacina_tipos')
+                .insert({ nome }).select('id, nome').single()
+        );
+        if (!resultado.ok) return;
+        tiposVacina.push(resultado.data.nome);
+        idsVacinaPorNome[resultado.data.nome] = String(resultado.data.id);
         confirmarEscrita("Tipo de vacina cadastrado");
     } else {
         if (!temPermissao('vacina_tipos_editar')) { showToast("Acesso restrito: sem permissão para editar.", "error"); return; }
         const idx = parseInt(idxRaw, 10);
         if (tiposVacina.some((t, i) => i !== idx && t.toLowerCase() === nome.toLowerCase())) { showToast("Tipo já cadastrado.", "error"); return; }
-        tiposVacina[idx] = nome;
+        const nomeAnterior = tiposVacina[idx];
+        const id = idsVacinaPorNome[nomeAnterior];
+        if (!id) { showToast("Tipo não encontrado no banco. Recarregue a tela.", "error"); return; }
+        const resultado = await executarMutacaoSupabase("atualizar o tipo de vacina", () =>
+            obterClienteSupabaseAuth().from('vacina_tipos')
+                .update({ nome }).eq('id', id).select('id, nome').single()
+        );
+        if (!resultado.ok) return;
+        tiposVacina[idx] = resultado.data.nome;
+        delete idsVacinaPorNome[nomeAnterior];
+        idsVacinaPorNome[resultado.data.nome] = String(resultado.data.id);
         confirmarEscrita("Tipo de vacina atualizado");
     }
     document.getElementById('edit-tipo-vacina-idx').value = '';
@@ -1541,9 +1799,18 @@ function editarTipoVacinaPrompt(idx) {
     document.getElementById('input-tipo-vacina-nome').focus();
 }
 
-function excluirTipoVacina(idx) {
+async function excluirTipoVacina(idx) {
     if (!temPermissao('vacina_tipos_excluir')) { showToast("Acesso restrito.", "error"); return; }
+    const nome = tiposVacina[idx];
+    const id = idsVacinaPorNome[nome];
+    if (!id) { showToast("Tipo não encontrado no banco. Recarregue a tela.", "error"); return; }
+    const resultado = await executarMutacaoSupabase("excluir o tipo de vacina", () =>
+        obterClienteSupabaseAuth().from('vacina_tipos')
+            .delete().eq('id', id).select('id').single()
+    );
+    if (!resultado.ok) return;
     tiposVacina.splice(idx, 1);
+    delete idsVacinaPorNome[nome];
     renderizarTiposVacina();
     popularVacinaTiposAg('');
     popularVacinaTiposClinica('');
@@ -1552,7 +1819,7 @@ function excluirTipoVacina(idx) {
 
 // O QUE: CRUD de tipos de raça por espécie — funcionário e admin (como tipos de vacina).
 // PORQUÊ: Raça como lista de seleção precisa de catálogo gerenciável; vet só lista nos selects.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: tabela `raca_tipos` (id, especie, nome, ativo).
+// Catálogo persistido em `raca_tipos`.
 function renderizarTiposRaca() {
     const esp = document.getElementById('filtro-tipo-raca-especie')?.value || ESPECIES_PET[0];
     const lista = document.getElementById('lista-tipos-raca');
@@ -1565,7 +1832,7 @@ function renderizarTiposRaca() {
     racas.forEach((r, idx) => {
         lista.innerHTML += `
             <div class='flex items-center justify-between gap-2 bg-slate-900/80 px-3.5 py-2.5 rounded-xl border border-slate-800'>
-                <span class='text-xs font-bold text-slate-200'>${r}</span>
+                <span class='text-xs font-bold text-slate-200'>${escaparHtml(r)}</span>
                 <div class='flex items-center gap-2 shrink-0'>
                     ${temPermissao('raca_tipos_editar') ? `<button onclick="editarTipoRacaPrompt(${idx})" class='text-[11px] text-brand-blue font-bold hover:underline'>Editar</button>` : ''}
                     ${temPermissao('raca_tipos_excluir') ? `<button onclick="excluirTipoRaca(${idx})" class='text-[11px] text-rose-400 font-bold hover:underline'>Excluir</button>` : ''}
@@ -1615,7 +1882,7 @@ function filtrarTiposRaca() {
     renderizarTiposRaca();
 }
 
-function salvarTipoRaca(e) {
+async function salvarTipoRaca(e) {
     e.preventDefault();
     if (!temPermissao('raca_tipos_criar') && !temPermissao('raca_tipos_editar')) {
         showToast("Acesso restrito: perfil sem permissão para salvar raças.", "error");
@@ -1629,13 +1896,30 @@ function salvarTipoRaca(e) {
     if (idxRaw === '') {
         if (!temPermissao('raca_tipos_criar')) { showToast("Acesso restrito: sem permissão para criar.", "error"); return; }
         if (racasPorEspecie[esp].some(r => r.toLowerCase() === nome.toLowerCase())) { showToast("Raça já cadastrada.", "error"); return; }
-        racasPorEspecie[esp].push(nome);
+        const resultado = await executarMutacaoSupabase("cadastrar a raça", () =>
+            obterClienteSupabaseAuth().from('raca_tipos')
+                .insert({ especie: esp, nome }).select('id, especie, nome').single()
+        );
+        if (!resultado.ok) return;
+        racasPorEspecie[resultado.data.especie].push(resultado.data.nome);
+        idsRacaPorChave[`${resultado.data.especie}|${resultado.data.nome}`] = String(resultado.data.id);
         confirmarEscrita("Raça cadastrada");
     } else {
         if (!temPermissao('raca_tipos_editar')) { showToast("Acesso restrito: sem permissão para editar.", "error"); return; }
         const idx = parseInt(idxRaw, 10);
         if (racasPorEspecie[esp].some((r, i) => i !== idx && r.toLowerCase() === nome.toLowerCase())) { showToast("Raça já cadastrada.", "error"); return; }
-        racasPorEspecie[esp][idx] = nome;
+        const nomeAnterior = racasPorEspecie[esp][idx];
+        const chaveAnterior = `${esp}|${nomeAnterior}`;
+        const id = idsRacaPorChave[chaveAnterior];
+        if (!id) { showToast("Raça não encontrada no banco. Recarregue a tela.", "error"); return; }
+        const resultado = await executarMutacaoSupabase("atualizar a raça", () =>
+            obterClienteSupabaseAuth().from('raca_tipos')
+                .update({ especie: esp, nome }).eq('id', id).select('id, especie, nome').single()
+        );
+        if (!resultado.ok) return;
+        racasPorEspecie[esp][idx] = resultado.data.nome;
+        delete idsRacaPorChave[chaveAnterior];
+        idsRacaPorChave[`${resultado.data.especie}|${resultado.data.nome}`] = String(resultado.data.id);
         confirmarEscrita("Raça atualizada");
     }
     document.getElementById('edit-tipo-raca-idx').value = '';
@@ -1656,10 +1940,20 @@ function editarTipoRacaPrompt(idx) {
     document.getElementById('input-tipo-raca-nome').focus();
 }
 
-function excluirTipoRaca(idx) {
+async function excluirTipoRaca(idx) {
     if (!temPermissao('raca_tipos_excluir')) { showToast("Acesso restrito.", "error"); return; }
     const esp = document.getElementById('filtro-tipo-raca-especie').value;
+    const nome = (racasPorEspecie[esp] || [])[idx];
+    const chave = `${esp}|${nome}`;
+    const id = idsRacaPorChave[chave];
+    if (!id) { showToast("Raça não encontrada no banco. Recarregue a tela.", "error"); return; }
+    const resultado = await executarMutacaoSupabase("excluir a raça", () =>
+        obterClienteSupabaseAuth().from('raca_tipos')
+            .delete().eq('id', id).select('id').single()
+    );
+    if (!resultado.ok) return;
     (racasPorEspecie[esp] || []).splice(idx, 1);
+    delete idsRacaPorChave[chave];
     renderizarTiposRaca();
     popularRacasPet('');
     popularRacasPet('edit-');
@@ -1684,16 +1978,26 @@ function editarDocumentoClinico(id) {
     atualizarLabelDocumento();
 }
 
-function excluirDocumentoClinico(id) {
+async function excluirDocumentoClinico(id) {
+    const resultado = await executarMutacaoSupabase("excluir o documento clínico", () =>
+        obterClienteSupabaseAuth().from('historico_clinico')
+            .delete().eq('id', id).select('id').single()
+    );
+    if (!resultado.ok) return;
     historicoClinico = historicoClinico.filter(h => h.id !== id);
     renderizarHistoricoClinico();
     confirmarEscrita("Documento excluído");
 }
 
-// O QUE: Recebe arquivos do <input type="file"> e registra metadados.
-// PORQUÊ: Upload de exames/documentos vinculados ao tutor+pet do form.
-// DEMO (mock): Não envia nem persiste — some ao recarregar (sem banco).
-function lidarUploadAnexos(e) {
+function nomeArquivoSeguro(nome) {
+    return nome.normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9._-]/g, '_')
+        .replace(/^\.+/, '')
+        .slice(0, 120) || 'arquivo';
+}
+
+async function lidarUploadAnexos(e) {
     if (!temPermissao('clinica_criar')) {
         showToast("Acesso restrito: perfil sem permissão para anexar.", "error");
         e.target.value = '';
@@ -1701,21 +2005,60 @@ function lidarUploadAnexos(e) {
     }
     const arquivos = Array.from(e.target.files || []);
     if (!arquivos.length) return;
+    e.target.value = '';
     const tutorCpf = document.getElementById('clinica-tutor-select').value || '';
     const petId = document.getElementById('clinica-pet-select').value || '';
-    arquivos.forEach(f => {
-        anexosClinicos.unshift({
-            id: Date.now().toString() + Math.floor(Math.random() * 1000),
-            tutorCpf, petId,
-            nome: f.name,
-            tipo: f.type || 'arquivo',
-            tamanhoKb: Math.max(1, Math.round(f.size / 1024)),
-            data: new Date().toISOString().slice(0, 10)
-        });
-    });
-    e.target.value = '';
+    if (!tutorCpf || !petId || !pets.some(p => p.id === petId && p.tutorCpf === tutorCpf)) {
+        showToast("Selecione um tutor e um pet válido antes de anexar arquivos.", "error");
+        return;
+    }
+
+    let enviados = 0;
+    let falhas = 0;
+    for (const arquivo of arquivos) {
+        const tiposAceitos = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'text/plain'];
+        if (!tiposAceitos.includes(arquivo.type) || arquivo.size < 1 || arquivo.size > 10485760) {
+            showToast(`${arquivo.name}: tipo não permitido ou arquivo acima de 10 MB.`, "error");
+            falhas++;
+            continue;
+        }
+        const caminho = `${petId}/${crypto.randomUUID()}-${nomeArquivoSeguro(arquivo.name)}`;
+        const storage = obterClienteSupabaseAuth().storage.from('dayvet-documentos');
+        const upload = await executarMutacaoSupabase("enviar o anexo", () =>
+            storage.upload(caminho, arquivo, { contentType: arquivo.type, upsert: false })
+        );
+        if (!upload.ok) {
+            falhas++;
+            continue;
+        }
+
+        const metadados = await executarMutacaoSupabase("registrar o anexo", () =>
+            obterClienteSupabaseAuth().from('documentos').insert({
+                tutor_cpf: tutorCpf,
+                pet_id: petId,
+                nome: arquivo.name.slice(0, 255),
+                mime_type: arquivo.type,
+                tamanho_bytes: arquivo.size,
+                storage_path: caminho,
+                criado_por: currentUser.id
+            }).select('*').single()
+        );
+        if (!metadados.ok) {
+            const remocao = await storage.remove([caminho]);
+            if (remocao.error) {
+                console.error("Arquivo enviado sem metadados e não removido do Storage.", remocao.error);
+                showToast("Um arquivo não foi registrado nem pôde ser removido do armazenamento. Avise o administrador.", "error");
+            }
+            falhas++;
+            continue;
+        }
+        anexosClinicos.unshift(window.DayVetPersistencia.mapearDocumento(metadados.data));
+        enviados++;
+    }
+
     renderizarAnexos();
-    confirmarEscrita(arquivos.length + " documento(s) anexado(s)");
+    if (enviados) confirmarEscrita(`${enviados} documento(s) anexado(s) e salvo(s)`);
+    if (falhas) showToast(`${falhas} arquivo(s) não foram anexados.`, "error");
 }
 
 function renderizarAnexos() {
@@ -1735,18 +2078,62 @@ function renderizarAnexos() {
                 <div class='flex items-center gap-2.5 min-w-0'>
                     <i data-lucide='paperclip' class='w-4 h-4 text-brand-blue shrink-0'></i>
                     <div class='min-w-0'>
-                        <p class='text-xs font-bold text-slate-200 truncate'>${a.nome}</p>
-                        <p class='text-[10px] text-slate-500'>${a.tamanhoKb} KB · ${a.data}${pet ? ' · ' + pet.nome : ''}${tutor ? ' · ' + tutor.nome : ''}</p>
+                        <p class='text-xs font-bold text-slate-200 truncate'>${escaparHtml(a.nome)}</p>
+                        <p class='text-[10px] text-slate-500'>${a.tamanhoKb} KB · ${escaparHtml(a.data)}${pet ? ' · ' + escaparHtml(pet.nome) : ''}${tutor ? ' · ' + escaparHtml(tutor.nome) : ''}</p>
                     </div>
                 </div>
-                ${temPermissao('clinica_excluir') ? `<button onclick="excluirAnexo('${a.id}')" class='text-[11px] text-rose-400 font-bold hover:underline shrink-0'>Excluir</button>` : ''}
+                <div class='flex items-center gap-3 shrink-0'>
+                    <button onclick="abrirAnexo('${a.id}')" class='text-[11px] text-brand-blue font-bold hover:underline'>Abrir</button>
+                    ${temPermissao('clinica_excluir') ? `<button onclick="excluirAnexo('${a.id}')" class='text-[11px] text-rose-400 font-bold hover:underline'>Excluir</button>` : ''}
+                </div>
             </div>
         `;
     });
     lucide.createIcons();
 }
 
-function excluirAnexo(id) {
+async function abrirAnexo(id) {
+    const anexo = anexosClinicos.find(a => a.id === id);
+    if (!anexo) return;
+    const janela = window.open('about:blank', '_blank');
+    if (!janela) {
+        showToast("Permita a abertura de uma nova aba para acessar o anexo.", "error");
+        return;
+    }
+    janela.opener = null;
+    const resultado = await executarMutacaoSupabase("gerar o link seguro do anexo", () =>
+        obterClienteSupabaseAuth().storage.from('dayvet-documentos')
+            .createSignedUrl(anexo.storagePath, 60)
+    );
+    if (!resultado.ok) {
+        janela.close();
+        return;
+    }
+    janela.location = resultado.data.signedUrl;
+}
+
+async function excluirAnexo(id) {
+    const anexo = anexosClinicos.find(a => a.id === id);
+    if (!anexo) return;
+    const removido = await executarMutacaoSupabase("excluir o registro do anexo", () =>
+        obterClienteSupabaseAuth().from('documentos')
+            .delete().eq('id', id).select('*').single()
+    );
+    if (!removido.ok) return;
+    const storage = obterClienteSupabaseAuth().storage.from('dayvet-documentos');
+    const arquivoRemovido = await storage.remove([anexo.storagePath]);
+    if (arquivoRemovido.error) {
+        console.error("Falha ao remover o arquivo do Storage; restaurando os metadados.", arquivoRemovido.error);
+        const restaurado = await executarMutacaoSupabase("restaurar os metadados do anexo", () =>
+            obterClienteSupabaseAuth().from('documentos').insert(removido.data).select('id').single()
+        );
+        if (!restaurado.ok) {
+            showToast("Falha ao remover o arquivo e ao restaurar seu registro. Avise o administrador.", "error");
+        } else {
+            showToast("Não foi possível remover o arquivo. O registro foi mantido.", "error");
+        }
+        return;
+    }
     anexosClinicos = anexosClinicos.filter(a => a.id !== id);
     renderizarAnexos();
     confirmarEscrita("Anexo excluído");
@@ -1761,7 +2148,7 @@ function resetarFormClinico() {
     document.getElementById('btn-cancelar-edit-clinico').classList.add('hidden');
 }
 
-function salvarRegistroClinico(e) {
+async function salvarRegistroClinico(e) {
     e.preventDefault();
     const editId = document.getElementById('clinica-edit-id').value;
     const tutorCpf = document.getElementById('clinica-tutor-select').value;
@@ -1774,20 +2161,35 @@ function salvarRegistroClinico(e) {
         showToast("Informe o tipo de vacinação.", "error");
         return;
     }
+    if (!tutorCpf || !petId || !pets.some(p => p.id === petId && p.tutorCpf === tutorCpf)) {
+        showToast("Selecione um tutor e um pet válido para o registro clínico.", "error");
+        return;
+    }
 
     if (editId) {
         const doc = historicoClinico.find(h => h.id === editId);
-        if (doc) {
-            doc.tutorCpf = tutorCpf;
-            doc.petId = petId;
-            doc.tipo = tipo;
-            doc.vacinaTipo = vacinaTipo;
-            doc.data = data;
-            doc.detalhe = detalhe;
-            confirmarEscrita("Documento atualizado");
-        }
+        if (!doc) { showToast("O documento não foi encontrado. Atualize a tela e tente novamente.", "error"); return; }
+        const atualizado = { ...doc, tutorCpf, petId, tipo, vacinaTipo, data, detalhe };
+        const payload = window.DayVetPersistencia.paraHistorico(atualizado, currentUser);
+        delete payload.veterinario_id;
+        delete payload.crmv;
+        delete payload.criado_por;
+        const resultado = await executarMutacaoSupabase("atualizar o documento clínico", () =>
+            obterClienteSupabaseAuth().from('historico_clinico')
+                .update(payload).eq('id', editId).select('*').single()
+        );
+        if (!resultado.ok) return;
+        Object.assign(doc, window.DayVetPersistencia.mapearHistorico(resultado.data));
+        confirmarEscrita("Documento atualizado");
     } else {
-        historicoClinico.unshift({ id: Date.now().toString(), tutorCpf, petId, tipo, vacinaTipo, data, detalhe });
+        const novoRegistro = { tutorCpf, petId, tipo, vacinaTipo, data, detalhe };
+        const resultado = await executarMutacaoSupabase("registrar o documento clínico", () =>
+            obterClienteSupabaseAuth().from('historico_clinico')
+                .insert(window.DayVetPersistencia.paraHistorico(novoRegistro, currentUser))
+                .select('*').single()
+        );
+        if (!resultado.ok) return;
+        historicoClinico.unshift(window.DayVetPersistencia.mapearHistorico(resultado.data));
         confirmarEscrita("Novo documento registrado");
     }
 
@@ -1814,10 +2216,8 @@ function imprimirDocumentoGenerico(id) {
     document.getElementById('doc-nome-tutor').innerText = tutor ? (tutor.nome + " (CPF " + tutor.cpf + ")") : 'N/A';
     document.getElementById('doc-data').innerText = doc.data;
     document.getElementById('doc-conteudo').innerText = doc.detalhe;
-    // RF-08 ILUSTRATIVO (protótipo): mostra como ficará nome+CRMV do vet.
-    // PREP pós-banco: prefere CRMV do veterinário logado (currentUser.crm) com fallback no mock.
-    // TODO [INTEGRAÇÃO SUPABASE - DB SQL]: buscar nome+CRMV do veterinário
-    //   logado (users JOIN profissional) + assinatura digital (pós-banco/LGPD).
+    // Nome e registro do veterinário vêm dos perfis reais; a assinatura digital
+    // segue pendente de implementação e validação jurídica.
     // Nome e CRMV andam juntos: admin/funcionário sem CRMV não assina documento
     // clínico — nesse caso assina o veterinário de referência (regra pura testada).
     const vetRef = (administradores && administradores[0]) || { nome: '—', crm: '—' };
@@ -1863,6 +2263,26 @@ function formatarMoeda(valor) {
     return "R$ " + valor.toFixed(2).replace('.', ',');
 }
 
+function atualizarKpisDashboard() {
+    const quantidadeAgendamentos = document.getElementById('kpi-agendamentos-count');
+    const notaAgendamentos = document.getElementById('kpi-agendamentos-nota');
+    const quantidadePets = document.getElementById('kpi-pacientes-count');
+    const quantidadeTutores = document.getElementById('kpi-tutores-count');
+    const naoCancelados = agendamentos.filter(a => a.status !== 'cancelado');
+    const confirmados = naoCancelados.filter(a => a.status === 'confirmado' || a.status === 'concluido').length;
+    const taxa = naoCancelados.length ? Math.round(confirmados / naoCancelados.length * 100) : 0;
+
+    if (quantidadeAgendamentos) quantidadeAgendamentos.textContent = `${agendamentos.length} Atendimentos`;
+    if (notaAgendamentos) notaAgendamentos.textContent = `${taxa}% confirmados/concluídos`;
+    if (quantidadePets) quantidadePets.textContent = `${pets.length} Pets`;
+    if (quantidadeTutores) quantidadeTutores.textContent =
+        `${tutores.filter(t => !t.arquivado).length} Tutores ativos`;
+}
+
+function dataLocalISO(data) {
+    return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+}
+
 function renderizarRelatorioServicos() {
     const body = document.getElementById('rel-servicos-table-body');
     if (!body) return;
@@ -1872,11 +2292,14 @@ function renderizarRelatorioServicos() {
     agendamentos.forEach(a => {
         const chave = /vacin/i.test(a.servico) && a.vacinaTipo ? a.servico + ' — ' + a.vacinaTipo : a.servico;
         if (!grupos[chave]) {
-            grupos[chave] = { qtde: 0, confirmados: 0, receita: 0 };
+            grupos[chave] = { qtde: 0, confirmados: 0, receita: 0, valoresCount: 0 };
         }
         grupos[chave].qtde += 1;
-        grupos[chave].receita += a.valor;
-        if (a.status === 'confirmado') grupos[chave].confirmados += 1;
+        if (a.status !== 'cancelado') {
+            grupos[chave].receita += Number(a.valor || 0);
+            grupos[chave].valoresCount += 1;
+        }
+        if (a.status === 'confirmado' || a.status === 'concluido') grupos[chave].confirmados += 1;
     });
 
     const servicos = Object.keys(grupos).sort((a, b) => grupos[b].receita - grupos[a].receita);
@@ -1886,13 +2309,13 @@ function renderizarRelatorioServicos() {
     servicos.forEach(nome => {
         const g = grupos[nome];
         const pctConfirmados = g.qtde > 0 ? Math.round((g.confirmados / g.qtde) * 100) : 0;
-        const ticketMedio = g.qtde > 0 ? g.receita / g.qtde : 0;
+        const ticketMedio = g.valoresCount > 0 ? g.receita / g.valoresCount : 0;
         receitaTotalGeral += g.receita;
         atendimentosTotalGeral += g.qtde;
 
         body.innerHTML += `
             <tr class='hover:bg-slate-900/60 border-b border-slate-800/50'>
-                <td class='py-3.5 px-6 font-bold text-slate-200'>${nome}</td>
+                <td class='py-3.5 px-6 font-bold text-slate-200'>${escaparHtml(nome)}</td>
                 <td class='py-3.5 px-6 text-slate-300'>${g.qtde}</td>
                 <td class='py-3.5 px-6 text-slate-300'>${pctConfirmados}%</td>
                 <td class='py-3.5 px-6 font-bold text-brand-lime'>${formatarMoeda(g.receita)}</td>
@@ -1921,7 +2344,8 @@ function renderizarRelatorioTutor() {
     const linhas = tutores.map(t => {
         const agendamentosDoTutor = agendamentos.filter(a => a.tutorCpf === t.cpf);
         const petsDoTutor = pets.filter(p => p.tutorCpf === t.cpf);
-        const valorTotal = agendamentosDoTutor.reduce((soma, a) => soma + a.valor, 0);
+        const atendimentosComValor = agendamentosDoTutor.filter(a => a.status !== 'cancelado');
+        const valorTotal = atendimentosComValor.reduce((soma, a) => soma + Number(a.valor || 0), 0);
         const ultimaData = agendamentosDoTutor.length > 0
             ? agendamentosDoTutor.map(a => a.data).sort().reverse()[0]
             : null;
@@ -1941,11 +2365,11 @@ function renderizarRelatorioTutor() {
     linhas.forEach(l => {
         body.innerHTML += `
             <tr class='hover:bg-slate-900/60 border-b border-slate-800/50'>
-                <td class='py-3.5 px-6 font-bold text-slate-200'>${l.nome}</td>
+                <td class='py-3.5 px-6 font-bold text-slate-200'>${escaparHtml(l.nome)}</td>
                 <td class='py-3.5 px-6 text-slate-300'>${l.pets}</td>
                 <td class='py-3.5 px-6 text-slate-300'>${l.qtde}</td>
                 <td class='py-3.5 px-6 font-bold text-brand-lime'>${formatarMoeda(l.valorTotal)}</td>
-                <td class='py-3.5 px-6 text-slate-300'>${l.ultimaData || '—'}</td>
+                <td class='py-3.5 px-6 text-slate-300'>${escaparHtml(l.ultimaData || '—')}</td>
             </tr>
         `;
     });
@@ -1955,7 +2379,8 @@ function renderizarRelatorioTutor() {
     }
 
     document.getElementById('rel-tutor-ativos').innerText = tutoresAtivos;
-    document.getElementById('rel-tutor-ticket-medio').innerText = formatarMoeda(agendamentos.length > 0 ? receitaTotalGeral / agendamentos.length : 0);
+    const totalComValor = agendamentos.filter(a => a.status !== 'cancelado').length;
+    document.getElementById('rel-tutor-ticket-medio').innerText = formatarMoeda(totalComValor > 0 ? receitaTotalGeral / totalComValor : 0);
     document.getElementById('rel-tutor-receita-total').innerText = formatarMoeda(receitaTotalGeral);
 }
 
@@ -1977,7 +2402,7 @@ function renderizarRelatorioPeriodo() {
     filtrados.forEach(a => {
         const pet = pets.find(p => p.id === a.petId);
         const tutor = tutores.find(t => t.cpf === a.tutorCpf);
-        receitaTotal += a.valor;
+        if (a.status !== 'cancelado') receitaTotal += Number(a.valor || 0);
 
         let badge = "";
         if (a.status === 'confirmado') {
@@ -1991,14 +2416,14 @@ function renderizarRelatorioPeriodo() {
         body.innerHTML += `
             <tr class='hover:bg-slate-900/60 border-b border-slate-800/50'>
                 <td class='py-3.5 px-6 text-slate-300'>
-                    <div>${a.data}</div>
-                    <div class='text-[10px] text-brand-pink font-bold'>${a.hora}</div>
+                    <div>${escaparHtml(a.data)}</div>
+                    <div class='text-[10px] text-brand-pink font-bold'>${escaparHtml(a.hora)}</div>
                 </td>
                 <td class='py-3.5 px-6'>
-                    <div class='font-bold text-slate-200'>${pet ? pet.nome : 'N/A'}</div>
-                    <div class='text-[10px] text-slate-500'>${tutor ? tutor.nome : 'N/A'}</div>
+                    <div class='font-bold text-slate-200'>${escaparHtml(pet ? pet.nome : 'N/A')}</div>
+                    <div class='text-[10px] text-slate-500'>${escaparHtml(tutor ? tutor.nome : 'N/A')}</div>
                 </td>
-                <td class='py-3.5 px-6 text-slate-300 font-semibold'>${a.servico}</td>
+                <td class='py-3.5 px-6 text-slate-300 font-semibold'>${escaparHtml(a.servico)}</td>
                 <td class='py-3.5 px-6'>${badge}</td>
                 <td class='py-3.5 px-6 font-bold text-slate-200'>${formatarMoeda(a.valor)}</td>
             </tr>
@@ -2011,7 +2436,9 @@ function renderizarRelatorioPeriodo() {
 
     document.getElementById('rel-periodo-qtde').innerText = filtrados.length;
     document.getElementById('rel-periodo-receita').innerText = formatarMoeda(receitaTotal);
-    document.getElementById('rel-periodo-ticket').innerText = formatarMoeda(filtrados.length > 0 ? receitaTotal / filtrados.length : 0);
+    const agendamentosComValor = filtrados.filter(a => a.status !== 'cancelado').length;
+    document.getElementById('rel-periodo-ticket').innerText =
+        formatarMoeda(agendamentosComValor > 0 ? receitaTotal / agendamentosComValor : 0);
 }
 
 function limparFiltroPeriodo() {
@@ -2026,7 +2453,7 @@ function fecharModalGerarRelatorios() { document.getElementById('modal-gerar-rel
 function executarGeracaoRelatorio() {
     const tipo = document.getElementById('relatorio-tipo').value;
     fecharModalGerarRelatorios();
-    showToast("Relatório (" + tipo + ") gerado com sucesso! Abrindo janela de impressão...");
+    showToast("Abrindo a janela de impressão do relatório (" + tipo + ").");
     setTimeout(() => window.print(), 500);
 }
 
@@ -2039,38 +2466,49 @@ function renderizarUsuarios() {
     if (!body) return;
     body.innerHTML = '';
 
-    usuariosMock.forEach(u => {
+    usuarios.forEach(u => {
+        const status = u.deletedAt ? 'Acesso excluído' : (u.active ? 'Ativo' : 'Inativo');
         body.innerHTML += `
             <tr class='hover:bg-slate-900/60 border-b border-slate-800/50'>
-                <td class='py-3.5 px-6 font-bold text-slate-200'>${u.nome}</td>
+                <td class='py-3.5 px-6 font-bold text-slate-200'>${escaparHtml(u.nome)}</td>
                 <td class='py-3.5 px-6 text-brand-lime font-bold uppercase text-[11px]'>${formatarCargo(u.role)}</td>
-                <td class='py-3.5 px-6 text-slate-400'>${u.cpf}</td>
+                <td class='py-3.5 px-6 text-slate-400'>${escaparHtml(u.cpf)}</td>
+                <td class='py-3.5 px-6 text-slate-400'>${status}</td>
                 <td class='py-3.5 px-6 text-right space-x-2'>
-                    <button onclick="abrirModalEditarPermissao('${u.id}', '${u.role}')" class='text-brand-blue font-bold hover:underline text-xs'>Editar Permissão</button>
-                    <button onclick="excluirUsuarioLogin('${u.id}')" class='text-rose-400 font-bold hover:underline text-xs'>Excluir Login</button>
+                    ${u.id !== currentUser?.id ? `<button onclick="abrirModalEditarPermissao('${u.id}', '${u.role}')" class='text-brand-blue font-bold hover:underline text-xs'>Editar Permissão</button>` : ''}
+                    ${u.id !== currentUser?.id ? `<button onclick="alternarAcessoUsuario('${u.id}')" class='text-amber-400 font-bold hover:underline text-xs'>${u.active ? 'Desativar' : 'Reativar'}</button>` : ''}
+                    ${u.id !== currentUser?.id ? `<button onclick="excluirUsuarioLogin('${u.id}')" class='text-rose-400 font-bold hover:underline text-xs'>Excluir Login</button>` : ''}
                 </td>
             </tr>
         `;
     });
 }
 
-function abrirModalUsuario() { document.getElementById('modal-usuario').classList.remove('hidden'); }
+function abrirModalUsuario() {
+    document.getElementById('user-new-crm').value = '';
+    document.getElementById('user-new-crm-validade').value = '';
+    document.getElementById('modal-usuario').classList.remove('hidden');
+    atualizarCamposCrmvUsuario();
+}
 function fecharModalUsuario() { document.getElementById('modal-usuario').classList.add('hidden'); }
 
-// O QUE: Cria novo usuario com validacao de CPF, email e unicidade.
-// PORQUÊ: Garante dados obrigatorios validos antes de inserir no mock.
-// DEMO (mock): Insercao direta em usuariosMock; senhas geradas por admins.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
-//   POST /api/users { nome, cpf, email, role } — backend valida CPF com
-//   algoritmo RF, unicidade UNIQUE constraints, e retorna senha temporaria
-//   gerada por crypto.randomBytes(). Senha temporaria enviada por email.
-//   mustChange=true por padrao. LGPD: log de criacao com criadoPor.
-function salvarNovoUsuario(e) {
+function atualizarCamposCrmvUsuario() {
+    const veterinario = document.getElementById('user-new-role').value === 'veterinario';
+    const campos = document.getElementById('campos-crmv-usuario');
+    campos.classList.toggle('hidden', !veterinario);
+    document.getElementById('user-new-crm').required = veterinario;
+    document.getElementById('user-new-crm-validade').required = veterinario;
+}
+
+// Cria usuário no Auth e no perfil público por Edge Function administrativa.
+async function salvarNovoUsuario(e) {
     e.preventDefault();
     const nome = document.getElementById('user-new-nome').value.trim();
     const cpf = document.getElementById('user-new-cpf').value.trim();
     const email = document.getElementById('user-new-email').value.trim().toLowerCase();
     const role = document.getElementById('user-new-role').value;
+    const crm = document.getElementById('user-new-crm').value.trim();
+    const crmValidade = document.getElementById('user-new-crm-validade').value;
 
     // Valida CPF: apenas digitos + dígito verificador
     if (!validarCPF(cpf)) {
@@ -2085,78 +2523,126 @@ function salvarNovoUsuario(e) {
     }
 
     // Verifica unicidade de CPF (sem revelar qual campo duplicou)
-    if (usuariosMock.some(u => u.cpf === cpf)) {
+    if (usuarios.some(u => u.cpf === cpf)) {
         showToast("Credenciais inválidas", "error");
         return;
     }
 
     // Verifica unicidade de e-mail
-    if (usuariosMock.some(u => u.email.toLowerCase() === email)) {
+    if (usuarios.some(u => u.email.toLowerCase() === email)) {
         showToast("Credenciais inválidas", "error");
         return;
     }
 
-    // Senha padrao e mustChange=true: obriga usuario a trocar no primeiro login
-    // TODO [INTEGRAÇÃO SUPABASE - DB SQL] Gerar senha temporaria aleatoria no backend + enviar por email
-    const senhaTemp = cpf.replace(/\D/g, '').slice(-4) + 'Temp1!';
+    // A Edge Function gera senha temporária e mustChange=true; o administrador a entrega por canal seguro.
+    if (role === 'veterinario' && (!crm || !crmValidade || crmValidade < hojeISO())) {
+        showToast("Informe o CRMV e uma validade vigente para o veterinário.", "error");
+        return;
+    }
 
-    usuariosMock.push({
-        id: Date.now().toString(),
-        nome,
-        cpf,
-        email,
-        role,
-        password_demo: senhaTemp,
-        mustChange: true,
-        active: true,
-        criadoPor: currentUser ? currentUser.id : 'sistema',
-        criadoEm: new Date().toISOString().slice(0, 10)
-    });
-
+    const resultado = await executarMutacaoSupabase("criar o usuário", () =>
+        obterClienteSupabaseAuth().functions.invoke('admin-criar-usuario', {
+            body: { nome, cpf, email, role, crm, crm_validade: crmValidade }
+        })
+    );
+    if (!resultado.ok || !resultado.data?.usuario || !resultado.data?.senha_temporaria) return;
+    usuarios.push(window.DayVetPersistencia.mapearUsuario(resultado.data.usuario));
     fecharModalUsuario();
     renderizarUsuarios();
     confirmarEscrita("Novo usuário criado");
+    document.getElementById('senha-temporaria-gerada').value = resultado.data.senha_temporaria;
+    document.getElementById('modal-senha-temporaria').classList.remove('hidden');
+}
+
+function fecharModalSenhaTemporaria() {
+    document.getElementById('senha-temporaria-gerada').value = '';
+    document.getElementById('modal-senha-temporaria').classList.add('hidden');
+}
+
+async function copiarSenhaTemporaria() {
+    const senha = document.getElementById('senha-temporaria-gerada').value;
+    if (!senha) return;
+    try {
+        await navigator.clipboard.writeText(senha);
+        showToast("Senha temporária copiada.");
+    } catch (erro) {
+        console.error("Falha ao copiar a senha temporária.", erro);
+        showToast("Não foi possível copiar. Selecione e copie a senha manualmente.", "error");
+    }
 }
 
 function abrirModalEditarPermissao(id, roleAtual) {
+    if (id === currentUser?.id) {
+        showToast("Não é possível alterar o próprio perfil administrativo.", "error");
+        return;
+    }
     document.getElementById('permissao-user-id').value = id;
     document.getElementById('permissao-user-role').value = roleAtual;
     document.getElementById('modal-editar-permissao').classList.remove('hidden');
 }
 function fecharModalEditarPermissao() { document.getElementById('modal-editar-permissao').classList.add('hidden'); }
 
-function salvarPermissaoUsuario(e) {
+async function salvarPermissaoUsuario(e) {
     e.preventDefault();
     const id = document.getElementById('permissao-user-id').value;
     const novaRole = document.getElementById('permissao-user-role').value;
-    const user = usuariosMock.find(u => u.id === id);
-    if (user) {
-        user.role = novaRole;
-        renderizarUsuarios();
-        confirmarEscrita("Permissão de login alterada");
+    const user = usuarios.find(u => u.id === id);
+    if (!user || id === currentUser?.id) {
+        showToast("Não foi possível alterar este perfil.", "error");
+        return;
     }
+    const resultado = await executarMutacaoSupabase("alterar a permissão do usuário", () =>
+        obterClienteSupabaseAuth().from('usuarios')
+            .update({ role: novaRole }).eq('id', id).select('*').single()
+    );
+    if (!resultado.ok) return;
+    Object.assign(user, window.DayVetPersistencia.mapearUsuario(resultado.data));
+    renderizarUsuarios();
     fecharModalEditarPermissao();
+    confirmarEscrita("Permissão de login alterada");
 }
 
-function excluirUsuarioLogin(id) {
-    // TODO [INTEGRAÇÃO SUPABASE]:
-    // Enviar DELETE /api/users/:id para remover o registro.
-    usuariosMock = usuariosMock.filter(u => u.id !== id);
+async function alternarAcessoUsuario(id) {
+    const user = usuarios.find(u => u.id === id);
+    if (!user || id === currentUser?.id) return;
+    const reativar = !user.active;
+    const resultado = await executarMutacaoSupabase(reativar ? "reativar o usuário" : "desativar o usuário", () =>
+        obterClienteSupabaseAuth().from('usuarios')
+            .update(reativar
+                ? { active: true, deleted_at: null }
+                : { active: false, deleted_at: null })
+            .eq('id', id).select('*').single()
+    );
+    if (!resultado.ok) return;
+    Object.assign(user, window.DayVetPersistencia.mapearUsuario(resultado.data));
     renderizarUsuarios();
-    showToast("Login excluído do sistema!");
+    confirmarEscrita(reativar ? "Acesso reativado" : "Acesso desativado");
+}
+
+async function excluirUsuarioLogin(id) {
+    if (id === currentUser?.id) {
+        showToast("Não é possível excluir o próprio acesso administrativo.", "error");
+        return;
+    }
+    const user = usuarios.find(u => u.id === id);
+    if (!user || !confirm(`Excluir o acesso de ${user.nome}? O perfil será mantido para preservar o histórico.`)) return;
+    const resultado = await executarMutacaoSupabase("excluir o acesso do usuário", () =>
+        obterClienteSupabaseAuth().from('usuarios')
+            .update({ active: false, deleted_at: new Date().toISOString() })
+            .eq('id', id).select('*').single()
+    );
+    if (!resultado.ok) return;
+    Object.assign(user, window.DayVetPersistencia.mapearUsuario(resultado.data));
+    renderizarUsuarios();
+    confirmarEscrita("Acesso excluído");
 }
 
 // ==========================================================
-// SEÇÃO 3b: RECUPERAÇÃO DE SENHA (fluxo demo)
+// SEÇÃO 3b: RECUPERAÇÃO DE SENHA (Supabase Auth)
 // ==========================================================
 
 // O QUE: Abre modal de recuperar senha na etapa 1 (informar CPF/email).
 // PORQUÊ: Permite ao usuario iniciar fluxo de reset quando esqueceu a senha.
-// DEMO (mock): Modal HTML simples; etapa 1 visivel, etapa 2 oculta.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
-//   POST /api/password-reset/request { identifier } → gera token JWT
-//   com expiração de 15 min, envia email com link de reset.
-//   Rate-limit: max 3 requests por hora por identificador.
 function abrirModalRecuperarSenha() {
     document.getElementById('modal-recuperar-senha').classList.remove('hidden');
     document.getElementById('recuperar-etapa-1').classList.remove('hidden');
@@ -2169,26 +2655,30 @@ function abrirModalRecuperarSenha() {
     atualizarIndicadoresRegraSenha('');
 }
 
+function abrirEtapaRedefinirSenha() {
+    document.getElementById('modal-recuperar-senha').classList.remove('hidden');
+    document.getElementById('recuperar-etapa-1').classList.add('hidden');
+    document.getElementById('recuperar-etapa-2').classList.remove('hidden');
+    document.getElementById('btn-recuperar-proximo').classList.add('hidden');
+    document.getElementById('btn-recuperar-confirmar').classList.remove('hidden');
+    atualizarIndicadoresRegraSenha('');
+}
+
 // O QUE: Fecha modal de recuperar senha e reseta campos.
 // PORQUÊ: Limpa estado do modal para proxima abertura.
-// DEMO (mock): Apenas esconde o modal e limpa inputs.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] Invalidar token de reset se modal for fechado.
 function fecharModalRecuperarSenha() {
     document.getElementById('modal-recuperar-senha').classList.add('hidden');
+    document.getElementById('recuperar-etapa-1').classList.remove('hidden');
+    document.getElementById('recuperar-etapa-2').classList.add('hidden');
+    document.getElementById('btn-recuperar-proximo').classList.remove('hidden');
+    document.getElementById('btn-recuperar-confirmar').classList.add('hidden');
     document.getElementById('recuperar-cpf').value = '';
     document.getElementById('recuperar-nova-senha').value = '';
     document.getElementById('recuperar-confirmar-senha').value = '';
 }
 
-// O QUE: Avanca para etapa 2 (definir nova senha) apos informar CPF/email.
-// PORQUÊ: Simula envio de email de verificacao; sempre mostra toast "demo".
-//   Se usuario nao existir, mesma mensagem (nao revela existencia).
-// DEMO (mock): Sempre avanca para etapa 2 independente do CPF/email informado.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
-//   Backend verifica se identifier existe na tabela users. Se existir,
-//   gera token de reset e envia email. Resposta sempre 200 OK (mesmo se
-//   identifier nao existe) para prevenir enumerate accounts via timing.
-function recuperarSenhaProximo() {
+// O QUE: Solicita por e-mail um link de redefinição sem revelar se a conta existe.
+async function recuperarSenhaProximo() {
     const identifier = document.getElementById('recuperar-cpf').value.trim();
 
     if (!identifier) {
@@ -2196,28 +2686,31 @@ function recuperarSenhaProximo() {
         return;
     }
 
-    // Toast "demo" — sempre exibe independente de o usuario existir
-    showToast("E-mail de verificação enviado (demo)! Verifique sua caixa de entrada.", "info");
-
-    // Avanca para etapa 2
-    document.getElementById('recuperar-etapa-1').classList.add('hidden');
-    document.getElementById('recuperar-etapa-2').classList.remove('hidden');
-    document.getElementById('btn-recuperar-proximo').classList.add('hidden');
-    document.getElementById('btn-recuperar-confirmar').classList.remove('hidden');
+    try {
+        const cliente = obterClienteSupabaseAuth();
+        const { data: email, error: erroResolver } = await cliente.rpc('resolver_login', {
+            p_identificador: identifier
+        });
+        if (erroResolver) throw erroResolver;
+        if (typeof email === 'string' && email) {
+            const redirectTo = window.location.origin === 'null'
+                ? 'https://agendau-2.vercel.app/dayvet/'
+                : `${window.location.origin}${window.location.pathname}`;
+            const { error } = await cliente.auth.resetPasswordForEmail(email, { redirectTo });
+            if (error) throw error;
+        }
+        showToast("Se a conta corresponder aos dados informados, você receberá um link para redefinir a senha.", "info");
+        fecharModalRecuperarSenha();
+    } catch (erro) {
+        console.error("Falha ao solicitar redefinição de senha.", erro);
+        showToast("Não foi possível solicitar a redefinição. Tente novamente.", "error");
+    }
 }
 
-// O QUE: Valida e aplica nova senha, atualizando usuariosMock.
-// PORQUÊ: Fecha ciclo de recuperacao com politica de senha forte.
-// DEMO (mock): Atualiza password_demo e mustChange=false no array.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
-//   POST /api/password-reset/confirm { token, novaSenha }
-//   → backend valida token JWT, aplica bcrypt.hash(novaSenha, 12),
-//   atualiza password_hash e mustChange=false. Token invalidado apos uso.
-//   LGPD: historico de senhas N ultimas para evitar reutilizacao.
-function recuperarSenhaConfirmar() {
+// O QUE: Valida a senha e conclui a redefinição na sessão autenticada pelo link.
+async function recuperarSenhaConfirmar() {
     const novaSenha = document.getElementById('recuperar-nova-senha').value;
     const confirmarSenha = document.getElementById('recuperar-confirmar-senha').value;
-    const identifier = document.getElementById('recuperar-cpf').value.trim();
 
     if (!novaSenha || !confirmarSenha) {
         showToast("Preencha os dois campos de senha.", "error");
@@ -2234,17 +2727,32 @@ function recuperarSenhaConfirmar() {
         return;
     }
 
-    // Busca usuário por usuário/CPF/e-mail para atualizar a senha (mesma regra do login)
-    const user = RegrasLogin.encontraUsuario(usuariosMock, identifier);
-
-    // Se usuario nao existe no mock, apenas mostra sucesso (demo)
-    if (user) {
-        user.password_demo = novaSenha;
-        user.mustChange = false;
+    let senhaAtualizada = false;
+    try {
+        const cliente = obterClienteSupabaseAuth();
+        const { error: erroSenha } = await cliente.auth.updateUser({ password: novaSenha });
+        if (erroSenha) throw erroSenha;
+        senhaAtualizada = true;
+        const { error: erroFlag } = await cliente.rpc('marcar_senha_alterada');
+        if (erroFlag) {
+            console.error("Senha redefinida, mas a flag de primeiro acesso não foi atualizada.", erroFlag);
+            showToast("Senha alterada, mas não foi possível atualizar o primeiro acesso. Entre em contato com o administrador.", "error");
+            return;
+        }
+        const { error: erroSaida } = await cliente.auth.signOut();
+        if (erroSaida) throw erroSaida;
+        currentUser = null;
+        currentRole = '';
+        limparDadosAutenticados();
+        fecharModalRecuperarSenha();
+        document.getElementById('login-screen').classList.remove('hidden');
+        showToast("Senha alterada com sucesso. Faça login com a nova senha.");
+    } catch (erro) {
+        console.error("Falha ao redefinir a senha.", erro);
+        showToast(senhaAtualizada
+            ? "Senha alterada, mas não foi possível encerrar a sessão. Recarregue a página antes de entrar novamente."
+            : "Não foi possível alterar a senha. O link pode ter expirado.", "error");
     }
-
-    fecharModalRecuperarSenha();
-    showToast("Senha alterada com sucesso! Faça login com a nova senha.");
 }
 
 // ==========================================================
@@ -2253,11 +2761,8 @@ function recuperarSenhaConfirmar() {
 
 // O QUE: Abre modal de troca forçada quando mustChange=true no login.
 // PORQUÊ: Obriga usuario a definir senha forte antes de acessar o sistema.
-// DEMO (mock): Modal simples com campos de nova senha e confirmacao.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] (tabela users + endpoint + bcrypt/LGPD):
-//   Endpoint POST /api/users/:id/change-password com Bearer token.
-//   Após mustChange=false, emitir novo JWT. LGPD: logs de alteracao
-//   de senha com timestamp e IP (sem expor hash).
+// Supabase Auth atualiza a senha; a RPC marca_senha_alterada baixa a flag
+// must_change sem permitir que o usuário altere outros dados do perfil.
 let _mustChangeUser = null;
 function abrirModalForcarTrocaSenha(user) {
     _mustChangeUser = user;
@@ -2270,13 +2775,26 @@ function abrirModalForcarTrocaSenha(user) {
     atualizarIndicadoresForcarSenha('');
 }
 
-function fecharModalForcarTrocaSenha() {
+async function fecharModalForcarTrocaSenha(encerraSessao = true) {
+    const user = _mustChangeUser;
     document.getElementById('forcar-senha-etapa').classList.add('hidden');
     document.getElementById('login-screen').classList.remove('hidden');
     _mustChangeUser = null;
+    if (encerraSessao && user && MODO_AUTENTICACAO === 'supabase') {
+        try {
+            const { error } = await obterClienteSupabaseAuth().auth.signOut();
+            if (error) {
+                console.error("Falha ao encerrar sessão após cancelar a troca de senha.", error);
+                showToast("Não foi possível encerrar a sessão. Tente novamente.", "error");
+            }
+        } catch (erro) {
+            console.error("Falha de comunicação ao cancelar a troca de senha.", erro);
+            showToast("Não foi possível encerrar a sessão. Tente novamente.", "error");
+        }
+    }
 }
 
-function confirmarForcarTrocaSenha() {
+async function confirmarForcarTrocaSenha() {
     const novaSenha = document.getElementById('forcar-senha-nova').value;
     const confirmarSenha = document.getElementById('forcar-senha-confirmar').value;
 
@@ -2295,27 +2813,39 @@ function confirmarForcarTrocaSenha() {
         return;
     }
 
-    if (_mustChangeUser) {
-        // Atualiza no mock
-        const user = usuariosMock.find(u => u.id === _mustChangeUser.id);
-        if (user) {
-            user.password_demo = novaSenha;
-            user.mustChange = false;
+    if (!_mustChangeUser) return;
+    const userObj = { ..._mustChangeUser };
+    const cliente = obterClienteSupabaseAuth();
+    try {
+        const { error: erroSenha } = await cliente.auth.updateUser({ password: novaSenha });
+        if (erroSenha) throw erroSenha;
+
+        const { error: erroFlag } = await cliente.rpc('marcar_senha_alterada');
+        if (erroFlag) {
+            console.error("Falha ao registrar a troca obrigatória de senha.", erroFlag);
+            showToast("A senha foi alterada, mas não foi possível concluir o primeiro acesso.", "error");
+            return;
         }
 
-        fecharModalForcarTrocaSenha();
-
-        // Login automatico apos troca
-        const userObj = { id: _mustChangeUser.id, nome: _mustChangeUser.nome, role: _mustChangeUser.role, profissao: _mustChangeUser.role };
-        realizarLogin(userObj, _mustChangeUser.role);
+        await fecharModalForcarTrocaSenha(false);
+        try {
+            await carregarDadosAutenticados(userObj);
+        } catch (erroDados) {
+            console.error("Senha alterada, mas os dados não puderam ser carregados.", erroDados);
+            await cliente.auth.signOut();
+            showToast("Senha alterada, mas não foi possível carregar os dados. Faça login novamente.", "error");
+            return;
+        }
+        realizarLogin(userObj, userObj.role);
         showToast("Senha alterada com sucesso!");
+    } catch (erro) {
+        console.error("Falha de comunicação ao alterar a senha.", erro);
+        showToast("Não foi possível concluir a troca de senha.", "error");
     }
 }
 
-// O QUE: Atualiza indicadores visuais (○/●) das regras de senha no modal de recuperação.
+// O QUE: Atualiza indicadores visuais das regras de senha no modal de recuperação.
 // PORQUÊ: Feedback em tempo real das regras de validação para o usuário.
-// DEMO (mock): Atualiza classes CSS dos elementos #regra-* conforme input.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] Mesma lógica aplicável no frontend do formulário de reset via email.
 function atualizarIndicadoresRegraSenha(senha) {
     const mapa = {
         'regra-tamanho': senha.length >= 8,
@@ -2331,8 +2861,6 @@ function atualizarIndicadoresRegraSenha(senha) {
 
 // O QUE: Atualiza indicadores visuais das regras no modal de troca forçada.
 // PORQUÊ: Feedback em tempo real durante primeiro login (mustChange).
-// DEMO (mock): Mesma logica dos indicadores de recuperacao.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL] Componente reutilizavel no frontend.
 function atualizarIndicadoresForcarSenha(senha) {
     const mapa = {
         'forcar-regra-tamanho': senha.length >= 8,
@@ -2346,15 +2874,88 @@ function atualizarIndicadoresForcarSenha(senha) {
     });
 }
 
-function abrirModalHorarioFuncionamento() { document.getElementById('modal-horario-funcionamento').classList.remove('hidden'); }
+function aplicarConfiguracaoHoraria() {
+    const seletorModo = document.getElementById('config-horario');
+    const abertura = document.getElementById('horario-abertura');
+    const fechamento = document.getElementById('horario-fechamento');
+    const fds = document.getElementById('horario-fds');
+    const horarioAgendamento = document.getElementById('agend-hora');
+
+    if (seletorModo) seletorModo.value = configuracaoClinica.modoRestricao;
+    if (abertura) abertura.value = configuracaoClinica.horaAbertura;
+    if (fechamento) fechamento.value = configuracaoClinica.horaFechamento;
+    if (fds) fds.value = configuracaoClinica.funcionamentoFds;
+    if (horarioAgendamento) {
+        horarioAgendamento.min = configuracaoClinica.modoRestricao === 'comercial'
+            ? configuracaoClinica.horaAbertura : '';
+        horarioAgendamento.max = configuracaoClinica.modoRestricao === 'comercial'
+            ? configuracaoClinica.horaFechamento : '';
+    }
+}
+
+function horarioAgendamentoPermitido(data, hora) {
+    if (!data || !hora) return false;
+    if (configuracaoClinica.modoRestricao === 'livre') return true;
+
+    const dataLocal = new Date(`${data}T12:00:00`);
+    if (Number.isNaN(dataLocal.getTime())) return false;
+    const dia = dataLocal.getDay();
+    if (dia === 0) return configuracaoClinica.funcionamentoFds === 'direto';
+    if (dia === 6) {
+        if (configuracaoClinica.funcionamentoFds === 'fechado') return false;
+        if (configuracaoClinica.funcionamentoFds === 'direto') return true;
+        const fechamentoSabado = configuracaoClinica.horaFechamento < '12:00'
+            ? configuracaoClinica.horaFechamento : '12:00';
+        return hora >= configuracaoClinica.horaAbertura && hora <= fechamentoSabado;
+    }
+    return hora >= configuracaoClinica.horaAbertura && hora <= configuracaoClinica.horaFechamento;
+}
+
+async function atualizarConfiguracaoClinica(campos, acao) {
+    const resultado = await executarMutacaoSupabase(acao, () =>
+        obterClienteSupabaseAuth().from('configuracoes_clinica')
+            .update({ ...campos, atualizado_por: currentUser.id })
+            .eq('id', true).select('*').single()
+    );
+    if (!resultado.ok) {
+        aplicarConfiguracaoHoraria();
+        return false;
+    }
+    if (!resultado.data) {
+        console.error("O Supabase não retornou a configuração atualizada da clínica.");
+        showToast("Não foi possível confirmar a configuração atualizada.", "error");
+        aplicarConfiguracaoHoraria();
+        return false;
+    }
+    configuracaoClinica = window.DayVetPersistencia.mapearConfiguracao(resultado.data);
+    configRestricao = configuracaoClinica.modoRestricao;
+    aplicarConfiguracaoHoraria();
+    return true;
+}
+
+function abrirModalHorarioFuncionamento() {
+    aplicarConfiguracaoHoraria();
+    document.getElementById('modal-horario-funcionamento').classList.remove('hidden');
+}
 function fecharModalHorarioFuncionamento() { document.getElementById('modal-horario-funcionamento').classList.add('hidden'); }
 
-function salvarHorarioFuncionamento(e) {
+async function salvarHorarioFuncionamento(e) {
     e.preventDefault();
     const ab = document.getElementById('horario-abertura').value;
     const fech = document.getElementById('horario-fechamento').value;
+    if (ab >= fech) {
+        showToast("O horário de fechamento deve ser posterior à abertura.", "error");
+        return;
+    }
+    const salvo = await atualizarConfiguracaoClinica({
+        hora_abertura: ab,
+        hora_fechamento: fech,
+        modo_restricao: document.getElementById('config-horario').value,
+        funcionamento_fds: document.getElementById('horario-fds').value
+    }, "salvar o horário de funcionamento");
+    if (!salvo) return;
     fecharModalHorarioFuncionamento();
-    showToast("Horário de funcionamento atualizado para (" + ab + " às " + fech + ")!");
+    confirmarEscrita("Horário de funcionamento atualizado");
 }
 
 // Popular dropdowns de tutores (por CPF) e pets filtrados para a aba clínica
@@ -2378,7 +2979,7 @@ function filtrarPetsClinicaPorTutor() {
         ? '<option value="">Selecione o paciente...</option>'
         : '<option value="">Selecione o tutor primeiro...</option>';
     pets.filter(p => p.tutorCpf === tutorCpf).forEach(p => {
-        selectP.innerHTML += `<option value="${p.id}">${p.nome} (${p.especie} - ${p.raca})</option>`;
+        selectP.innerHTML += `<option value="${escaparHtml(p.id)}">${escaparHtml(p.nome)} (${escaparHtml(p.especie)} - ${escaparHtml(p.raca)})</option>`;
     });
 }
 
@@ -2397,13 +2998,13 @@ function inicializarGraficos() {
     if (ctx1) {
         if (financeChartRef) financeChartRef.destroy();
         const periodo = document.getElementById('periodo-faturamento')?.value || 'mensal';
-        const dados = DADOS_FATURAMENTO[periodo] || DADOS_FATURAMENTO.mensal;
+        const dados = obterDadosFaturamento(periodo);
         financeChartRef = new Chart(ctx1, {
             type: 'line',
             data: {
                 labels: dados.labels,
                 datasets: [{
-                    label: 'Receita (R$)',
+                    label: 'Valor dos atendimentos (R$)',
                     data: dados.valores,
                     borderColor: '#0066ff',
                     backgroundColor: 'rgba(0, 102, 255, 0.1)',
@@ -2425,28 +3026,84 @@ function inicializarGraficos() {
     }
 }
 
-// O QUE: Datasets ilustrativos do faturamento por período (dashboard).
-// PORQUÊ: O select #periodo-faturamento chamava atualizarPeriodoFaturamento(), que não existia.
-// DEMO (mock): valores ilustrativos; com banco, agregar `agendamentos` por data.
-// TODO [INTEGRAÇÃO SUPABASE - DB SQL]: SELECT date_trunc + sum(valor) FROM agendamentos WHERE status='confirmado'.
-const DADOS_FATURAMENTO = {
-    mensal: { labels: ['01/Mai', '05/Mai', '10/Mai', '15/Mai', '18/Mai'], valores: [1800, 3200, 5400, 8900, 12850], kpi: 'R$ 12.850,00', nota: '+18.4% vs mês anterior' },
-    semanal: { labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'], valores: [450, 700, 520, 980, 1200, 1650, 900], kpi: 'R$ 6.400,00', nota: '+9.2% vs semana anterior' },
-    anual: { labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'], valores: [42000, 48500, 51200, 47800, 55900, 60100], kpi: 'R$ 305.500,00', nota: '+12.6% vs semestre anterior' }
-};
+function somarAtendimentosNoPeriodo(inicio, fim) {
+    const inicioISO = dataLocalISO(inicio);
+    const fimISO = dataLocalISO(fim);
+    return agendamentos
+        .filter(a => (a.status === 'confirmado' || a.status === 'concluido') &&
+            a.data >= inicioISO && a.data < fimISO)
+        .reduce((total, a) => total + Number(a.valor || 0), 0);
+}
+
+function obterDadosFaturamento(periodo) {
+    const hoje = new Date();
+    const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    let inicioPeriodo;
+    let fimPeriodo;
+    let inicioAnterior;
+    let fimAnterior;
+    let quantidade;
+    let rotulos;
+
+    if (periodo === 'semanal') {
+        inicioPeriodo = new Date(inicio);
+        inicioPeriodo.setDate(inicioPeriodo.getDate() - ((inicioPeriodo.getDay() + 6) % 7));
+        fimPeriodo = new Date(inicioPeriodo);
+        fimPeriodo.setDate(fimPeriodo.getDate() + 7);
+        inicioAnterior = new Date(inicioPeriodo);
+        inicioAnterior.setDate(inicioAnterior.getDate() - 7);
+        fimAnterior = inicioPeriodo;
+        quantidade = 7;
+        rotulos = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    } else if (periodo === 'anual') {
+        inicioPeriodo = new Date(hoje.getFullYear(), 0, 1);
+        fimPeriodo = new Date(hoje.getFullYear() + 1, 0, 1);
+        inicioAnterior = new Date(hoje.getFullYear() - 1, 0, 1);
+        fimAnterior = inicioPeriodo;
+        quantidade = 12;
+        rotulos = MESES_PT.map(mes => mes.slice(0, 3));
+    } else {
+        inicioPeriodo = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+        fimPeriodo = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+        inicioAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+        fimAnterior = inicioPeriodo;
+        quantidade = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+        rotulos = Array.from({ length: quantidade }, (_, dia) => String(dia + 1));
+    }
+
+    const valores = Array(quantidade).fill(0);
+    agendamentos.forEach(agendamento => {
+        if (agendamento.status !== 'confirmado' && agendamento.status !== 'concluido') return;
+        const data = new Date(`${agendamento.data}T12:00:00`);
+        if (Number.isNaN(data.getTime()) || data < inicioPeriodo || data >= fimPeriodo) return;
+        const indice = periodo === 'anual'
+            ? data.getMonth()
+            : periodo === 'semanal'
+                ? (data.getDay() + 6) % 7
+                : data.getDate() - 1;
+        valores[indice] += Number(agendamento.valor || 0);
+    });
+
+    const total = valores.reduce((soma, valor) => soma + valor, 0);
+    const anterior = somarAtendimentosNoPeriodo(inicioAnterior, fimAnterior);
+    const nota = total === 0 ? 'Nenhum atendimento no período'
+        : anterior === 0 ? 'Sem dados no período anterior para comparar'
+            : `${((total - anterior) / anterior * 100).toFixed(1)}% vs período anterior`;
+    return { labels: rotulos, valores, total, nota };
+}
 
 function atualizarKpiFaturamento(periodo) {
-    const dados = DADOS_FATURAMENTO[periodo] || DADOS_FATURAMENTO.mensal;
+    const dados = obterDadosFaturamento(periodo);
     const kpi = document.getElementById('kpi-faturamento');
-    if (kpi) kpi.innerText = dados.kpi;
+    if (kpi) kpi.innerText = formatarMoeda(dados.total);
     const nota = document.getElementById('kpi-faturamento-nota');
-    if (nota) nota.innerHTML = `<i data-lucide='trending-up' class='w-3.5 h-3.5'></i> ${dados.nota}`;
+    if (nota) nota.textContent = dados.nota;
 }
 
 // O QUE: Troca o período do gráfico + KPI de faturamento do dashboard.
 function atualizarPeriodoFaturamento() {
     const periodo = document.getElementById('periodo-faturamento')?.value || 'mensal';
-    const dados = DADOS_FATURAMENTO[periodo] || DADOS_FATURAMENTO.mensal;
+    const dados = obterDadosFaturamento(periodo);
     if (financeChartRef) {
         financeChartRef.data.labels = dados.labels;
         financeChartRef.data.datasets[0].data = dados.valores;
@@ -2467,10 +3124,10 @@ function atualizarPeriodoFaturamento() {
 // TODO [INTEGRAÇÃO SUPABASE]: filtrar por `vetId` + `data` no backend.
 function atualizarDashboardPorPerfil() {
     const ehVet = currentRole === 'veterinario';
-    document.getElementById('dash-titulo').innerText = ehVet ? 'Minha Agenda do Dia' : 'Resumo Financeiro e Operacional';
+    document.getElementById('dash-titulo').innerText = ehVet ? 'Minha Agenda do Dia' : 'Resumo de Atendimentos';
     document.getElementById('dash-subtitulo').innerText = ehVet
         ? 'Próxima consulta e movimento de hoje.'
-        : 'Acompanhamento consolidado de vendas, atendimentos e fluxo de clínica.';
+        : 'Dados carregados do banco. Valores representam agendamentos, não pagamentos.';
     toggleEl('card-faturamento', !ehVet);
     toggleEl('periodo-faturamento', !ehVet);
     toggleEl('grafico-receita-card', !ehVet);
@@ -2503,8 +3160,8 @@ function renderizarProximaConsulta() {
     box.innerHTML = `
         <div class='flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/80 p-4 rounded-xl border border-slate-800'>
             <div class='space-y-1'>
-                <p class='font-bold text-slate-100 text-sm'>${pet ? pet.nome : 'N/A'} <span class='text-xs text-slate-400 font-semibold'>· ${a.servico}${a.vacinaTipo ? ' — ' + a.vacinaTipo : ''}</span></p>
-                <p class='text-xs text-slate-400'>${tutor ? tutor.nome : 'N/A'} · ${a.data} às ${a.hora}</p>
+                <p class='font-bold text-slate-100 text-sm'>${escaparHtml(pet ? pet.nome : 'N/A')} <span class='text-xs text-slate-400 font-semibold'>· ${escaparHtml(a.servico)}${a.vacinaTipo ? ' — ' + escaparHtml(a.vacinaTipo) : ''}</span></p>
+                <p class='text-xs text-slate-400'>${escaparHtml(tutor ? tutor.nome : 'N/A')} · ${escaparHtml(a.data)} às ${escaparHtml(a.hora)}</p>
             </div>
             <button onclick="switchTab('agendamentos')" class='px-4 py-2 bg-brand-blue text-xs font-bold text-white rounded-xl shrink-0'>Ver agenda</button>
         </div>
@@ -2639,7 +3296,8 @@ function inicializarTooltipInfoLogin() {
 // SEÇÃO 13: INICIALIZAÇÃO
 // ==========================================================
 
-window.onload = function() {
+window.onload = async function() {
+    const parametrosAuth = new URLSearchParams(window.location.hash.slice(1));
     inicializarTema();
     aplicarAvisoModoDados();
     inicializarTooltipInfoLogin();
@@ -2652,4 +3310,8 @@ window.onload = function() {
     renderizarAnexos();
     renderizarUsuarios();
     inicializarGraficos();
+    await restaurarSessaoSupabase();
+    if (parametrosAuth.get('type') === 'recovery') {
+        abrirEtapaRedefinirSenha();
+    }
 };

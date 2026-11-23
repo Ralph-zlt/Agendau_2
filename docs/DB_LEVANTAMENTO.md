@@ -1,9 +1,9 @@
 # LEVANTAMENTO — Banco de Dados (DayVet-Gestão)
 
 > Documento de levantamento **sem código**. Define entidades, mapeia TODOs existentes e lista opções de persistência.
-> Última atualização: 2026-11-13.
-> Status: **em integração (autorizado em 2026-11-13).** Schema v2 escrito e **validado localmente** em `supabase/migrations/` (`0001_schema`, `0002_seed`, `0003_rls`) — Postgres 17 descartável, `tests/db.mjs` com 68 casos de RLS verdes. **Nada aplicado na nuvem:** o projeto Supabase ainda não existe (Fase B) e o código segue 100% mock.
-> **Nota (2026-11-13):** o SQL já está **escrito** em `docs/sql/` (`schema.sql`, `seeds.sql`, `rls-policies.sql`, `dayvet-completo.sql`, gerado em 2026-11-02) e a receita de migração em `docs/levantamento-bd.md`. Escrito ≠ aplicado: nenhum projeto Supabase existe e nenhum script rodou. Este documento segue sendo o levantamento conceitual; os `.sql` refletem a estrutura multi-clinic proposta.
+> Última atualização: 2026-11-23.
+> Status: levantamento conceitual e parcialmente histórico. O projeto Supabase está ativo; migrations `0001..0006` foram validadas em Postgres 17 na VPS e confirmadas no projeto remoto. Auth e a Edge Function `admin-criar-usuario` estão implantadas. O smoke autenticado real de tutor (cadastro, edição, reload e exclusão dos dados sintéticos) passou; outros fluxos ainda requerem validação. Para o estado operacional, priorize `ROADMAP.md`, `MAPA_DO_SISTEMA.md` e `supabase/migrations/`.
+> **Nota histórica (2026-11-13):** o SQL em `docs/sql/` e a receita em `docs/levantamento-bd.md` antecedem o schema single-clinic efetivo em `supabase/migrations/`; não os use como fonte de implementação atual.
 > **Nota (2026-09-17):** Laudos foram removidos do escopo por decisão da clínica. Não criar tabela nem endpoint para laudo.
 > **Nota (2026-11-13):** Guias de encaminhamento (RF-10) foram removidas do escopo por decisão do dono. O enum de `historico_clinico` fica `receita` e `vacina`.
 
@@ -48,7 +48,7 @@
 ### 1.3 Tutor (tabela `tutores`)
 - **id** (PK, string/UUID)
 - **nome** (string)
-- **cpf** (único)
+- **cpf** (único, formato canônico `000.000.000-00`; validado antes do cadastro/edição)
 - **email** (string)
 - **tel** (string, 11 dígitos)
 - **endereco** (string)
@@ -93,7 +93,7 @@
 
 **Regra de negócio:** Registros são **imutáveis** após criação (auditoria).
 
-### 1.6b Catálogos gerenciáveis (tabelas futuras — hoje mocks em memória)
+### 1.6b Catálogos gerenciáveis (tabelas persistidas no schema atual)
 - **`vacina_tipos`** (`id` PK, `nome` UNIQUE, `ativo` boolean) — CRUD por admin/veterinário (RBAC `vacina_tipos_*`); coluna `vacinaTipo` em `agendamentos` e `historico_clinico` referencia pelo nome (decisão 2026-09-25, item 18: funcionário sem acesso).
 - **`raca_tipos`** (`id` PK, `especie` enum, `nome`, `ativo` boolean) — CRUD por admin/funcionário (RBAC `raca_tipos_*`).
 
@@ -116,9 +116,11 @@
 
 ---
 
-## 2. Mapeamento dos TODOs existentes em `dayvet/script.js`
+## 2. Mapeamento histórico de TODOs e endpoints
 
-Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` (novo padrão: `TODO [INTEGRAÇÃO SUPABASE]` — SQL via Supabase, projeto ainda não criado):
+> A tabela e a lista de endpoints abaixo descrevem o levantamento anterior à integração Supabase e não representam a implementação atual. O código atual usa Supabase JS/PostgREST/Auth/Storage, não endpoints próprios `/api/*`; consulte os TODOs ativos no `script.js` antes de implementar trabalho novo.
+
+As linhas e endpoints abaixo são um inventário histórico e não mapeiam os TODOs ativos da implementação atual:
 
 | Linha | Trecho | Endpoint futuro | Entidade afetada |
 |---|---|---|---|
@@ -162,8 +164,8 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` (no
 | Aspecto | Detalhe |
 |---|---|
 | **Prós** | Auth built-in, Postgres SQL, real-time, hospedado, escala, RLS para RBAC |
-| **Contras** | Lock-in de fornecedor, limites de plano gratuito, projeto ainda a criar |
-| **Adequação** | **DECISÃO ADOTADA em 2026-09-22: SQL via Supabase.** Projeto ainda não criado; mocks mantidos até migração |
+| **Contras** | Lock-in de fornecedor, limites de plano gratuito |
+| **Adequação** | **DECISÃO ADOTADA em 2026-09-22: SQL via Supabase.** Projeto e Auth existem; a integração está em validação |
 
 ### 3.4 API própria (Node/Express + PostgreSQL/MySQL)
 | Aspecto | Detalhe |
@@ -187,9 +189,9 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` (no
 
 ## 4. Decisão adotada: SQL via Supabase
 
-> **Decisão tomada em 2026-09-22: SQL via Supabase (Postgres) — execução PAUSADA em 2026-11-13 por decisão do dono.** Projeto NÃO criado — nenhum código de banco implementado; mocks em memória mantidos.
+> **Decisão tomada em 2026-09-22: SQL via Supabase (Postgres).** O projeto foi criado e as Fases A–C estão no baseline. A integração de dados está implementada no worktree local, mas não deve ser promovida até validar Postgres/RLS, migrations `0005`/`0006` e smoke test remoto.
 >
-> **Motivo:** Auth + banco SQL + RLS com mínimo de código para MVP; tabelas §1 viram schema Supabase; bypass 1/2/3 mantido no protótipo para teste do usuário final (sem dados reais).
+> **Motivo:** Auth + banco SQL + RLS com mínimo de código para MVP; o bypass 1/2/3 permanece somente por decisão do dono durante a prototipação.
 >
 > A escolha afeta: criação do projeto Supabase, `supabase.sql`/migrations, uso de `supabase-js`, Auth, RLS e deploy.
 
@@ -209,20 +211,20 @@ Todos os pontos marcados com `// TODO [INTEGRAÇÃO BANCO DE DADOS FUTURA]:` (no
 - **Exclusão:** Tutor/pet podem ser "arquivados" (soft delete) mantendo integridade referencial.
 
 ### RNFS-01: "Os dados devem persistir em banco de dados"
-- Atualmente 100% mock — todos os TODOs apontam para integração futura.
-- Qualquer opção escolhida (§3) deve suportar: tabelas definidas em §1, endpoints em §2, autenticação JWT/session.
+- O worktree local usa Supabase em modo real; o carregamento e as operações persistentes estão implementados. A validação desta continuação passou nos testes estáticos, unitários, regressão e E2E com stubs; o teste DB foi pulado por falta de Docker e não houve smoke test real.
+- O contrato efetivo é o das migrations e policies em `supabase/migrations/`, não os endpoints hipotéticos `/api/*` desta proposta antiga.
 
 ---
 
 ## 6. Próximos passos
 
-> **PAUSADO em 2026-11-13 por decisão do dono.** Os passos abaixo ficam registrados para quando o banco voltar ao escopo; nada deve ser criado/aplicado antes disso.
+> **Em andamento.** Próximas etapas para finalizar a validação antes de qualquer deploy:
 
-1. **Decisão adotada:** SQL via Supabase (projeto ainda a criar) + infra Pages já definida.
-2. **Criar projeto Supabase + migrations/schema:** mapear entidades (§1) para Postgres (`supabase.sql`).
-3. **Implementar auth:** POST /api/login + JWT/session (substituir `perfisTestes`).
-4. **Substituir TODOs:** um a um, trocar mock por `supabase-js` (`TODO [INTEGRAÇÃO SUPABASE]`).
-5. **Testes:** cobrir CRUD de cada entidade + RBAC server-side.
-6. **LGPD:** implementar consentimento, criptografia e política de retenção.
+1. Rodar `node tests/db.mjs` com Docker/Postgres 17 e corrigir qualquer falha nas migrations/RLS.
+2. Confirmar/aplicar `0005_documentos_storage.sql` e `0006_configuracoes_horario.sql` na nuvem.
+3. Confirmar o deploy da Edge Function `admin-criar-usuario`.
+4. Fazer smoke test real com cada perfil: CRUD, persistência após reload, clínica, anexos e recuperação Auth.
+5. Validar o URL de produção e fluxo de deploy somente depois do merge autorizado na `main`.
+6. Planejar LGPD: consentimento, direitos do titular, retenção e resposta a incidentes.
 
-> **Este documento é levantamento. Nenhum código de banco foi implementado.**
+> **Este documento é levantamento histórico.** A referência atual é o schema versionado em `supabase/migrations/`.

@@ -55,7 +55,7 @@ rm -rf "$SAIDA"
 mkdir -p "$SAIDA/dayvet"
 cp "$RAIZ/site/index.html" "$SAIDA/index.html"
 cp "$RAIZ/dayvet/index.html" "$RAIZ/dayvet/styles.css" "$RAIZ/dayvet/regras.js" \
-   "$RAIZ/dayvet/script.js" "$RAIZ/dayvet/config.js" "$SAIDA/dayvet/"
+   "$RAIZ/dayvet/persistencia.js" "$RAIZ/dayvet/script.js" "$RAIZ/dayvet/config.js" "$SAIDA/dayvet/"
 
 cat > "$SAIDA/vercel.json" <<'JSON'
 {
@@ -77,7 +77,7 @@ vercel deploy --prod --yes
 echo
 echo "→ conferindo https://agendau-2.vercel.app"
 falhou=0
-for caminho in / /dayvet/ /dayvet/config.js /dayvet/script.js /dayvet/regras.js /dayvet/styles.css; do
+for caminho in / /dayvet/ /dayvet/config.js /dayvet/script.js /dayvet/regras.js /dayvet/persistencia.js /dayvet/styles.css; do
     codigo="$(curl -s -o /dev/null -w '%{http_code}' "https://agendau-2.vercel.app$caminho")"
     printf '  %-22s %s\n' "$caminho" "$codigo"
     [ "$codigo" = "200" ] || falhou=1

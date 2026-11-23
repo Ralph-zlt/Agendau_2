@@ -1,7 +1,7 @@
 # AGENTS.md — DayVet-Gestão
 
 > ⚠️ **RISCO ALTO DE SEGURANÇA — SOMENTE PROTOTIPAÇÃO:** contas 1/2/3 entram sem senha válida e sem troca obrigatória. REMOVER `perfisTestes`, `password_demo` e qualquer bypass antes da implantação. Em produção: hash de senha, sem bypass, `mustChange=true` p/ todo primeiro acesso.
-> **Exceção vigente (decisão do dono, 2026-11-13):** o bypass **fica** enquanto durar a fase de testes. Ele é exposto por botões visíveis no login (`#acessos-teste` → `preencherAcessoTeste()`), que preenchem CPF + senha dos 3 perfis. Não remover sem ordem explícita; ao ligar o Supabase, os botões passam a apontar para as contas de teste reais.
+> **Exceção vigente (decisão do dono, 2026-11-13):** o bypass **fica** enquanto durar a fase de testes. Os botões de `#acessos-teste` preenchem as credenciais e passam pelo Auth real; digitar 1/2/3 ainda aciona o bypass. Não remover sem ordem explícita.
 
 Instruções para **IAs e colaboradores** que forem editar este código.
 
@@ -41,16 +41,16 @@ ou da professora têm prioridade sobre convenções genéricas.
 
 ## Onde está o código
 - O produto fica em **`dayvet/`**: `index.html` (estrutura), `styles.css` (estilos), `script.js` (lógica). Nada fora dessa pasta é o produto.
-- SPA + Supabase **em integração** (autorizado pelo dono em 2026-11-13): o banco ainda NÃO existe na nuvem, mas o schema v2 já está em `supabase/migrations/` (`0001_schema`, `0002_seed`, `0003_rls`) e validado localmente por `node tests/db.mjs`. Os dados seguem mock em memória nos pontos `TODO [INTEGRAÇÃO SUPABASE]:` até a Fase D. Nada de publicar fora do GitHub Pages.
+- SPA + Supabase: o worktree da `teste` contém a integração real de dados/Storage e usa `MODO_DADOS='real'`, sem fallback silencioso. As migrations `0001..0006` foram validadas em Postgres 17 na VPS e confirmadas no projeto remoto; `admin-criar-usuario` está implantada com JWT obrigatório. O smoke autenticado real de cadastro/edição de tutor passou após a normalização de CPF; os registros sintéticos foram removidos. Estático, unitários, regressões e E2E Chromium passaram; ainda faltam smokes reais dos demais fluxos/perfis. A Vercel está Ready/200, mas ainda serve o frontend de demonstração da `main`; não publicar da `teste`. Nunca ler nem publicar `service_role`, senhas ou tokens; deploy segue as regras da seção acima.
 
 ## Não versionar
 - `local/` (relatórios pessoais de metodologia/commit) e `opencode.json` (config local da ferramenta).
 
 ## Stack
-- HTML/CSS/JS puros + CDNs externas: Tailwind CSS, Lucide (ícones), Chart.js (gráficos), Google Fonts. Sem build e sem servidor; backend SQL via Supabase com schema escrito e validado localmente, **projeto na nuvem ainda não criado** (Fase B). Regras puras de negócio testáveis ficam em `dayvet/regras.js`.
+- HTML/CSS/JS puros + CDNs externas: Tailwind CSS, Lucide (ícones), Chart.js (gráficos), Google Fonts e Supabase JS. Sem build/servidor próprio; Auth integrado no baseline e acesso real a dados no worktree. Regras puras de negócio testáveis ficam em `dayvet/regras.js`; adaptadores/mapeamentos em `dayvet/persistencia.js`.
 
 ## RBAC vigente (resumo — detalhe em `docs/MAPA_DO_SISTEMA.md` §3 e `script.js` SEÇÃO 2)
-- `admin` = `*` (tudo, incl. tipos de vacina/raça). `veterinario` = clínico + vacinação total + CRUD tipos de vacina + dashboard sem financeiro. `funcionario` = SEM modo clínico (sem `clinica_*`/`vacina_tipos_*`); agendamentos só-leitura + tutor/pet (inclui `tutor_editar`/`tutor_arquivar`/`tutor_excluir`, decisão 2026-11-13) + tipos de raça. Item 18 (só na `teste`, a mergear) consolidou a parte de vacinas — `main` ainda tem vacina=funcionário.
+- `admin` = `*` (tudo, incl. tipos de vacina/raça). `veterinario` = clínico + vacinação total + CRUD tipos de vacina + dashboard sem financeiro. `funcionario` = SEM modo clínico (sem `clinica_*`/`vacina_tipos_*`); agendamentos só-leitura + tutor/pet (inclui `tutor_editar`/`tutor_arquivar`/`tutor_excluir`) + tipos de raça. A regra de vacinas do item 18 já está no baseline `origin/main` (`e5c2e16`).
 
 ## Validação de mudanças
 
@@ -59,6 +59,7 @@ ou da professora têm prioridade sobre convenções genéricas.
 ```bash
 node tests/estatico.mjs      # sintaxe, IDs/handlers, blocos, z-index
 node tests/unit/regras.mjs   # regras puras (tabela entrada → saída)
+node tests/unit/persistencia.mjs # adaptadores Supabase + filtros por perfil
 node tests/e2e.mjs           # Chromium: login 1/2/3, abas, clínico, tutores, mobile
 node tests/e2e.mjs firefox   # quando mexer em layout/tema
 node tests/db.mjs            # migrations + matriz de RLS em Postgres 17 (Docker)

@@ -1,11 +1,7 @@
 // ==========================================================
-// REGRESSÃO 04 — Escrita na tela não pode se passar por escrita no banco
-// BUG: com o front 100% mock, ações de escrita (cancelar consulta, cadastrar
-//      tutor, anexar documento...) exibiam "sucesso" e o F5 desfazia tudo.
-//      Quem usa acredita que salvou; o banco nunca recebeu nada.
-// O QUE: enquanto MODO_DADOS === 'mock', (a) a faixa #aviso-modo-demo e o
-//        aviso do login ficam visíveis; (b) toda mensagem de escrita passa
-//        por confirmarEscrita(), que diz que nada foi salvo no banco.
+// REGRESSÃO 04 — O frontend não pode fingir que uma escrita foi salva.
+// O QUE: no modo real, avisos de demonstração ficam ocultos; mutações só
+//        anunciam sucesso após a operação do Supabase retornar sem erro.
 // FALHA SEM O FIX / PASSA COM O FIX — nunca renumerar.
 // ==========================================================
 import fs from "node:fs";
@@ -23,16 +19,17 @@ function check(nome, cond, detalhe = "") {
     else falhas.push(detalhe ? `${nome} — ${detalhe}` : nome);
 }
 
-// (a) aviso visível nos dois pontos de entrada
+// (a) avisos de demonstração permanecem disponíveis caso o modo mock volte
 check("faixa #aviso-modo-demo existe no HTML", html.includes('id="aviso-modo-demo"'));
 check("aviso #aviso-login-demo existe no HTML", html.includes('id="aviso-login-demo"'));
 check("faixa diz que nada é salvo", /nada é salvo/i.test(html));
 check("CSS do aviso existe nos 2 temas",
     css.includes(".aviso-demo") && css.includes("[data-theme='light'] .aviso-demo"));
 
-// (b) o modo é declarado e o aviso é aplicado no boot
-check("MODO_DADOS declarado", /const MODO_DADOS\s*=\s*'[a-z]+'/.test(js));
+// (b) o modo real oculta os avisos durante a inicialização
+check("MODO_DADOS está em modo real", /const MODO_DADOS\s*=\s*'real'/.test(js));
 check("aplicarAvisoModoDados() é chamada no onload", /window\.onload[\s\S]{0,400}aplicarAvisoModoDados\(\)/.test(js));
+check("avisos só aparecem no modo mock", /const emMock = MODO_DADOS !== 'real'/.test(js));
 
 // (c) nenhuma escrita anuncia sucesso por showToast direto
 const mensagensDeEscrita = [
@@ -51,13 +48,10 @@ const mensagensDeEscrita = [
 const vazando = mensagensDeEscrita.filter(m => js.includes(`showToast("${m}")`));
 check("nenhuma escrita usa showToast direto", vazando.length === 0, vazando.join(" | "));
 
-// (d) o helper realmente avisa quando está em mock
+// (d) sucesso e erro têm semântica explícita
 check("confirmarEscrita existe", /function confirmarEscrita\(/.test(js));
-check("confirmarEscrita avisa que não salvou", /nada foi salvo no banco/.test(js));
-check("confirmarEscrita usa o toast de aviso", /showToast\([^)]*'aviso'\)/.test(js));
-
-// (e) toast de aviso tem estilo próprio (não é o verde de sucesso)
-check("toast tipo 'aviso' tem cor âmbar", /tipo === 'aviso'[\s\S]{0,180}amber/.test(js));
+check("falha de persistência não declara sucesso", /A alteração não foi confirmada/.test(js));
+check("mutação checa erro antes do retorno de sucesso", /if \(resultado\?\.error\)[\s\S]*?return \{ ok: false, data: null \};[\s\S]*?return \{ ok: true, data: resultado/.test(js));
 
 console.log(`\nRegressão 04 — aviso de modo demonstração`);
 for (const nome of ok) console.log(`  ✓ ${nome}`);
