@@ -9,6 +9,12 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-23 · (banco de produção; código `bae3f12`) — Datas passadas para os concluídos QA
+**O que:** por pedido do dono, somente os três agendamentos QA concluídos que estavam em 01–03/12/2026 tiveram a data alterada para 20/11/2026. Horários, serviços, valores (R$ 85, R$ 95 e R$ 150) e status `concluido` foram preservados; o cancelado de novembro não foi alterado.
+**Por quê:** testar o painel de novembro com atendimentos concluídos em datas já passadas.
+**Validação:** conferi as três combinações originais de data/hora/valor/status antes da escrita e validei exatamente três linhas alteradas via Auth/RLS. Após reload, o histórico mostrou as três em 20/11 e o dashboard mensal mostrou R$ 330,00. A sessão foi encerrada.
+**Onde:** tabela Supabase `public.agendamentos` (somente os três registros QA do print) e este histórico. Nenhum código ou deploy foi alterado.
+
 ## 2026-11-23 · (main `293ac5e` + `3a188dd`; Vercel Ready `AsYBpdN9s51DVLLQWZ62FHxzb25c`) — Conclusões visíveis fora do mês atual
 **Causa confirmada:** leitura autenticada somente de consulta encontrou 3 agendamentos `concluido` em dezembro/2026 e 1 cancelado em novembro. O histórico e o dashboard iniciavam em novembro; o painel estava correto ao agrupar valores pela data agendada, mas o filtro inicial do histórico ocultava os concluídos de dezembro. Dois ciclos de login/logout/login na produção também funcionaram; nenhum dado real foi alterado.
 **O que:** histórico inicia em "Todos os meses/anos", mantém concluídos de qualquer data visíveis no estado recolhido e identifica datas futuras sem chamá-las de últimos 7 dias. O dashboard explica que valores seguem a data agendada; selecionar dezembro exibe os valores concluídos daquele mês.
