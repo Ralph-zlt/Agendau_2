@@ -47,7 +47,15 @@ page.on("console", m => { if (m.type() === "error") problemas.push("console: " +
 page.on("pageerror", e => problemas.push("pageerror: " + e.message));
 page.on("response", r => { if (r.status() >= 400) problemas.push(`HTTP ${r.status()} ${r.url()}`); });
 
-await page.goto(URL, { waitUntil: "networkidle" });
+// `load` (não `networkidle`): em 2026-11-23 o Chromium 156 passou a resolver
+// `networkidle` com o documento ainda em readyState "loading" — o parser não
+// tinha chegado aos <script src="regras.js|script.js"> e as checagens de
+// globais davam falso negativo. `load` só dispara depois que tudo executou.
+await page.goto(URL, { waitUntil: "load" });
+await page.waitForFunction(
+    () => typeof window.handleAuthSubmit === "function",
+    null, { timeout: 15000 }
+);
 
 // 1. Os assets novos estão realmente publicados
 const publicado = await page.evaluate(() => ({
@@ -107,7 +115,7 @@ check("sem erro de console, página ou HTTP ≥400", problemas.length === 0, pro
 // 5. Mobile sem overflow horizontal
 const m = await ctx.newPage();
 await m.setViewportSize({ width: 390, height: 844 });
-await m.goto(URL, { waitUntil: "networkidle" });
+await m.goto(URL, { waitUntil: "load" });
 const overflow = await m.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 check("mobile 390px sem overflow", overflow <= 1, `overflow ${overflow}px`);
 await m.screenshot({ path: "/tmp/ai-evidence/publicado-mobile.png" });
