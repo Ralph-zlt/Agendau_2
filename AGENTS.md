@@ -27,6 +27,18 @@ ou da professora têm prioridade sobre convenções genéricas.
 - PROIBIDO criar `teste/*`, `test/*`, `feature/*` ou qualquer outra branch sem autorização explícita do dono.
 - Antes de codar: `git fetch origin` + conferir `git branch -r` — se já existe `teste`, usar ela.
 
+## Deploy (Vercel) — reflete a `main`, sempre
+
+- A Vercel publica **apenas** o que está na `main`. O caminho é `./scripts/deploy-vercel.sh`,
+  que **aborta** se `HEAD != origin/main` ou se `dayvet/`/`site/` tiverem alteração não
+  commitada. Publicar de branch de trabalho é proibido.
+- Fluxo completo: commitar na `teste` → `git checkout main && git merge --ff-only origin/teste`
+  → `git push origin main` → `./scripts/deploy-vercel.sh` → `node tests/publicado.mjs <url>`.
+- O GitHub Pages publica sozinho no push da `main` (workflow `deploy-pages`); a Vercel não,
+  porque a integração Git dela está bloqueada ("commit author doesn't have permission").
+- Quando a integração Git da Vercel for religada, o push na `main` passa a publicar sozinho e
+  o script vira só verificação.
+
 ## Onde está o código
 - O produto fica em **`dayvet/`**: `index.html` (estrutura), `styles.css` (estilos), `script.js` (lógica). Nada fora dessa pasta é o produto.
 - SPA + Supabase **em integração** (autorizado pelo dono em 2026-11-13): o banco ainda NÃO existe na nuvem, mas o schema v2 já está em `supabase/migrations/` (`0001_schema`, `0002_seed`, `0003_rls`) e validado localmente por `node tests/db.mjs`. Os dados seguem mock em memória nos pontos `TODO [INTEGRAÇÃO SUPABASE]:` até a Fase D. Nada de publicar fora do GitHub Pages.

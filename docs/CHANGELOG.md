@@ -9,6 +9,15 @@ A cada commit, adicione no topo: **data · hash · resumo (o que / por quê / on
 
 ---
 
+## 2026-11-23 · (main) — Merge na `main`, Pages automático e Vercel travada na `main`
+**O que:** `teste` (`1e6d052`) foi para a `main` por fast-forward — autorizado pelo dono ("pode mandar na branch main"). Isso levou para produção: a restauração do Supabase, a Fase 0 (avisos de demonstração), o workflow de keep-alive e a correção do `tests/publicado.mjs`. Depois entrou `44b04b9` com a **trava de deploy**: `scripts/deploy-vercel.sh` aborta se `HEAD != origin/main` ou se `dayvet/`/`site/` estiverem com alteração não commitada, garantindo que a Vercel sempre reflita a `main` (decisão do dono no mesmo dia).
+**Por quê:** a Vercel não tem integração Git ativa (deploy só por script); sem trava, o que está no ar poderia ser trabalho de branch não auditável.
+**Onde:** `scripts/deploy-vercel.sh` (trava + mensagem de fluxo), `AGENTS.md` (nova seção "Deploy (Vercel) — reflete a `main`, sempre"), `ROADMAP.md`, este CHANGELOG.
+**Validações:** Pages publicou sozinho nos dois pushes (`45162337058` = `1e6d052`, `45162452063` = `44b04b9`, ambos success) e `tests/publicado.mjs` 15/15 na URL do Pages (com a faixa de demonstração no ar); Vercel publicada pela trava com 6 rotas 200 e 15/15 funcional; `supabase-keepalive` disparado por `workflow_dispatch` (`45162494962`) — login e leitura real verdes, passo de issue `skipped`.
+**Efeito colateral bom:** com o workflow na `main`, o keep-alive passou a valer de fato (agendado diário às 06:00 UTC).
+
+---
+
 ## 2026-11-23 · (teste) — Incidente: projeto pausado + Fase 0 (parar a falsa persistência)
 **Sintoma relatado:** no site da Vercel, desmarcar uma consulta e recarregar mostrava a consulta marcada de novo — "ou é falso, ou o Supabase caiu".
 **Diagnóstico (duas causas independentes):** (1) **o projeto Supabase estava PAUSADO** — `supabase projects list` mostrava `status: INACTIVE` e o host `dkdvhstjnverofgzwzne.supabase.co` respondia **NXDOMAIN** em local, `1.1.1.1` e `8.8.8.8` (outros domínios resolviam normalmente, então não era o resolver da VPS). Plano free pausa após ~7 dias de pouca atividade e, ao pausar, **remove a resolução DNS** — daí a impressão de "fora do ar". Nenhum dado foi perdido. (2) **o front nunca falou com o banco**: `index.html` não carrega `config.js`, `script.js` não tem `supabase`, `fetch` nem `/rest/v1` (zero chamadas de rede), e `alterarStatusAgendamento()` só faz `item.status = status` em memória; o único dado persistido era o tema em `localStorage`. Ou seja: "volta ao recarregar" era o comportamento esperado dos mocks — e a UI **afirmava sucesso** sem salvar, que é o defeito real.
