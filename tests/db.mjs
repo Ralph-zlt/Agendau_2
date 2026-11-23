@@ -85,6 +85,18 @@ try {
     contagem.trim() === "10/31" ? ok(`catálogo intacto após 2 execuções (${contagem.trim()})`)
         : erro(`catálogo duplicado: ${contagem.trim()} (esperado 10/31)`);
 
+    // 5.1 RPC de login (Fase C) — caso tabelado entrada → e-mail
+    const login = path.join(dirTests, "11_resolver_login.sql");
+    sh("docker", ["cp", login, `${container}:/tmp/11_resolver_login.sql`]);
+    const saidaLogin = psql(login);
+    const falhasLogin = saidaLogin.split("\n").filter(l => l.startsWith(" FALHA") || l.startsWith("FALHA"));
+    const totalLogin = (saidaLogin.match(/^\s*(OK|FALHA)\s*\|/gm) || []).length;
+    if (falhasLogin.length === 0) ok(`resolver_login: ${totalLogin} casos, 0 falhas`);
+    else {
+        erro(`resolver_login: ${falhasLogin.length} falha(s) em ${totalLogin} casos`);
+        falhasLogin.forEach(l => console.error("     " + l.trim()));
+    }
+
     // 6. Matriz de permissões
     const matriz = path.join(dirTests, "10_matriz_rls.sql");
     sh("docker", ["cp", matriz, `${container}:/tmp/10_matriz_rls.sql`]);
